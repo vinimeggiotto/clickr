@@ -96,14 +96,14 @@ jobs:
         run: |
           mkdir -p release
           if [ -f artifacts/Clickr-windows/Clickr.exe ]; then
-            cp artifacts/Clickr-windows/Clickr.exe release/Clickr-windows.exe
+            cp artifacts/Clickr-windows/Clickr.exe release/Clickr.exe
           fi
           if [ -f artifacts/Clickr-macos/Clickr.app.zip ]; then
-            cp artifacts/Clickr-macos/Clickr.app.zip release/Clickr-macos.app.zip
+            cp artifacts/Clickr-macos/Clickr.app.zip release/Clickr.app.zip
           fi
           if [ -f artifacts/Clickr-linux/Clickr ]; then
-            cp artifacts/Clickr-linux/Clickr release/Clickr-linux
-            chmod +x release/Clickr-linux
+            cp artifacts/Clickr-linux/Clickr release/Clickr
+            chmod +x release/Clickr
           fi
           ls -la release
 

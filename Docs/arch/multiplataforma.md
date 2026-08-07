@@ -27,6 +27,6 @@ Ver `app.paths.user_data_dir()` e `Docs/arch/arquitetura-clickr.md`.
 
 Scripts na raiz + specs em `packaging/` (`Clickr.windows.spec`, `Clickr.macos.spec`, `Clickr.linux.spec`). CI: `.github/workflows/build.yml`.
 
-Em tags `v*`, o job `release` publica os artefatos multi-OS com [`softprops/action-gh-release`](https://github.com/softprops/action-gh-release) (`permissions.contents: write`).
+Em tags `v*`, o job `release` publica os artefatos multi-OS com [`softprops/action-gh-release`](https://github.com/softprops/action-gh-release) (`permissions.contents: write`): `Clickr.exe`, `Clickr.app.zip`, `Clickr`.
 
 Fora de escopo desta entrega: notarização Apple, assinatura de código paga, cross-compile.

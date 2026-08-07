@@ -121,7 +121,7 @@ Os scripts regeneram o ícone (`scripts/generate_icon.py`) antes do PyInstaller.
 Workflow [`.github/workflows/build.yml`](.github/workflows/build.yml): matrix Windows / macOS / Linux.
 
 - Push/PR: sobe artifacts por plataforma
-- Tag `v*`: publica os três artefatos na GitHub Release
+- Tag `v*`: publica na GitHub Release `Clickr.exe`, `Clickr.app.zip` e `Clickr`
 
 ---
 
