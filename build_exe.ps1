@@ -21,8 +21,8 @@ Write-Host "Limpando builds anteriores..."
 if (Test-Path dist) { Remove-Item -Recurse -Force dist }
 if (Test-Path build) { Remove-Item -Recurse -Force build }
 
-Write-Host "Empacotando Clickr..."
-python -m PyInstaller --noconfirm Clickr.spec
+Write-Host "Empacotando Clickr (packaging/Clickr.windows.spec)..."
+python -m PyInstaller --noconfirm packaging\Clickr.windows.spec
 
 $exe = Join-Path $PSScriptRoot "dist\Clickr.exe"
 if (-not (Test-Path $exe)) {

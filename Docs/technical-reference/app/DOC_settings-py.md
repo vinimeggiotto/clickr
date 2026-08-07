@@ -2,11 +2,11 @@
 
 ## Objetivo
 
-Carregar e gravar preferências do aplicativo (hoje: `locale` da UI) em `%APPDATA%/Clickr/settings.json`.
+Carregar e gravar preferências do aplicativo (hoje: `locale` da UI) em `{user_data_dir()}/settings.json`.
 
 ## Dependências
 
-- `os.environ["APPDATA"]`
+- `app.paths.user_data_dir`
 - `json`, `pathlib`
 
 ## Lógica central

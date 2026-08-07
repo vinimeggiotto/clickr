@@ -6,10 +6,6 @@ import sys
 
 
 def main() -> int:
-    if sys.platform != "win32":
-        print("Clickr é suportado apenas no Windows.", file=sys.stderr)
-        return 1
-
     from core.dpi import enable_dpi_awareness
 
     enable_dpi_awareness()

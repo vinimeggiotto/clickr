@@ -2,28 +2,31 @@
 
 ## Objetivo
 
-Encapsular a API Win32 `SendInput` / `GetCursorPos` / `GetSystemMetrics` via `ctypes` para mouse (incl. XBUTTON1/2) e teclado (VK).
+Fachada de input multiplataforma com API pública estável para mouse (incl. X1/X2 quando disponível) e teclado.
 
 ## Dependências
 
-- `ctypes` / `ctypes.wintypes` (stdlib)
-- `user32.dll` (Windows)
+- `sys.platform` para escolher o backend
+- Windows: `core.sendinput_win32` (ctypes / `user32` SendInput)
+- macOS / Linux: `core.sendinput_pynput` (pynput)
 
 ## Lógica central
 
-- Coordenadas de ponto fixo usam tela virtual (`SM_*VIRTUALSCREEN`) normalizadas para o intervalo SendInput **0–65535**, com flags `MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK`.
-- Clique no cursor: apenas `DOWN` + `UP` do botão escolhido, sem mover.
-- Botões `x1`/`x2` usam `MOUSEEVENTF_XDOWN/XUP` com `mouseData` = `XBUTTON1`/`XBUTTON2`.
-- Teclado: `INPUT_KEYBOARD` + VK via `name_to_vk` / `key_down` / `key_up` / `key_press`.
-- Falha de `SendInput` (retorno ≠ quantidade enviada) levanta `OSError` com código Win32.
+- Reexporta as mesmas funções em todos os SOs.
+- Windows: coordenadas de ponto fixo usam tela virtual (`SM_*VIRTUALSCREEN`) normalizadas para SendInput **0–65535**, com `MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK`.
+- macOS: tela virtual via Quartz (`CGGetActiveDisplayList` / `CGDisplayBounds`).
+- Linux: métricas via Xlib (`XDisplayWidth` / `XDisplayHeight`); exige sessão X11.
+- Botões `x1`/`x2`: plenos no Win32; no pynput só se o enum `Button` expuser `x1`/`x2` — senão `OSError` explícito.
+- Teclado: API por VK (`name_to_vk`, `key_down`/`key_up`/`key_press`) e por nome (`key_*_name`).
+- Falhas de envio/consulta levantam `OSError` (sem retry).
 
 ## Assinaturas
 
 | Função | Entrada | Saída / efeito |
 |--------|---------|----------------|
 | `get_cursor_pos()` | — | `(x, y)` pixels |
-| `get_virtual_screen_rect()` | — | `(x, y, width, height)` tela virtual |
-| `move_absolute(x, y)` | pixels tela virtual | move cursor |
+| `get_virtual_screen_rect()` | — | `(x, y, width, height)` |
+| `move_absolute(x, y)` | pixels | move cursor |
 | `click(button)` | `left\|right\|middle\|x1\|x2` | clique no cursor |
 | `click_at(button, x, y)` | botão + XY | move + clique |
 | `double_click(button)` | botão | dois cliques no cursor |

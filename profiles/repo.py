@@ -1,12 +1,13 @@
-"""Repositório de perfis JSON em %APPDATA%/Clickr/."""
+"""Repositório de perfis JSON em user_data_dir()/profiles/."""
 
 from __future__ import annotations
 
 import json
-import os
 import re
 from pathlib import Path
 from typing import Any, Optional
+
+from app.paths import user_data_dir
 
 _NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 _.-]{0,63}$")
 
@@ -15,17 +16,14 @@ class ProfilesRepo:
     """
     Salva, carrega, lista, importa e exporta perfis de configuração.
 
-    Diretório: %APPDATA%/Clickr/profiles/{nome}.json
+    Diretório: {user_data_dir()}/profiles/{nome}.json
     """
 
     def __init__(self, root: Path | None = None) -> None:
         if root is not None:
             self._root = root
         else:
-            appdata = os.environ.get("APPDATA")
-            if not appdata:
-                raise RuntimeError("Variável APPDATA não definida")
-            self._root = Path(appdata) / "Clickr" / "profiles"
+            self._root = user_data_dir() / "profiles"
 
     @property
     def root(self) -> Path:

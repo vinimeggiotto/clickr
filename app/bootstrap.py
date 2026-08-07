@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import sys
-
 import webview
 
 from app.controller import AppController
@@ -17,9 +15,6 @@ WINDOW_HEIGHT = 676
 
 
 def create_app() -> tuple[webview.Window, AppController]:
-    if sys.platform != "win32":
-        raise RuntimeError("Clickr é suportado apenas no Windows.")
-
     controller = AppController()
     index = (UI_DIR / "index.html").resolve()
     if not index.is_file():

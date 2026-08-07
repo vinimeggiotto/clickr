@@ -6,7 +6,7 @@ Persistir e restaurar configurações do Clickr entre sessões, inclusive import
 
 ## Armazenamento
 
-- Diretório: `%APPDATA%/Clickr/profiles/{nome}.json`
+- Diretório: `{user_data_dir()}/profiles/{nome}.json` (Windows: `%APPDATA%/Clickr`; macOS: `~/Library/Application Support/Clickr`; Linux: `$XDG_CONFIG_HOME/Clickr` ou `~/.config/Clickr`)
 - Formato: `{ "name": "...", "config": { ...ClickConfig } }`
 
 ## Comportamento

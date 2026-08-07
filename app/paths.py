@@ -1,7 +1,8 @@
-"""Resolução de caminhos de recursos (dev e PyInstaller frozen)."""
+"""Resolução de caminhos de recursos (dev e PyInstaller frozen) e dados do usuário."""
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -28,3 +29,24 @@ def assets_dir() -> Path:
 
 def locales_dir() -> Path:
     return ui_dir() / "locales"
+
+
+def user_data_dir() -> Path:
+    """
+    Diretório de preferências e perfis do usuário (por SO).
+
+    - Windows: %APPDATA%/Clickr
+    - macOS: ~/Library/Application Support/Clickr
+    - Linux: $XDG_CONFIG_HOME/Clickr ou ~/.config/Clickr
+    """
+    if sys.platform == "win32":
+        appdata = os.environ.get("APPDATA")
+        if not appdata:
+            raise RuntimeError("Variável APPDATA não definida")
+        return Path(appdata) / "Clickr"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "Clickr"
+    xdg = os.environ.get("XDG_CONFIG_HOME")
+    if xdg:
+        return Path(xdg) / "Clickr"
+    return Path.home() / ".config" / "Clickr"

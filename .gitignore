@@ -35,7 +35,7 @@ coverage.xml
 build/
 dist/
 *.exe
-# Mantém o Clickr.spec versionado; ignora dumps locais do PyInstaller
+# Specs versionados em packaging/Clickr.*.spec; ignora dumps locais do PyInstaller
 warn-*.txt
 
 # --- Segredos / config local ---

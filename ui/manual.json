@@ -58,7 +58,7 @@
       "id": "profiles",
       "title": "Aba Perfis",
       "body": [
-        "Salve a configuração atual com um nome em %APPDATA%/Clickr/profiles/.",
+        "Salve a configuração atual com um nome na pasta de dados do Clickr (profiles/).",
         "Carregar aplica um perfil da lista. Exportar/Importar troca JSON com outras máquinas."
       ],
       "tips": [],

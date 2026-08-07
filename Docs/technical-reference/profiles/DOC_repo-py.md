@@ -2,11 +2,12 @@
 
 ## Objetivo
 
-Persistir, listar, importar e exportar perfis de configuração em JSON sob `%APPDATA%/Clickr/profiles/`.
+Persistir, listar, importar e exportar perfis de configuração em JSON sob `{user_data_dir()}/profiles/`.
 
 ## Dependências
 
-- `json`, `os`, `re`, `pathlib` (stdlib)
+- `app.paths.user_data_dir`
+- `json`, `re`, `pathlib` (stdlib)
 
 ## Lógica central
 

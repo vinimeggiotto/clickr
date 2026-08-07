@@ -5,7 +5,7 @@
 | Linguagem | Python |
 | Versão do projeto | **3.12** |
 | Fonte | Plano Clickr (`clickr_autoclicker_python`) — decisão travada do projeto |
-| Plataforma | Windows 10/11 apenas |
+| Plataforma | Windows 10/11, macOS, Linux (X11) |
 
 ## Aderência
 

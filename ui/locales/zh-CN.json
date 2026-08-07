@@ -243,7 +243,7 @@
       "profiles": {
         "title": "配置页",
         "body": [
-          "将当前配置以名称保存到 %APPDATA%/Clickr/profiles/。",
+          "将当前配置以名称保存到 Clickr 用户数据文件夹的 profiles/ 目录。",
           "加载应用列表中的配置。导出/导入可与其他电脑交换 JSON。"
         ],
         "tips": []

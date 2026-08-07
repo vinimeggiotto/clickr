@@ -17,7 +17,7 @@ Permitir que o usuário escolha o idioma da interface do Clickr (6 locales), com
 
 ## Persistência
 
-- Arquivo: `%APPDATA%/Clickr/settings.json`
+- Arquivo: `{user_data_dir()}/settings.json`
 - Campo: `locale` (string BCP-47 ou ausente/`null`)
 - **Não** misturado com presets de clique em `profiles/`
 

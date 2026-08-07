@@ -243,7 +243,7 @@
       "profiles": {
         "title": "Pestaña Perfiles",
         "body": [
-          "Guarda la configuración actual en %APPDATA%/Clickr/profiles/.",
+          "Guarda la configuración actual con un nombre en la carpeta de datos del Clickr (profiles/).",
           "Cargar aplica un perfil. Exportar/Importar intercambia JSON."
         ],
         "tips": []

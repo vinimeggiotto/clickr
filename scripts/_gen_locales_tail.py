@@ -215,7 +215,7 @@ ES = {
             "profiles": {
                 "title": "Pestaña Perfiles",
                 "body": [
-                    "Guarda la configuración actual en %APPDATA%/Clickr/profiles/.",
+                    "Guarda la configuración actual con un nombre en la carpeta de datos del Clickr (profiles/).",
                     "Cargar aplica un perfil. Exportar/Importar intercambia JSON.",
                 ],
                 "tips": [],
@@ -584,7 +584,7 @@ RU = {
             "profiles": {
                 "title": "Вкладка Профили",
                 "body": [
-                    "Сохраните текущую конфигурацию в %APPDATA%/Clickr/profiles/.",
+                    "Сохраните текущую конфигурацию с именем в папке данных пользователя Clickr (profiles/).",
                     "Загрузка применяет профиль. Экспорт/Импорт обменивает JSON.",
                 ],
                 "tips": [],

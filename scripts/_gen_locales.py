@@ -259,7 +259,7 @@ PT = {
             "profiles": {
                 "title": "Aba Perfis",
                 "body": [
-                    "Salve a configuração atual com um nome em %APPDATA%/Clickr/profiles/.",
+                    "Salve a configuração atual com um nome na pasta de dados do Clickr (profiles/).",
                     "Carregar aplica um perfil da lista. Exportar/Importar troca JSON com outras máquinas.",
                 ],
                 "tips": [],
@@ -653,7 +653,7 @@ EN = {
             "profiles": {
                 "title": "Profiles tab",
                 "body": [
-                    "Save the current config with a name under %APPDATA%/Clickr/profiles/.",
+                    "Save the current config with a name under the Clickr user data folder (profiles/).",
                     "Load applies a profile from the list. Export/Import swaps JSON with other machines.",
                 ],
                 "tips": [],
@@ -1044,7 +1044,7 @@ ZH = {
             "profiles": {
                 "title": "配置页",
                 "body": [
-                    "将当前配置以名称保存到 %APPDATA%/Clickr/profiles/。",
+                    "将当前配置以名称保存到 Clickr 用户数据文件夹的 profiles/ 目录。",
                     "加载应用列表中的配置。导出/导入可与其他电脑交换 JSON。",
                 ],
                 "tips": [],
@@ -1427,7 +1427,7 @@ DE = {
             "profiles": {
                 "title": "Tab Profile",
                 "body": [
-                    "Aktuelle Konfiguration unter %APPDATA%/Clickr/profiles/ speichern.",
+                    "Aktuelle Konfiguration unter dem Clickr-Benutzerdatenordner (profiles/) speichern.",
                     "Laden wendet ein Profil an. Export/Import tauscht JSON.",
                 ],
                 "tips": [],
@@ -1805,7 +1805,7 @@ ES = {
             "profiles": {
                 "title": "Pestaña Perfiles",
                 "body": [
-                    "Guarda la configuración actual en %APPDATA%/Clickr/profiles/.",
+                    "Guarda la configuración actual con un nombre en la carpeta de datos del Clickr (profiles/).",
                     "Cargar aplica un perfil. Exportar/Importar intercambia JSON.",
                 ],
                 "tips": [],
@@ -2174,7 +2174,7 @@ RU = {
             "profiles": {
                 "title": "Вкладка Профили",
                 "body": [
-                    "Сохраните текущую конфигурацию в %APPDATA%/Clickr/profiles/.",
+                    "Сохраните текущую конфигурацию с именем в папке данных пользователя Clickr (profiles/).",
                     "Загрузка применяет профиль. Экспорт/Импорт обменивает JSON.",
                 ],
                 "tips": [],

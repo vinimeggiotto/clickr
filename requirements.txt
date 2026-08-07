@@ -1,4 +1,4 @@
-# Clickr — dependências (Windows)
+# Clickr — dependências (Windows / macOS / Linux)
 pywebview>=5.0
 pynput>=1.7
 pystray>=0.19

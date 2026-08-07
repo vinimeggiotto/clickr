@@ -2,14 +2,14 @@
 
 ## Objetivo
 
-Expor ícone na bandeja do Windows com menu Mostrar / Ocultar / Sair (rótulos via catálogo i18n).
+Expor ícone na bandeja (Windows / macOS / Linux via pystray) com menu Mostrar / Ocultar / Sair (rótulos via catálogo i18n).
 
 ## Dependências
 
 - `pystray`
 - `PIL.Image` (Pillow)
 - Asset obrigatório: `assets/icon.png` (marca Clickr)
-- `scripts/generate_icon.py` gera PNG + ICO multi-tamanho (16–256); `build_exe.ps1` regenera antes do PyInstaller (`Clickr.spec` → `icon='assets\\icon.ico'`)
+- `scripts/generate_icon.py` gera PNG + ICO; scripts de build regeneram antes do PyInstaller (`packaging/Clickr.*.spec`)
 - Catálogos `ui/locales/{code}.json` (seção `tray.*`) via `app.paths.locales_dir`
 
 ## Lógica central

@@ -1,16 +1,21 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller spec — gera Clickr.exe (Windows)
-# Uso: pyinstaller Clickr.spec
+# Uso (na raiz do repo): pyinstaller --noconfirm packaging/Clickr.windows.spec
+
+import os
+
+SPECDIR = os.path.dirname(os.path.abspath(SPEC))
+ROOT = os.path.dirname(SPECDIR)
 
 block_cipher = None
 
 a = Analysis(
-    ['main.py'],
-    pathex=[],
+    [os.path.join(ROOT, 'main.py')],
+    pathex=[ROOT],
     binaries=[],
     datas=[
-        ('ui', 'ui'),
-        ('assets', 'assets'),
+        (os.path.join(ROOT, 'ui'), 'ui'),
+        (os.path.join(ROOT, 'assets'), 'assets'),
     ],
     hiddenimports=[
         'clr',
@@ -20,6 +25,7 @@ a = Analysis(
         'pynput.mouse._win32',
         'pystray._win32',
         'PIL._tkinter_finder',
+        'core.sendinput_win32',
     ],
     hookspath=[],
     hooksconfig={},
@@ -53,5 +59,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='assets\\icon.ico',
+    icon=os.path.join(ROOT, 'assets', 'icon.ico'),
 )

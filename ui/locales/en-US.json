@@ -243,7 +243,7 @@
       "profiles": {
         "title": "Profiles tab",
         "body": [
-          "Save the current config with a name under %APPDATA%/Clickr/profiles/.",
+          "Save the current config with a name under the Clickr user data folder (profiles/).",
           "Load applies a profile from the list. Export/Import swaps JSON with other machines."
         ],
         "tips": []

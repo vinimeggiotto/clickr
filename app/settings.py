@@ -1,11 +1,12 @@
-"""Preferências do app em %APPDATA%/Clickr/settings.json (locale da UI)."""
+"""Preferências do app em user_data_dir()/settings.json (locale da UI)."""
 
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import Any, Optional
+
+from app.paths import user_data_dir
 
 SUPPORTED_LOCALES = (
     "pt-BR",
@@ -25,7 +26,7 @@ class AppSettings:
     """
     Carrega e grava preferências do aplicativo.
 
-    Arquivo: %APPDATA%/Clickr/settings.json
+    Arquivo: {user_data_dir()}/settings.json
     Não mistura com presets de clique em profiles/.
     """
 
@@ -33,10 +34,7 @@ class AppSettings:
         if path is not None:
             self._path = path
         else:
-            appdata = os.environ.get("APPDATA")
-            if not appdata:
-                raise RuntimeError("Variável APPDATA não definida")
-            self._path = Path(appdata) / "Clickr" / "settings.json"
+            self._path = user_data_dir() / "settings.json"
 
     @property
     def path(self) -> Path:
