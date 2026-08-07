@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentação e uso
+    url: https://github.com/vinimeggiotto/clickr/blob/main/README.md
+    about: Leia o README (aviso legal, builds e uso) antes de abrir uma issue.
+  - name: Como contribuir
+    url: https://github.com/vinimeggiotto/clickr/blob/main/CONTRIBUTING.md
+    about: Fluxo de fork, PR e desenvolvimento local.

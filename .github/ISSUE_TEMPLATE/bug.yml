@@ -1,0 +1,57 @@
+name: Bug
+description: Algo não funciona como esperado
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Antes de abrir: confira se já existe issue semelhante e leia o [README](https://github.com/vinimeggiotto/clickr/blob/main/README.md).
+  - type: dropdown
+    id: os
+    attributes:
+      label: Sistema operacional
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Outro
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versão do Clickr
+      description: Tag da release (ex. v1.0.1) ou conteúdo do arquivo VERSION / texto no rodapé do app.
+      placeholder: v1.0.1
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passos para reproduzir
+      description: Lista numerada do que você fez.
+      placeholder: |
+        1. Abri o Clickr
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamento esperado
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportamento atual
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Informações extras
+      description: Logs, screenshots, se rodou pelo .exe ou `python main.py`, etc.
+    validations:
+      required: false

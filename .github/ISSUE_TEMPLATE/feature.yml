@@ -1,0 +1,30 @@
+name: Feature
+description: Sugestão de melhoria ou nova funcionalidade
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Descreva o problema que a feature resolve. Lembre-se da [licença não comercial](https://github.com/vinimeggiotto/clickr/blob/main/LICENSE) e do aviso legal no README.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema / motivação
+      description: Qual dor ou limitação atual?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta
+      description: Como você imagina a solução?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas
+      description: Outras formas de resolver, se houver.
+    validations:
+      required: false
