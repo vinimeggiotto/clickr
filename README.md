@@ -6,7 +6,7 @@
 ![UI](https://img.shields.io/badge/UI-pywebview-1f2937?style=flat-square)
 ![i18n](https://img.shields.io/badge/i18n-6%20locales-10b981?style=flat-square)
 ![Build](https://img.shields.io/github/actions/workflow/status/vinimeggiotto/clickr/build.yml?style=flat-square&label=build)
-![License](https://img.shields.io/badge/license-as%20is-6b7280?style=flat-square)
+![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial-6b7280?style=flat-square)
 
 **Autoclicker desktop multiplataforma** — UI amber no estilo “device”, motor de input nativo (SendInput no Windows; pynput no macOS/Linux), hotkeys, perfis, macros, scripts e agenda.
 
@@ -154,6 +154,17 @@ Docs/          Documentação do projeto
 
 ---
 
+## Comunidade
+
+- [Como contribuir](CONTRIBUTING.md)
+- [Código de conduta](CODE_OF_CONDUCT.md)
+- [Política de segurança](SECURITY.md)
+
 ## Licença
 
-Software fornecido **“como está”**, sem garantia. Uso por sua conta e risco.
+Este software é distribuído sob a **[PolyForm Noncommercial License 1.0.0](LICENSE)** (copyright 2026 Vinicius Meggiotto).
+
+- Uso **não comercial** permitido nos termos da licença; **não** é uma licença OSI “Open Source”.
+- Fornecido **“como está”**, sem garantia. Uso por sua conta e risco.
+
+Texto integral: [`LICENSE`](LICENSE).
