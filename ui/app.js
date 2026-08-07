@@ -814,6 +814,36 @@
     }
   }
 
+  function formatVersionLabel(version) {
+    const raw = String(version || "").trim();
+    if (!raw) return "";
+    return raw.charAt(0).toLowerCase() === "v" ? raw : "v" + raw;
+  }
+
+  function applyVersion(version) {
+    const label = formatVersionLabel(version);
+    const splashEl = document.getElementById("splashVersion");
+    const footerEl = document.getElementById("appVersion");
+    if (splashEl) {
+      if (label) {
+        splashEl.textContent = label;
+        splashEl.hidden = false;
+      } else {
+        splashEl.textContent = "";
+        splashEl.hidden = true;
+      }
+    }
+    if (footerEl) {
+      if (label) {
+        footerEl.textContent = label;
+        footerEl.hidden = false;
+      } else {
+        footerEl.textContent = "";
+        footerEl.hidden = true;
+      }
+    }
+  }
+
   function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
@@ -921,14 +951,18 @@
       }
       bindLocaleSelect();
 
+      const bridge = api();
+      const settings = bridge && bridge.get_settings ? await bridge.get_settings() : {};
+      if (settings && settings.version) {
+        applyVersion(settings.version);
+      }
+
       const elapsedSplash = Date.now() - splashStarted;
       if (elapsedSplash < minSplash) {
         await delay(minSplash - elapsedSplash);
       }
       hideSplash();
 
-      const bridge = api();
-      const settings = bridge && bridge.get_settings ? await bridge.get_settings() : {};
       let locale = settings && settings.locale ? settings.locale : null;
       if (!locale) {
         locale = await showLocaleGate();

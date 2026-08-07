@@ -14,7 +14,7 @@
 ## Composição
 
 1. **Title bar custom** — janela `frameless`; logo + “Clickr” (drag) à esquerda; minimizar / fechar amber minimal à direita (sem maximizar).
-2. **Splash** — ao abrir, `#splash` com `clickr_logo_horizontal.svg` + barra indeterminada até a bridge estar pronta (`body.booting`); mínimo ~1,1s.
+2. **Splash** — ao abrir, `#splash` com `clickr_logo_horizontal.svg` + barra indeterminada + `#splashVersion` (`v` + `VERSION`) até a bridge estar pronta (`body.booting`); mínimo ~1,1s.
 3. **Locale gate** — se não houver `locale` em settings, `#localeGate` (overlay amber no `app-shell`) após o splash; escolha obrigatória.
 4. **Nameplate** — ícone `clickr_icon.svg` à esquerda; à direita `#localeSelect`.
 5. **Stage** — pulse button compacto, contador LCD, pulse-strip (casca fixa).
@@ -24,7 +24,7 @@
    - **Run** — delay, jitter, limites, always-on-top, compact
    - **Point** — XY, capturar, sequência
    - **Perfis / Manual / Adv / Macro / Script / Agenda** — Manual é guia interativo
-8. **Footer** — keycap da hotkey + status (casca fixa).
+8. **Footer** — keycap da hotkey + `#appVersion` (centro) + status (casca fixa).
 9. **Modo compacto** — oculta `.tab-adv`; se aba avançada ativa, volta para **Clique** (Manual permanece).
 
 ## Regras

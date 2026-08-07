@@ -193,6 +193,14 @@ body:not(.booting) .splash {
   color: var(--text-dim);
 }
 
+.splash-version {
+  margin: -10px 0 0;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--amber-dim);
+}
+
 @keyframes splashSlide {
   0% { transform: translateX(-120%); }
   100% { transform: translateX(320%); }
@@ -920,9 +928,19 @@ body:not(.booting) .splash {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   padding-top: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   flex-shrink: 0;
+}
+
+.footer-version {
+  flex: 1;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 1px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
 }
 
 .controls .error {

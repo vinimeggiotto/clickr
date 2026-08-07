@@ -38,4 +38,4 @@ Expor a API JS do pywebview e orquestrar motor, hotkeys, perfis, tray, pick, seq
 | `set_always_on_top` / `show_window` / `hide_window(notify=False)` | janela; `notify` dispara toast da bandeja |
 | `window_minimize` / `window_close` | title bar; close = hide + notify |
 | `show_info_popup` / `get_info_popup` / `close_info_popup` | janela auxiliar de ajuda (Assistente) |
-| `get_settings` / `set_locale` | preferências do app (`locale`); `set_locale` atualiza menu da bandeja |
+| `get_settings` / `set_locale` | `locale`, `supported_locales`, `version` (de `VERSION`); `set_locale` atualiza a bandeja |

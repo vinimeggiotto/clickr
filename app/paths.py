@@ -31,6 +31,22 @@ def locales_dir() -> Path:
     return ui_dir() / "locales"
 
 
+def app_version() -> str:
+    """
+    Versão do aplicativo lida do arquivo VERSION na raiz do projeto / bundle.
+
+    Em build frozen, VERSION deve estar em datas do PyInstaller (project_root).
+    """
+    path = project_root() / "VERSION"
+    if not path.is_file():
+        raise FileNotFoundError(f"VERSION não encontrado: {path}")
+    text = path.read_text(encoding="utf-8").strip()
+    line = text.splitlines()[0].strip() if text else ""
+    if not line:
+        raise ValueError(f"VERSION vazio: {path}")
+    return line
+
+
 def user_data_dir() -> Path:
     """
     Diretório de preferências e perfis do usuário (por SO).

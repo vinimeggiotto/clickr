@@ -9,7 +9,7 @@ from typing import Any, Optional
 
 import webview
 
-from app.paths import locales_dir, ui_dir
+from app.paths import app_version, locales_dir, ui_dir
 from app.settings import SUPPORTED_LOCALES, AppSettings
 from app.tray import SystemTray
 from core import sendinput
@@ -473,11 +473,12 @@ class AppController:
         self._tray_hide()
 
     def get_settings(self) -> dict[str, Any]:
-        """Preferências do app (locale). Não inclui presets de clique."""
+        """Preferências do app (locale) + versão do arquivo VERSION."""
         data = self._settings.load()
         return {
             "locale": data.get("locale"),
             "supported_locales": list(SUPPORTED_LOCALES),
+            "version": app_version(),
         }
 
     def set_locale(self, code: str) -> dict[str, Any]:
@@ -488,6 +489,7 @@ class AppController:
         return {
             "locale": saved.get("locale"),
             "supported_locales": list(SUPPORTED_LOCALES),
+            "version": app_version(),
         }
 
     def window_minimize(self) -> None:
