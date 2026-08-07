@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clickr</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="booting">
+  <header class="titlebar" data-i18n-aria="titlebar.aria" aria-label="Barra da janela">
+    <div class="titlebar-drag pywebview-drag-region">
+      <img class="titlebar-icon" src="assets/clickr_icon.svg" alt="" width="18" height="18">
+      <span class="titlebar-title">Clickr</span>
+    </div>
+    <div class="titlebar-controls">
+      <button type="button" class="win-btn" id="winMin" data-i18n-aria="titlebar.minimize" data-i18n-title="titlebar.minimize" aria-label="Minimizar" title="Minimizar">
+        <span aria-hidden="true">&#8211;</span>
+      </button>
+      <button type="button" class="win-btn win-btn-close" id="winClose" data-i18n-aria="titlebar.close" data-i18n-title="titlebar.close" aria-label="Fechar" title="Fechar">
+        <span aria-hidden="true">&#10005;</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+  <div id="trayModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="trayModalTitle">
+    <div class="modal-card">
+      <h2 id="trayModalTitle" class="modal-title" data-i18n="trayModal.title">Ainda em execução</h2>
+      <p class="modal-body" data-i18n-html="trayModal.body">
+        O Clickr não encerrou — ele continua na <strong>bandeja do sistema</strong>
+        (ícone perto do relógio).
+      </p>
+      <p class="modal-body dim" data-i18n-html="trayModal.bodyDim">
+        Para sair de verdade: clique no ícone → <strong>Sair</strong>.
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="action-btn ghost" id="trayModalCancel" data-i18n="trayModal.cancel">Cancelar</button>
+        <button type="button" class="action-btn" id="trayModalOk" data-i18n="trayModal.ok">Entendi</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="localeGate" class="locale-gate" hidden role="dialog" aria-modal="true" data-i18n-aria="localeGate.aria" aria-labelledby="localeGateTitle">
+    <div class="locale-gate-card">
+      <h2 id="localeGateTitle" class="locale-gate-title" data-i18n="localeGate.title">Escolha o idioma</h2>
+      <p class="locale-gate-sub" data-i18n="localeGate.subtitle">Você pode mudar depois no seletor de idioma no topo.</p>
+      <div class="locale-gate-list" id="localeGateList" role="list"></div>
+    </div>
+  </div>
+
+  <div id="splash" class="splash" aria-busy="true" aria-live="polite">
+    <img class="splash-logo" src="assets/clickr_logo_horizontal.svg" alt="Clickr" width="280" height="115">
+    <div class="splash-track" aria-hidden="true">
+      <div class="splash-bar"></div>
+    </div>
+    <p class="splash-label" data-i18n="splash.loading">carregando</p>
+  </div>
+
+  <div class="device" id="device">
+    <div class="nameplate">
+      <img class="nameplate-logo" src="assets/clickr_icon.svg" alt="Clickr" width="28" height="28">
+      <span class="nameplate-right">
+        <select id="localeSelect" class="locale-select" data-i18n-aria="localeSelect.aria" aria-label="Idioma da interface"></select>
+      </span>
+    </div>
+
+    <div class="stage">
+      <button class="pulse-btn" id="mainBtn" type="button" aria-pressed="false" data-i18n-aria="stage.mainAria" aria-label="Iniciar ou parar">
+        <span class="ring"></span>
+        <span id="icon">&#9654;</span>
+      </button>
+      <div class="readout">
+        <span id="counter">000000</span>
+        <span class="readout-label" data-i18n="brand.clicks">clicks</span>
+      </div>
+      <div class="pulse-strip" id="strip"></div>
+    </div>
+
+    <div class="controls">
+      <div class="workspace">
+      <nav class="tabs" role="tablist" data-i18n-aria="tabs.aria" aria-label="Painéis" aria-orientation="vertical">
+        <button type="button" class="tab active" data-tab="click" role="tab" aria-selected="true" data-i18n="tabs.click">Clique</button>
+        <button type="button" class="tab" data-tab="run" role="tab" aria-selected="false" data-i18n="tabs.run">Run</button>
+        <button type="button" class="tab" data-tab="point" role="tab" aria-selected="false" data-i18n="tabs.point">Point</button>
+        <button type="button" class="tab" data-tab="profiles" role="tab" aria-selected="false" data-i18n="tabs.profiles">Perfis</button>
+        <button type="button" class="tab" data-tab="manual" role="tab" aria-selected="false" data-i18n="tabs.manual">Manual</button>
+        <button type="button" class="tab tab-adv" data-tab="advanced" role="tab" aria-selected="false" data-i18n="tabs.advanced">Adv</button>
+        <button type="button" class="tab tab-adv" data-tab="macro" role="tab" aria-selected="false" data-i18n="tabs.macro">Macro</button>
+        <button type="button" class="tab tab-adv" data-tab="script" role="tab" aria-selected="false" data-i18n="tabs.script">Script</button>
+        <button type="button" class="tab tab-adv" data-tab="schedule" role="tab" aria-selected="false" data-i18n="tabs.schedule">Agenda</button>
+      </nav>
+
+      <div class="main-col">
+      <div class="panels">
+        <section class="panel active" id="panel-click" role="tabpanel">
+          <div class="field">
+            <label for="intervalMs" data-i18n="click.interval">Intervalo</label>
+            <div class="lcd-input">
+              <input type="number" id="intervalMs" value="80" min="1" max="2000">
+              <span>ms</span>
+            </div>
+            <input type="range" class="fader" id="intervalSlider" min="10" max="500" value="80" data-i18n-aria="click.intervalAria" aria-label="Intervalo">
+            <div class="cps">&asymp; <span id="cpsVal">12.5</span> <span data-i18n="brand.cpsSuffix">clicks/seg</span></div>
+          </div>
+
+          <div class="row">
+            <div class="segmented dense" data-group="button" role="group" data-i18n-aria="click.buttonAria" aria-label="Botão do mouse">
+              <button type="button" class="seg active" data-val="left">L</button>
+              <button type="button" class="seg" data-val="right">R</button>
+              <button type="button" class="seg" data-val="middle">M</button>
+              <button type="button" class="seg" data-val="x1">4</button>
+              <button type="button" class="seg" data-val="x2">5</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="segmented" data-group="click_type" role="group" data-i18n-aria="click.typeAria" aria-label="Tipo de clique">
+              <button type="button" class="seg active" data-val="single" data-i18n="click.single">SIMPLES</button>
+              <button type="button" class="seg" data-val="double" data-i18n="click.double">DUPLO</button>
+              <button type="button" class="seg" data-val="hold" data-i18n="click.hold">HOLD</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="segmented" data-group="position_mode" role="group" data-i18n-aria="click.positionAria" aria-label="Modo de posição">
+              <button type="button" class="seg active" data-val="cursor" data-i18n="click.cursor">CURSOR</button>
+              <button type="button" class="seg" data-val="fixed" data-i18n="click.fixed">PONTO FIXO</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-run" role="tabpanel" hidden>
+          <div class="field-grid">
+            <div class="field">
+              <label for="startDelay" data-i18n="run.startDelay">Delay início</label>
+              <div class="lcd-input compact">
+                <input type="number" id="startDelay" value="0" min="0" max="60000" step="100">
+                <span>ms</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="jitterMs" data-i18n="run.jitter">Jitter ±</label>
+              <div class="lcd-input compact">
+                <input type="number" id="jitterMs" value="0" min="0" max="2000" step="1">
+                <span>ms</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="maxClicks" data-i18n="run.maxClicks">Limite cliques</label>
+              <div class="lcd-input compact">
+                <input type="number" id="maxClicks" value="" min="1" max="999999" placeholder="∞">
+                <span>n</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="maxDuration" data-i18n="run.maxDuration">Duração máx.</label>
+              <div class="lcd-input compact">
+                <input type="number" id="maxDuration" value="" min="1" max="86400000" placeholder="∞">
+                <span>ms</span>
+              </div>
+            </div>
+          </div>
+          <label class="toggle-row">
+            <span data-i18n="run.alwaysOnTop">Sempre no topo</span>
+            <input type="checkbox" id="alwaysOnTop" checked>
+            <span class="toggle-ui" aria-hidden="true"></span>
+          </label>
+          <label class="toggle-row">
+            <span data-i18n="run.compactMode">Modo compacto</span>
+            <input type="checkbox" id="compactMode">
+            <span class="toggle-ui" aria-hidden="true"></span>
+          </label>
+        </section>
+
+        <section class="panel" id="panel-point" role="tabpanel" hidden>
+          <div class="field-grid xy-grid">
+            <div class="field">
+              <label for="fixedX">X</label>
+              <div class="lcd-input compact">
+                <input type="number" id="fixedX" value="0" step="1">
+              </div>
+            </div>
+            <div class="field">
+              <label for="fixedY">Y</label>
+              <div class="lcd-input compact">
+                <input type="number" id="fixedY" value="0" step="1">
+              </div>
+            </div>
+          </div>
+          <button type="button" class="action-btn" id="pickBtn" data-i18n="point.pick">Capturar ponto</button>
+          <div class="fixed-hint" id="fixedHint"></div>
+
+          <div class="seq-block">
+            <div class="seq-head">
+              <span class="field-label" data-i18n="point.sequence">Sequência</span>
+              <div class="seq-actions">
+                <button type="button" class="action-btn ghost tiny" id="addSeqBtn" data-i18n="point.addPoint">+ ponto</button>
+                <button type="button" class="action-btn ghost tiny" id="clearSeqBtn" data-i18n="point.clear">limpar</button>
+              </div>
+            </div>
+            <div class="field-grid xy-grid seq-add-row">
+              <div class="field">
+                <label for="seqDelay" data-i18n="point.seqDelay">Delay passo</label>
+                <div class="lcd-input compact">
+                  <input type="number" id="seqDelay" value="80" min="0" max="60000" step="10">
+                  <span>ms</span>
+                </div>
+              </div>
+            </div>
+            <ul class="seq-list" id="seqList" data-i18n-aria="point.seqListAria" aria-label="Lista de pontos da sequência"></ul>
+            <div class="fixed-hint" id="seqHint" data-i18n="point.seqEmpty">Lista vazia: usa cursor ou ponto fixo.</div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-advanced" role="tabpanel" hidden>
+          <label class="toggle-row">
+            <span data-i18n="advanced.windowFilter">Filtro de janela</span>
+            <input type="checkbox" id="wfEnabled">
+            <span class="toggle-ui" aria-hidden="true"></span>
+          </label>
+          <div class="field">
+            <label for="wfProcess" data-i18n="advanced.process">Processo</label>
+            <div class="lcd-input compact">
+              <input type="text" id="wfProcess" maxlength="128" data-i18n-placeholder="advanced.placeholderProcess" placeholder="notepad.exe" autocomplete="off">
+            </div>
+          </div>
+          <div class="field">
+            <label for="wfTitle" data-i18n="advanced.titleContains">Título contém</label>
+            <div class="lcd-input compact">
+              <input type="text" id="wfTitle" maxlength="128" data-i18n-placeholder="advanced.placeholderTitle" placeholder="Sem título" autocomplete="off">
+            </div>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label for="burstCount" data-i18n="advanced.burstCount">Burst N</label>
+              <div class="lcd-input compact">
+                <input type="number" id="burstCount" value="" min="1" max="9999" data-i18n-placeholder="advanced.placeholderOff" placeholder="off">
+                <span>n</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="burstPause" data-i18n="advanced.burstPause">Pausa burst</label>
+              <div class="lcd-input compact">
+                <input type="number" id="burstPause" value="" min="0" max="600000" data-i18n-placeholder="advanced.placeholderDash" placeholder="—">
+                <span>ms</span>
+              </div>
+            </div>
+          </div>
+          <div class="fixed-hint" data-i18n="advanced.hintXButtons">Botões 4/5 = XBUTTON1/2 no seletor L R M 4 5.</div>
+        </section>
+
+        <section class="panel" id="panel-profiles" role="tabpanel" hidden>
+          <div class="field">
+            <label for="profileName" data-i18n="profiles.name">Nome do perfil</label>
+            <div class="lcd-input">
+              <input type="text" id="profileName" maxlength="64" data-i18n-placeholder="profiles.placeholder" placeholder="meu-preset" autocomplete="off">
+            </div>
+          </div>
+          <div class="action-row">
+            <button type="button" class="action-btn" id="saveProfileBtn" data-i18n="profiles.save">Salvar</button>
+            <button type="button" class="action-btn ghost" id="loadProfileBtn" data-i18n="profiles.load">Carregar</button>
+          </div>
+          <div class="action-row">
+            <button type="button" class="action-btn ghost" id="exportProfileBtn" data-i18n="profiles.export">Exportar</button>
+            <button type="button" class="action-btn ghost" id="importProfileBtn" data-i18n="profiles.import">Importar</button>
+          </div>
+          <label class="field-label" for="profileList" data-i18n="profiles.savedLabel">Perfis salvos</label>
+          <select id="profileList" class="profile-select" size="2" data-i18n-aria="profiles.listAria" aria-label="Lista de perfis"></select>
+        </section>
+
+        <section class="panel" id="panel-manual" role="tabpanel" hidden>
+          <div class="manual-modes segmented" role="tablist" data-i18n-aria="manualUi.modeAria" aria-label="Modo do Manual">
+            <button type="button" class="seg active" id="modeGuide" data-mode="guide" data-i18n="manualUi.guide">Guia</button>
+            <button type="button" class="seg" id="modeWizard" data-mode="wizard" data-i18n="manualUi.wizard">Assistente</button>
+          </div>
+
+          <div class="manual" id="manualGuide">
+            <div class="manual-progress">
+              <span id="manualStepLabel">1 / 1</span>
+            </div>
+            <div class="manual-body" id="manualBody"></div>
+            <div class="manual-actions">
+              <button type="button" class="action-btn ghost" id="manualPrev" disabled data-i18n="manualUi.prev">Anterior</button>
+              <button type="button" class="action-btn" id="manualNext" data-i18n="manualUi.next">Próximo</button>
+            </div>
+            <button type="button" class="action-btn ghost" id="manualTry" hidden>Experimentar</button>
+          </div>
+
+          <div class="manual" id="manualWizard" hidden>
+            <div class="manual-progress">
+              <span id="wizStepLabel">1 / 1</span>
+            </div>
+            <div class="manual-body" id="wizBody"></div>
+            <div class="manual-actions" id="wizActions">
+              <button type="button" class="action-btn ghost" id="wizPrev" disabled data-i18n="manualUi.prev">Anterior</button>
+              <button type="button" class="action-btn" id="wizNext" data-i18n="manualUi.next">Próximo</button>
+            </div>
+            <p class="manual-foot-hint" id="wizHint"></p>
+          </div>
+        </section>
+
+        <section class="panel panel-adv" id="panel-macro" role="tabpanel" hidden>
+          <div class="fixed-hint" id="macroHint" data-i18n="macro.empty">Nenhum evento gravado.</div>
+          <div class="action-row">
+            <button type="button" class="action-btn" id="macroRecordBtn" data-i18n="macro.record">Gravar</button>
+            <button type="button" class="action-btn ghost" id="macroPlayBtn" data-i18n="macro.play">Reproduzir</button>
+          </div>
+          <div class="action-row">
+            <button type="button" class="action-btn ghost" id="macroStopBtn" data-i18n="macro.stop">Parar</button>
+            <button type="button" class="action-btn ghost" id="macroClearBtn" data-i18n="macro.clear">Limpar</button>
+          </div>
+        </section>
+
+        <section class="panel panel-adv" id="panel-script" role="tabpanel" hidden>
+          <label class="field-label" for="scriptSource" data-i18n="script.dsl">DSL</label>
+          <textarea id="scriptSource" class="script-area" spellcheck="false" rows="4" data-i18n-placeholder="script.placeholder" placeholder="move 100 200&#10;click left&#10;wait 100&#10;key SPACE&#10;loop 3&#10;  click&#10;  wait 50&#10;end"></textarea>
+          <div class="action-row">
+            <button type="button" class="action-btn" id="scriptRunBtn" data-i18n="script.run">Executar</button>
+            <button type="button" class="action-btn ghost" id="scriptStopBtn" data-i18n="script.stop">Parar</button>
+          </div>
+        </section>
+
+        <section class="panel panel-adv" id="panel-schedule" role="tabpanel" hidden>
+          <div class="field">
+            <label for="scheduleAt" data-i18n="schedule.startAt">Início em</label>
+            <div class="lcd-input">
+              <input type="datetime-local" id="scheduleAt" step="1">
+            </div>
+          </div>
+          <div class="fixed-hint" id="scheduleHint" data-i18n="schedule.none">Nenhum agendamento ativo.</div>
+          <div class="action-row">
+            <button type="button" class="action-btn" id="scheduleSetBtn" data-i18n="schedule.set">Agendar</button>
+            <button type="button" class="action-btn ghost" id="scheduleCancelBtn" data-i18n="schedule.cancel">Cancelar</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="error" id="errorLabel"></div>
+      </div><!-- /.main-col -->
+      </div><!-- /.workspace -->
+    </div>
+
+    <div class="footer">
+      <div class="hotkey">
+        <button type="button" class="keycap" id="hotkeyBtn" data-i18n-title="footer.hotkeyTitle" title="Clique para gravar nova tecla">F6</button>
+        <span id="hotkeyHint" data-i18n="footer.hotkeyHint">iniciar / parar</span>
+      </div>
+      <div class="status" id="statusLabel" data-i18n="status.stopped">parado</div>
+    </div>
+  </div>
+  </div><!-- /.app-shell -->
+
+  <script src="i18n.js"></script>
+  <script src="manual.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

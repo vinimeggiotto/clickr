@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clickr — info</title>
+  <style>
+    :root {
+      --bg: #14100c;
+      --panel: #1d1712;
+      --panel-raised: #241c15;
+      --groove: #0e0b08;
+      --amber: #f2a33b;
+      --amber-dim: #7a5522;
+      --text: #ece5d8;
+      --text-dim: #8f8478;
+      --danger: #cf5240;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", "Cascadia Mono", ui-sans-serif, sans-serif;
+      user-select: none;
+    }
+    .shell {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(180deg, var(--panel-raised), var(--panel));
+      border: 1px solid rgba(242, 163, 59, 0.28);
+    }
+    .bar {
+      flex-shrink: 0;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px 0 12px;
+      background: linear-gradient(180deg, #1d1712, #14100c);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .bar-title {
+      flex: 1;
+      min-width: 0;
+      font-size: 11px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--amber);
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .close {
+      width: 36px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    .close:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+    .content {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 14px 16px 16px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--amber-dim) var(--groove);
+    }
+    .content::-webkit-scrollbar { width: 5px; }
+    .content::-webkit-scrollbar-thumb {
+      background: var(--amber-dim);
+      border-radius: 3px;
+    }
+    .content p {
+      margin: 0 0 10px;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--text);
+    }
+    .content p:last-child { margin-bottom: 0; }
+    .content strong { color: var(--amber); font-weight: 600; }
+    .content em { color: var(--text-dim); font-style: normal; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="bar pywebview-drag-region">
+      <span class="bar-title" id="title">Informação</span>
+      <button type="button" class="close" id="closeBtn" aria-label="Fechar">&#10005;</button>
+    </header>
+    <main class="content" id="body"></main>
+  </div>
+  <script>
+    async function waitApi(timeoutMs) {
+      const start = Date.now();
+      while (!(window.pywebview && window.pywebview.api)) {
+        if (Date.now() - start > timeoutMs) throw new Error("Bridge indisponível");
+        await new Promise((r) => setTimeout(r, 40));
+      }
+      return window.pywebview.api;
+    }
+
+    function getByPath(obj, key) {
+      const parts = String(key).split(".");
+      let cur = obj;
+      for (let i = 0; i < parts.length; i++) {
+        if (cur == null || typeof cur !== "object") return undefined;
+        cur = cur[parts[i]];
+      }
+      return cur;
+    }
+
+    async function loadCloseLabel(api) {
+      let code = "pt-BR";
+      try {
+        const settings = await api.get_settings();
+        if (settings && settings.locale) code = settings.locale;
+      } catch (_) {
+        /* default */
+      }
+      let catalog = {};
+      let fallback = {};
+      try {
+        const resFb = await fetch("locales/pt-BR.json", { cache: "no-store" });
+        if (resFb.ok) fallback = await resFb.json();
+      } catch (_) {
+        /* ignore */
+      }
+      catalog = fallback;
+      if (code !== "pt-BR") {
+        try {
+          const res = await fetch(`locales/${code}.json`, { cache: "no-store" });
+          if (res.ok) catalog = await res.json();
+        } catch (_) {
+          /* fallback */
+        }
+      }
+      const t = (key) => {
+        let val = getByPath(catalog, key);
+        if (val === undefined) val = getByPath(fallback, key);
+        return typeof val === "string" ? val : key;
+      };
+      document.documentElement.lang = code;
+      const closeLabel = t("infoWindow.close");
+      const closeBtn = document.getElementById("closeBtn");
+      closeBtn.setAttribute("aria-label", closeLabel);
+      closeBtn.setAttribute("title", closeLabel);
+      return t("infoWindow.defaultTitle");
+    }
+
+    (async () => {
+      try {
+        const api = await waitApi(5000);
+        const defaultTitle = await loadCloseLabel(api);
+        const data = await api.get_info_popup();
+        document.getElementById("title").textContent =
+          (data && data.title) || defaultTitle;
+        document.getElementById("body").innerHTML = (data && data.body_html) || "";
+        document.getElementById("closeBtn").addEventListener("click", () => {
+          api.close_info_popup();
+        });
+      } catch (err) {
+        document.getElementById("body").textContent = String(err.message || err);
+      }
+    })();
+  </script>
+</body>
+</html>

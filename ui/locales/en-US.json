@@ -1,0 +1,419 @@
+{
+  "locales": {
+    "pt-BR": "Português (Brasil)",
+    "en-US": "English (United States)",
+    "zh-CN": "中文 (中国)",
+    "de-DE": "Deutsch (Deutschland)",
+    "es-ES": "Español (España)",
+    "ru-RU": "Русский (Россия)"
+  },
+  "meta": {
+    "code": "en-US",
+    "label": "English (United States)"
+  },
+  "brand": {
+    "clicks": "clicks",
+    "cpsSuffix": "clicks/sec"
+  },
+  "splash": {
+    "loading": "loading"
+  },
+  "titlebar": {
+    "aria": "Window bar",
+    "minimize": "Minimize",
+    "close": "Close"
+  },
+  "localeGate": {
+    "title": "Choose your language",
+    "subtitle": "You can change it later with the language selector at the top.",
+    "aria": "Language selection"
+  },
+  "localeSelect": {
+    "aria": "Interface language"
+  },
+  "trayModal": {
+    "title": "Still running",
+    "body": "Clickr did not quit — it is still in the <strong>system tray</strong> (icon near the clock).",
+    "bodyDim": "To quit for real: click the icon → <strong>Quit</strong>.",
+    "cancel": "Cancel",
+    "ok": "Got it"
+  },
+  "stage": {
+    "mainAria": "Start or stop"
+  },
+  "tabs": {
+    "aria": "Panels",
+    "click": "Click",
+    "run": "Run",
+    "point": "Point",
+    "profiles": "Profiles",
+    "manual": "Manual",
+    "advanced": "Adv",
+    "macro": "Macro",
+    "script": "Script",
+    "schedule": "Schedule"
+  },
+  "click": {
+    "interval": "Interval",
+    "intervalAria": "Interval",
+    "buttonAria": "Mouse button",
+    "typeAria": "Click type",
+    "positionAria": "Position mode",
+    "single": "SINGLE",
+    "double": "DOUBLE",
+    "hold": "HOLD",
+    "cursor": "CURSOR",
+    "fixed": "FIXED POINT"
+  },
+  "run": {
+    "startDelay": "Start delay",
+    "jitter": "Jitter ±",
+    "maxClicks": "Click limit",
+    "maxDuration": "Max duration",
+    "alwaysOnTop": "Always on top",
+    "compactMode": "Compact mode"
+  },
+  "point": {
+    "pick": "Capture point",
+    "picking": "Capturing…",
+    "sequence": "Sequence",
+    "addPoint": "+ point",
+    "clear": "clear",
+    "seqDelay": "Step delay",
+    "seqListAria": "Sequence point list",
+    "seqEmpty": "Empty list: uses cursor or fixed point.",
+    "seqCount": "{n} point(s) — the engine cycles the list.",
+    "seqRemove": "Remove",
+    "seqDelayMeta": "delay {ms} ms",
+    "fixedPoint": "Point: <strong>{x}, {y}</strong>",
+    "fixedHintCursor": "Enable FIXED POINT or capture a coordinate."
+  },
+  "advanced": {
+    "windowFilter": "Window filter",
+    "process": "Process",
+    "titleContains": "Title contains",
+    "burstCount": "Burst N",
+    "burstPause": "Burst pause",
+    "hintXButtons": "Buttons 4/5 = XBUTTON1/2 on the L R M 4 5 selector.",
+    "placeholderProcess": "notepad.exe",
+    "placeholderTitle": "Untitled",
+    "placeholderOff": "off",
+    "placeholderDash": "—"
+  },
+  "profiles": {
+    "name": "Profile name",
+    "placeholder": "my-preset",
+    "save": "Save",
+    "load": "Load",
+    "export": "Export",
+    "import": "Import",
+    "savedLabel": "Saved profiles",
+    "listAria": "Profile list",
+    "needName": "Enter a profile name.",
+    "needSelect": "Select a profile to load."
+  },
+  "manualUi": {
+    "modeAria": "Manual mode",
+    "guide": "Guide",
+    "wizard": "Wizard",
+    "prev": "Previous",
+    "next": "Next",
+    "finish": "Done",
+    "continue": "Continue",
+    "tryTab": "Try → {tab}",
+    "moreInfo": "More information"
+  },
+  "macro": {
+    "empty": "No events recorded.",
+    "count": "{n} event(s) in the macro.",
+    "recording": "Recording… {n} event(s)",
+    "record": "Record",
+    "stopRecord": "Stop recording",
+    "play": "Play",
+    "stop": "Stop",
+    "clear": "Clear"
+  },
+  "script": {
+    "dsl": "DSL",
+    "run": "Run",
+    "stop": "Stop",
+    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend"
+  },
+  "schedule": {
+    "startAt": "Start at",
+    "none": "No active schedule.",
+    "active": "Scheduled: {at}",
+    "set": "Schedule",
+    "cancel": "Cancel"
+  },
+  "footer": {
+    "hotkeyTitle": "Click to record a new key",
+    "hotkeyHint": "start / stop",
+    "hotkeyRecording": "press a key…"
+  },
+  "status": {
+    "stopped": "stopped",
+    "active": "active",
+    "recording": "recording",
+    "macro": "macro",
+    "script": "script"
+  },
+  "errors": {
+    "bridgeUnavailable": "pywebview bridge unavailable",
+    "waitingBridge": "Waiting for Python bridge…",
+    "infoUnavailable": "Info window unavailable.",
+    "pickHint": "Click the screen to mark the point (Esc cancels)…",
+    "wizardSavedStart": "Profile “{name}” saved and engine started.",
+    "wizardSavedOnly": "Profile “{name}” saved. Tweak later in Click / Run / Point."
+  },
+  "tray": {
+    "show": "Show",
+    "hide": "Hide",
+    "quit": "Quit",
+    "notifyTitle": "Still running",
+    "notifyBody": "Clickr is still running in the tray. Use Quit on the icon to exit for real."
+  },
+  "overlay": {
+    "title": "Capture point",
+    "hint": "Click to mark XY · Esc cancels",
+    "windowTitle": "Clickr — capture point"
+  },
+  "infoWindow": {
+    "defaultTitle": "Information",
+    "close": "Close"
+  },
+  "manual": {
+    "goto": {
+      "click": "Click",
+      "run": "Run",
+      "point": "Point",
+      "profiles": "Profiles",
+      "advanced": "Adv",
+      "macro": "Macro",
+      "script": "Script",
+      "schedule": "Schedule"
+    },
+    "guide": {
+      "welcome": {
+        "title": "Welcome to Clickr",
+        "body": [
+          "Windows autoclicker with a native motor (SendInput).",
+          "Use the pulse button or the hotkey (default F6) to start and stop.",
+          "The window X does not quit the app — it goes to the tray. To quit for real: tray icon → Quit."
+        ],
+        "tips": [
+          "Click the F6 keycap in the footer to record another shortcut key.",
+          "Want a guided preset? Use Wizard mode at the top of this tab."
+        ]
+      },
+      "click": {
+        "title": "Click tab — essentials",
+        "body": [
+          "Interval (ms) + slider: time between clicks. Estimated CPS appears below.",
+          "Button: L / R / M / 4 / 5 (side mouse buttons).",
+          "Type: Single, Double, or Hold (keeps pressed until stop).",
+          "Position: Cursor (where the mouse is) or Fixed point (XY)."
+        ],
+        "tips": [
+          "Hold releases the button when you stop the engine.",
+          "After the Wizard, change everything again on this tab."
+        ]
+      },
+      "run": {
+        "title": "Run tab — limits and extras",
+        "body": [
+          "Start delay: wait before the first click (useful to return to the target window).",
+          "Jitter ±: random variation on the interval (less “mechanical” clicks).",
+          "Click limit / max duration: stops alone when N or the time is reached.",
+          "Always on top: window above others. Compact mode: hides Adv, Macro, Script, and Schedule."
+        ],
+        "tips": []
+      },
+      "point": {
+        "title": "Point tab — coordinates",
+        "body": [
+          "Set X and Y manually or use Capture point (overlay on all monitors).",
+          "Sequence: list of points with per-step delay. The engine cycles the list when not empty.",
+          "+ point uses the current cursor position (or XY if provided)."
+        ],
+        "tips": [
+          "Esc cancels capture. Click marks the real OS cursor position."
+        ]
+      },
+      "profiles": {
+        "title": "Profiles tab",
+        "body": [
+          "Save the current config with a name under %APPDATA%/Clickr/profiles/.",
+          "Load applies a profile from the list. Export/Import swaps JSON with other machines."
+        ],
+        "tips": []
+      },
+      "advanced": {
+        "title": "Adv tab — filter and burst",
+        "body": [
+          "Window filter: only clicks if the focused process and/or title match.",
+          "Burst: N fast clicks, pause, repeat — useful for controlled bursts.",
+          "Buttons 4 and 5 are on the Click tab selector."
+        ],
+        "tips": [
+          "With filter on and empty criteria, all clicks are allowed."
+        ]
+      },
+      "macro": {
+        "title": "Macro tab",
+        "body": [
+          "Record: captures mouse and keyboard with relative timing.",
+          "Play: resends events via SendInput.",
+          "Stop / Clear interrupt or erase the recording."
+        ],
+        "tips": [
+          "During recording, the engine toggle hotkey is ignored."
+        ]
+      },
+      "script": {
+        "title": "Script tab — DSL",
+        "body": [
+          "Commands: click [button], move X Y, wait ms, key NAME, loop N … end.",
+          "Limits: up to 500 lines, loops 1–1000, loop depth ≤ 2.",
+          "Run / Stop control the runner."
+        ],
+        "tips": [
+          "Example: move 100 200 → click left → wait 100 → key SPACE"
+        ]
+      },
+      "schedule": {
+        "title": "Schedule tab",
+        "body": [
+          "Pick a local date/time and Schedule.",
+          "When the time arrives, the click engine starts on its own.",
+          "Cancel removes the pending schedule."
+        ],
+        "tips": []
+      },
+      "safety": {
+        "title": "Responsible use",
+        "body": [
+          "Use only where you have authorization.",
+          "In online games / anti-cheat, an autoclicker may violate terms and cause a ban.",
+          "Clickr does not bypass anti-cheat. Admin windows may ignore input if Clickr is not elevated."
+        ],
+        "tips": [
+          "You are responsible for how you use the software."
+        ]
+      }
+    },
+    "wizard": {
+      "welcomeTitle": "Wizard — first preset",
+      "welcomeBody": "We'll build a preset step by step and save it at the end.",
+      "welcomeNote": "Nothing starts clicking on its own until “Save and start”. Use (i) on the next steps if a word is new.",
+      "buttonTitle": "Which mouse button?",
+      "buttonBody": "Choose which button Clickr will “press” automatically.",
+      "buttonNote": "Unsure about L R M 4 5? Open (i).",
+      "typeTitle": "Click type",
+      "typeBody": "How the button is triggered each cycle.",
+      "intervalTitle": "Interval between clicks",
+      "intervalBody": "Pause between one click and the next (in ms).",
+      "positionTitle": "Where to click?",
+      "positionBody": "At the cursor (moving) or always at the same screen point.",
+      "positionCursorHint": "Cursor mode — no need to capture.",
+      "limitsTitle": "Limits (optional)",
+      "limitsBody": "Stops that halt alone. You can leave empty and continue.",
+      "profileTitle": "Profile name",
+      "profileBody": "A name to save this preset and reuse later.",
+      "profileNote": "Later: Profiles tab. Edit values: Click / Run / Point.",
+      "finishTitle": "All set",
+      "finishProfile": "Profile: <strong>{name}</strong>",
+      "finishSummaryFixed": "fixed ({x},{y})",
+      "finishSummaryCursor": "cursor",
+      "saveOnly": "Save only",
+      "saveStart": "Save and start",
+      "back": "Back",
+      "finishTip1": "Click / type / interval → <strong>Click</strong> tab",
+      "finishTip2": "Delay, jitter, limits → <strong>Run</strong> tab",
+      "finishTip3": "Fixed point / sequence → <strong>Point</strong> tab",
+      "hintInfo": "Tap (i) — the explanation opens in a side window.",
+      "defaultProfile": "my-first-preset",
+      "cpsLine": "≈ {cps} clicks/sec"
+    },
+    "info": {
+      "mouse_buttons": {
+        "title": "Mouse buttons (L R M 4 5)",
+        "body": [
+          "<strong>L</strong> — left button (the “normal” click).",
+          "<strong>R</strong> — right button (context menu).",
+          "<strong>M</strong> — middle button (usually the wheel pressed).",
+          "<strong>4</strong> and <strong>5</strong> — side buttons (back/forward), if your mouse has them."
+        ]
+      },
+      "click_type": {
+        "title": "Click type",
+        "body": [
+          "<strong>Single</strong> — one click at a time, at the interval pace.",
+          "<strong>Double</strong> — two quick clicks each cycle (like double-clicking an icon).",
+          "<strong>Hold</strong> — keeps the button pressed until you stop Clickr (not repeated clicking)."
+        ]
+      },
+      "interval": {
+        "title": "Interval and CPS",
+        "body": [
+          "<strong>Interval</strong> is the pause between one click and the next, in milliseconds (ms). 1000 ms = 1 second.",
+          "E.g.: 80 ms ≈ 12.5 clicks per second (CPS).",
+          "Smaller numbers = faster. Start slower when testing."
+        ]
+      },
+      "position": {
+        "title": "Where to click",
+        "body": [
+          "<strong>Cursor</strong> — clicks where the mouse is at the time (you can move while it runs).",
+          "<strong>Fixed point</strong> — always the same screen coordinate (X, Y).",
+          "<strong>Capture point</strong> — the screen dims; click the desired place (Esc cancels). Works on all monitors."
+        ]
+      },
+      "limits": {
+        "title": "What are limits?",
+        "body": [
+          "Optional stops so Clickr does not run forever. You can leave everything empty/zero and adjust later on the <strong>Run</strong> tab."
+        ]
+      },
+      "delay": {
+        "title": "Start delay",
+        "body": [
+          "Wait time <em>before the first click</em>, after you hit Start.",
+          "Useful so you can press Start and still return to the right game or window.",
+          "E.g.: 2000 ms = waits 2 seconds, then starts clicking."
+        ]
+      },
+      "jitter": {
+        "title": "Jitter (±)",
+        "body": [
+          "Random variation on the interval so clicks are not 100% robotic.",
+          "E.g.: interval 80 ms and jitter 10 → each pause is between ~70 and ~90 ms.",
+          "0 = no variation (fixed rhythm)."
+        ]
+      },
+      "max_clicks": {
+        "title": "Click limit",
+        "body": [
+          "Maximum number of clicks. When reached, Clickr stops on its own.",
+          "Empty field (∞) = no quantity limit."
+        ]
+      },
+      "max_duration": {
+        "title": "Max duration",
+        "body": [
+          "Maximum time the engine stays active, in milliseconds.",
+          "E.g.: 10000 = stops automatically after 10 seconds.",
+          "Empty field (∞) = no time limit."
+        ]
+      },
+      "profile": {
+        "title": "Profile (preset)",
+        "body": [
+          "A name to store this configuration and reuse later.",
+          "Lives on the <strong>Profiles</strong> tab (load, export, import).",
+          "Afterwards you can change button, interval, etc. on Click / Run / Point without redoing the Wizard."
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,419 @@
+{
+  "locales": {
+    "pt-BR": "Português (Brasil)",
+    "en-US": "English (United States)",
+    "zh-CN": "中文 (中国)",
+    "de-DE": "Deutsch (Deutschland)",
+    "es-ES": "Español (España)",
+    "ru-RU": "Русский (Россия)"
+  },
+  "meta": {
+    "code": "zh-CN",
+    "label": "中文 (中国)"
+  },
+  "brand": {
+    "clicks": "点击",
+    "cpsSuffix": "点击/秒"
+  },
+  "splash": {
+    "loading": "加载中"
+  },
+  "titlebar": {
+    "aria": "窗口栏",
+    "minimize": "最小化",
+    "close": "关闭"
+  },
+  "localeGate": {
+    "title": "选择语言",
+    "subtitle": "之后可在顶部的语言选择器中更改。",
+    "aria": "语言选择"
+  },
+  "localeSelect": {
+    "aria": "界面语言"
+  },
+  "trayModal": {
+    "title": "仍在运行",
+    "body": "Clickr 并未退出 — 它仍在<strong>系统托盘</strong>（时钟附近的图标）。",
+    "bodyDim": "要真正退出：点击图标 → <strong>退出</strong>。",
+    "cancel": "取消",
+    "ok": "知道了"
+  },
+  "stage": {
+    "mainAria": "开始或停止"
+  },
+  "tabs": {
+    "aria": "面板",
+    "click": "点击",
+    "run": "运行",
+    "point": "坐标",
+    "profiles": "配置",
+    "manual": "手册",
+    "advanced": "高级",
+    "macro": "宏",
+    "script": "脚本",
+    "schedule": "计划"
+  },
+  "click": {
+    "interval": "间隔",
+    "intervalAria": "间隔",
+    "buttonAria": "鼠标按键",
+    "typeAria": "点击类型",
+    "positionAria": "位置模式",
+    "single": "单击",
+    "double": "双击",
+    "hold": "按住",
+    "cursor": "光标",
+    "fixed": "固定点"
+  },
+  "run": {
+    "startDelay": "启动延迟",
+    "jitter": "抖动 ±",
+    "maxClicks": "点击上限",
+    "maxDuration": "最长时长",
+    "alwaysOnTop": "始终置顶",
+    "compactMode": "紧凑模式"
+  },
+  "point": {
+    "pick": "捕获坐标",
+    "picking": "捕获中…",
+    "sequence": "序列",
+    "addPoint": "+ 点",
+    "clear": "清空",
+    "seqDelay": "步骤延迟",
+    "seqListAria": "序列点列表",
+    "seqEmpty": "列表为空：使用光标或固定点。",
+    "seqCount": "{n} 个点 — 引擎循环列表。",
+    "seqRemove": "移除",
+    "seqDelayMeta": "延迟 {ms} ms",
+    "fixedPoint": "点：<strong>{x}, {y}</strong>",
+    "fixedHintCursor": "启用固定点或捕获坐标。"
+  },
+  "advanced": {
+    "windowFilter": "窗口过滤",
+    "process": "进程",
+    "titleContains": "标题包含",
+    "burstCount": "连发 N",
+    "burstPause": "连发暂停",
+    "hintXButtons": "按键 4/5 = 选择器 L R M 4 5 上的 XBUTTON1/2。",
+    "placeholderProcess": "notepad.exe",
+    "placeholderTitle": "无标题",
+    "placeholderOff": "关",
+    "placeholderDash": "—"
+  },
+  "profiles": {
+    "name": "配置名称",
+    "placeholder": "我的预设",
+    "save": "保存",
+    "load": "加载",
+    "export": "导出",
+    "import": "导入",
+    "savedLabel": "已保存配置",
+    "listAria": "配置列表",
+    "needName": "请输入配置名称。",
+    "needSelect": "请选择要加载的配置。"
+  },
+  "manualUi": {
+    "modeAria": "手册模式",
+    "guide": "指南",
+    "wizard": "向导",
+    "prev": "上一步",
+    "next": "下一步",
+    "finish": "完成",
+    "continue": "继续",
+    "tryTab": "试用 → {tab}",
+    "moreInfo": "更多信息"
+  },
+  "macro": {
+    "empty": "尚未录制事件。",
+    "count": "宏中有 {n} 个事件。",
+    "recording": "录制中… {n} 个事件",
+    "record": "录制",
+    "stopRecord": "停止录制",
+    "play": "播放",
+    "stop": "停止",
+    "clear": "清除"
+  },
+  "script": {
+    "dsl": "DSL",
+    "run": "执行",
+    "stop": "停止",
+    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend"
+  },
+  "schedule": {
+    "startAt": "开始于",
+    "none": "没有活动计划。",
+    "active": "已计划：{at}",
+    "set": "计划",
+    "cancel": "取消"
+  },
+  "footer": {
+    "hotkeyTitle": "点击以录制新快捷键",
+    "hotkeyHint": "开始 / 停止",
+    "hotkeyRecording": "请按下一个键…"
+  },
+  "status": {
+    "stopped": "已停止",
+    "active": "运行中",
+    "recording": "录制中",
+    "macro": "宏",
+    "script": "脚本"
+  },
+  "errors": {
+    "bridgeUnavailable": "pywebview 桥接不可用",
+    "waitingBridge": "正在等待 Python 桥接…",
+    "infoUnavailable": "信息窗口不可用。",
+    "pickHint": "点击屏幕标记坐标（Esc 取消）…",
+    "wizardSavedStart": "配置“{name}”已保存并启动引擎。",
+    "wizardSavedOnly": "配置“{name}”已保存。稍后可在 点击 / 运行 / 坐标 中调整。"
+  },
+  "tray": {
+    "show": "显示",
+    "hide": "隐藏",
+    "quit": "退出",
+    "notifyTitle": "仍在运行",
+    "notifyBody": "Clickr 仍在托盘中运行。请在图标上使用“退出”以真正结束。"
+  },
+  "overlay": {
+    "title": "捕获坐标",
+    "hint": "点击标记 XY · Esc 取消",
+    "windowTitle": "Clickr — 捕获坐标"
+  },
+  "infoWindow": {
+    "defaultTitle": "信息",
+    "close": "关闭"
+  },
+  "manual": {
+    "goto": {
+      "click": "点击",
+      "run": "运行",
+      "point": "坐标",
+      "profiles": "配置",
+      "advanced": "高级",
+      "macro": "宏",
+      "script": "脚本",
+      "schedule": "计划"
+    },
+    "guide": {
+      "welcome": {
+        "title": "欢迎使用 Clickr",
+        "body": [
+          "面向 Windows 的自动点击器，使用原生引擎（SendInput）。",
+          "使用 pulse 按钮或热键（默认 F6）开始和停止。",
+          "窗口的 X 不会退出应用 — 它会进入托盘。真正退出：托盘图标 → 退出。"
+        ],
+        "tips": [
+          "点击底部 F6 键帽可录制其他快捷键。",
+          "想要引导式预设？使用本页顶部的向导模式。"
+        ]
+      },
+      "click": {
+        "title": "点击页 — 基础",
+        "body": [
+          "间隔（ms）+ 滑块：点击间隔。下方显示估算 CPS。",
+          "按键：L / R / M / 4 / 5（鼠标侧键）。",
+          "类型：单击、双击或按住（直到停止保持按下）。",
+          "位置：光标（鼠标所在处）或固定点（XY）。"
+        ],
+        "tips": [
+          "按住模式在停止引擎时松开按键。",
+          "完成向导后，可在此页再次修改所有设置。"
+        ]
+      },
+      "run": {
+        "title": "运行页 — 限制与附加",
+        "body": [
+          "启动延迟：首次点击前等待（便于回到目标窗口）。",
+          "抖动 ±：间隔随机变化（点击更不“机械”）。",
+          "点击上限 / 最长时长：达到 N 或时间后自动停止。",
+          "始终置顶：窗口在最前。紧凑模式：隐藏高级、宏、脚本和计划。"
+        ],
+        "tips": []
+      },
+      "point": {
+        "title": "坐标页",
+        "body": [
+          "手动设置 X/Y，或使用捕获坐标（覆盖所有显示器）。",
+          "序列：带每步延迟的点列表。非空时引擎循环列表。",
+          "+ 点使用当前光标位置（或提供的 XY）。"
+        ],
+        "tips": [
+          "Esc 取消捕获。点击标记系统真实光标位置。"
+        ]
+      },
+      "profiles": {
+        "title": "配置页",
+        "body": [
+          "将当前配置以名称保存到 %APPDATA%/Clickr/profiles/。",
+          "加载应用列表中的配置。导出/导入可与其他电脑交换 JSON。"
+        ],
+        "tips": []
+      },
+      "advanced": {
+        "title": "高级页 — 过滤与连发",
+        "body": [
+          "窗口过滤：仅当焦点进程和/或标题匹配时点击。",
+          "连发：N 次快速点击、暂停、再重复。",
+          "按键 4 和 5 在点击页选择器中。"
+        ],
+        "tips": [
+          "过滤开启且条件为空时，允许所有点击。"
+        ]
+      },
+      "macro": {
+        "title": "宏页",
+        "body": [
+          "录制：以相对时间捕获鼠标和键盘。",
+          "播放：通过 SendInput 重新发送事件。",
+          "停止 / 清除可中断或删除录制。"
+        ],
+        "tips": [
+          "录制期间忽略引擎切换热键。"
+        ]
+      },
+      "script": {
+        "title": "脚本页 — DSL",
+        "body": [
+          "命令：click [按键]、move X Y、wait ms、key 名称、loop N … end。",
+          "限制：最多 500 行，循环 1–1000，循环深度 ≤ 2。",
+          "执行 / 停止控制运行器。"
+        ],
+        "tips": [
+          "示例：move 100 200 → click left → wait 100 → key SPACE"
+        ]
+      },
+      "schedule": {
+        "title": "计划页",
+        "body": [
+          "选择本地日期/时间并计划。",
+          "时间到达时，点击引擎自动启动。",
+          "取消会移除待处理计划。"
+        ],
+        "tips": []
+      },
+      "safety": {
+        "title": "负责任的使用",
+        "body": [
+          "仅在您有授权的地方使用。",
+          "在在线游戏/反作弊环境中，自动点击可能违反条款并导致封禁。",
+          "Clickr 不会绕过反作弊。若 Clickr 未提升权限，以管理员运行的窗口可能忽略输入。"
+        ],
+        "tips": [
+          "您需对软件使用负责。"
+        ]
+      }
+    },
+    "wizard": {
+      "welcomeTitle": "向导 — 首个预设",
+      "welcomeBody": "我们将逐步创建预设并在最后保存。",
+      "welcomeNote": "在“保存并启动”之前不会自动开始点击。若有不熟悉的词，请使用下一步中的 (i)。",
+      "buttonTitle": "哪个鼠标按键？",
+      "buttonBody": "选择 Clickr 将自动“按下”的按键。",
+      "buttonNote": "不熟悉 L R M 4 5？打开 (i)。",
+      "typeTitle": "点击类型",
+      "typeBody": "每个周期如何触发按键。",
+      "intervalTitle": "点击间隔",
+      "intervalBody": "两次点击之间的停顿（毫秒）。",
+      "positionTitle": "点击哪里？",
+      "positionBody": "在光标处（可移动）或始终在同一屏幕点。",
+      "positionCursorHint": "光标模式 — 无需捕获。",
+      "limitsTitle": "限制（可选）",
+      "limitsBody": "用于自动停止的限制。可留空并继续。",
+      "profileTitle": "配置名称",
+      "profileBody": "用于保存此预设并稍后重用的名称。",
+      "profileNote": "之后：配置页。编辑数值：点击 / 运行 / 坐标。",
+      "finishTitle": "全部就绪",
+      "finishProfile": "配置：<strong>{name}</strong>",
+      "finishSummaryFixed": "固定 ({x},{y})",
+      "finishSummaryCursor": "光标",
+      "saveOnly": "仅保存",
+      "saveStart": "保存并启动",
+      "back": "返回",
+      "finishTip1": "点击 / 类型 / 间隔 → <strong>点击</strong>页",
+      "finishTip2": "延迟、抖动、限制 → <strong>运行</strong>页",
+      "finishTip3": "固定点 / 序列 → <strong>坐标</strong>页",
+      "hintInfo": "点按 (i) — 说明会在侧边窗口打开。",
+      "defaultProfile": "我的首个预设",
+      "cpsLine": "≈ {cps} 点击/秒"
+    },
+    "info": {
+      "mouse_buttons": {
+        "title": "鼠标按键（L R M 4 5）",
+        "body": [
+          "<strong>L</strong> — 左键（“普通”点击）。",
+          "<strong>R</strong> — 右键（上下文菜单）。",
+          "<strong>M</strong> — 中键（通常是按下滚轮）。",
+          "<strong>4</strong> 和 <strong>5</strong> — 侧键（后退/前进），如果鼠标有。"
+        ]
+      },
+      "click_type": {
+        "title": "点击类型",
+        "body": [
+          "<strong>单击</strong> — 按间隔节奏每次一点。",
+          "<strong>双击</strong> — 每周期两次快速点击（像双击图标）。",
+          "<strong>按住</strong> — 保持按下直到停止 Clickr（不是重复点击）。"
+        ]
+      },
+      "interval": {
+        "title": "间隔与 CPS",
+        "body": [
+          "<strong>间隔</strong>是两次点击之间的停顿，单位毫秒（ms）。1000 ms = 1 秒。",
+          "例如：80 ms ≈ 每秒 12.5 次点击（CPS）。",
+          "数字越小越快。测试时请从较慢开始。"
+        ]
+      },
+      "position": {
+        "title": "点击位置",
+        "body": [
+          "<strong>光标</strong> — 点击当时鼠标所在位置（运行时可移动）。",
+          "<strong>固定点</strong> — 始终同一屏幕坐标（X, Y）。",
+          "<strong>捕获坐标</strong> — 屏幕变暗；点击目标位置（Esc 取消）。支持所有显示器。"
+        ]
+      },
+      "limits": {
+        "title": "什么是限制？",
+        "body": [
+          "可选的停止条件，避免 Clickr 永远运行。可全部留空/为零，稍后在<strong>运行</strong>页调整。"
+        ]
+      },
+      "delay": {
+        "title": "启动延迟",
+        "body": [
+          "在您点击开始之后、<em>首次点击之前</em>的等待时间。",
+          "便于按下开始后仍有时间回到正确的游戏或窗口。",
+          "例如：2000 ms = 等待 2 秒后才开始点击。"
+        ]
+      },
+      "jitter": {
+        "title": "抖动（±）",
+        "body": [
+          "间隔的随机变化，使点击不那么完全机械。",
+          "例如：间隔 80 ms、抖动 10 → 每次停顿约在 70–90 ms。",
+          "0 = 无变化（固定节奏）。"
+        ]
+      },
+      "max_clicks": {
+        "title": "点击上限",
+        "body": [
+          "最大点击次数。达到后 Clickr 自动停止。",
+          "空字段（∞）= 无数量限制。"
+        ]
+      },
+      "max_duration": {
+        "title": "最长时长",
+        "body": [
+          "引擎保持活动的最长时间，单位毫秒。",
+          "例如：10000 = 10 秒后自动停止。",
+          "空字段（∞）= 无时间限制。"
+        ]
+      },
+      "profile": {
+        "title": "配置（预设）",
+        "body": [
+          "用于保存此设置并稍后重用的名称。",
+          "位于<strong>配置</strong>页（加载、导出、导入）。",
+          "之后可在 点击 / 运行 / 坐标 更改按键、间隔等，无需重做向导。"
+        ]
+      }
+    }
+  }
+}

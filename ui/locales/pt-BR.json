@@ -1,0 +1,419 @@
+{
+  "locales": {
+    "pt-BR": "Português (Brasil)",
+    "en-US": "English (United States)",
+    "zh-CN": "中文 (中国)",
+    "de-DE": "Deutsch (Deutschland)",
+    "es-ES": "Español (España)",
+    "ru-RU": "Русский (Россия)"
+  },
+  "meta": {
+    "code": "pt-BR",
+    "label": "Português (Brasil)"
+  },
+  "brand": {
+    "clicks": "clicks",
+    "cpsSuffix": "clicks/seg"
+  },
+  "splash": {
+    "loading": "carregando"
+  },
+  "titlebar": {
+    "aria": "Barra da janela",
+    "minimize": "Minimizar",
+    "close": "Fechar"
+  },
+  "localeGate": {
+    "title": "Escolha o idioma",
+    "subtitle": "Você pode mudar depois no seletor de idioma no topo.",
+    "aria": "Seleção de idioma"
+  },
+  "localeSelect": {
+    "aria": "Idioma da interface"
+  },
+  "trayModal": {
+    "title": "Ainda em execução",
+    "body": "O Clickr não encerrou — ele continua na <strong>bandeja do sistema</strong> (ícone perto do relógio).",
+    "bodyDim": "Para sair de verdade: clique no ícone → <strong>Sair</strong>.",
+    "cancel": "Cancelar",
+    "ok": "Entendi"
+  },
+  "stage": {
+    "mainAria": "Iniciar ou parar"
+  },
+  "tabs": {
+    "aria": "Painéis",
+    "click": "Clique",
+    "run": "Run",
+    "point": "Point",
+    "profiles": "Perfis",
+    "manual": "Manual",
+    "advanced": "Adv",
+    "macro": "Macro",
+    "script": "Script",
+    "schedule": "Agenda"
+  },
+  "click": {
+    "interval": "Intervalo",
+    "intervalAria": "Intervalo",
+    "buttonAria": "Botão do mouse",
+    "typeAria": "Tipo de clique",
+    "positionAria": "Modo de posição",
+    "single": "SIMPLES",
+    "double": "DUPLO",
+    "hold": "HOLD",
+    "cursor": "CURSOR",
+    "fixed": "PONTO FIXO"
+  },
+  "run": {
+    "startDelay": "Delay início",
+    "jitter": "Jitter ±",
+    "maxClicks": "Limite cliques",
+    "maxDuration": "Duração máx.",
+    "alwaysOnTop": "Sempre no topo",
+    "compactMode": "Modo compacto"
+  },
+  "point": {
+    "pick": "Capturar ponto",
+    "picking": "Capturando…",
+    "sequence": "Sequência",
+    "addPoint": "+ ponto",
+    "clear": "limpar",
+    "seqDelay": "Delay passo",
+    "seqListAria": "Lista de pontos da sequência",
+    "seqEmpty": "Lista vazia: usa cursor ou ponto fixo.",
+    "seqCount": "{n} ponto(s) — o motor cicla a lista.",
+    "seqRemove": "Remover",
+    "seqDelayMeta": "delay {ms} ms",
+    "fixedPoint": "Ponto: <strong>{x}, {y}</strong>",
+    "fixedHintCursor": "Ative PONTO FIXO ou capture uma coordenada."
+  },
+  "advanced": {
+    "windowFilter": "Filtro de janela",
+    "process": "Processo",
+    "titleContains": "Título contém",
+    "burstCount": "Burst N",
+    "burstPause": "Pausa burst",
+    "hintXButtons": "Botões 4/5 = XBUTTON1/2 no seletor L R M 4 5.",
+    "placeholderProcess": "notepad.exe",
+    "placeholderTitle": "Sem título",
+    "placeholderOff": "off",
+    "placeholderDash": "—"
+  },
+  "profiles": {
+    "name": "Nome do perfil",
+    "placeholder": "meu-preset",
+    "save": "Salvar",
+    "load": "Carregar",
+    "export": "Exportar",
+    "import": "Importar",
+    "savedLabel": "Perfis salvos",
+    "listAria": "Lista de perfis",
+    "needName": "Informe um nome de perfil.",
+    "needSelect": "Selecione um perfil para carregar."
+  },
+  "manualUi": {
+    "modeAria": "Modo do Manual",
+    "guide": "Guia",
+    "wizard": "Assistente",
+    "prev": "Anterior",
+    "next": "Próximo",
+    "finish": "Concluir",
+    "continue": "Continuar",
+    "tryTab": "Experimentar → {tab}",
+    "moreInfo": "Mais informações"
+  },
+  "macro": {
+    "empty": "Nenhum evento gravado.",
+    "count": "{n} evento(s) na macro.",
+    "recording": "Gravando… {n} evento(s)",
+    "record": "Gravar",
+    "stopRecord": "Parar gravação",
+    "play": "Reproduzir",
+    "stop": "Parar",
+    "clear": "Limpar"
+  },
+  "script": {
+    "dsl": "DSL",
+    "run": "Executar",
+    "stop": "Parar",
+    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend"
+  },
+  "schedule": {
+    "startAt": "Início em",
+    "none": "Nenhum agendamento ativo.",
+    "active": "Agendado: {at}",
+    "set": "Agendar",
+    "cancel": "Cancelar"
+  },
+  "footer": {
+    "hotkeyTitle": "Clique para gravar nova tecla",
+    "hotkeyHint": "iniciar / parar",
+    "hotkeyRecording": "pressione uma tecla…"
+  },
+  "status": {
+    "stopped": "parado",
+    "active": "ativo",
+    "recording": "gravando",
+    "macro": "macro",
+    "script": "script"
+  },
+  "errors": {
+    "bridgeUnavailable": "Bridge pywebview indisponível",
+    "waitingBridge": "Aguardando bridge Python…",
+    "infoUnavailable": "Janela de informação indisponível.",
+    "pickHint": "Clique na tela para marcar o ponto (Esc cancela)…",
+    "wizardSavedStart": "Perfil “{name}” salvo e motor iniciado.",
+    "wizardSavedOnly": "Perfil “{name}” salvo. Ajuste depois em Clique / Run / Point."
+  },
+  "tray": {
+    "show": "Mostrar",
+    "hide": "Ocultar",
+    "quit": "Sair",
+    "notifyTitle": "Ainda está rodando",
+    "notifyBody": "O Clickr continua em execução na bandeja. Use Sair no ícone para encerrar de verdade."
+  },
+  "overlay": {
+    "title": "Capturar ponto",
+    "hint": "Clique para marcar XY · Esc cancela",
+    "windowTitle": "Clickr — capturar ponto"
+  },
+  "infoWindow": {
+    "defaultTitle": "Informação",
+    "close": "Fechar"
+  },
+  "manual": {
+    "goto": {
+      "click": "Clique",
+      "run": "Run",
+      "point": "Point",
+      "profiles": "Perfis",
+      "advanced": "Adv",
+      "macro": "Macro",
+      "script": "Script",
+      "schedule": "Agenda"
+    },
+    "guide": {
+      "welcome": {
+        "title": "Bem-vindo ao Clickr",
+        "body": [
+          "Autoclicker para Windows com motor nativo (SendInput).",
+          "Use o botão pulse ou a hotkey (padrão F6) para iniciar e parar.",
+          "O X da janela não encerra o app — ele vai para a bandeja. Para sair de verdade: ícone na bandeja → Sair."
+        ],
+        "tips": [
+          "Clique no keycap F6 no rodapé para gravar outra tecla de atalho.",
+          "Quer montar um preset guiado? Use o modo Assistente no topo desta aba."
+        ]
+      },
+      "click": {
+        "title": "Aba Clique — essencial",
+        "body": [
+          "Intervalo (ms) + slider: tempo entre cliques. O CPS estimado aparece abaixo.",
+          "Botão: L / R / M / 4 / 5 (botões laterais do mouse).",
+          "Tipo: Simples, Duplo ou Hold (mantém pressionado até parar).",
+          "Posição: Cursor (onde o mouse estiver) ou Ponto fixo (coordenada XY)."
+        ],
+        "tips": [
+          "Hold solta o botão quando você parar o motor.",
+          "Depois do Assistente, altere tudo de novo nesta aba."
+        ]
+      },
+      "run": {
+        "title": "Aba Run — limites e extras",
+        "body": [
+          "Delay início: espera antes do primeiro clique (útil para voltar à janela alvo).",
+          "Jitter ±: variação aleatória no intervalo (cliques menos “mecânicos”).",
+          "Limite de cliques / duração máx.: para sozinho ao atingir N ou o tempo.",
+          "Sempre no topo: janela acima das outras. Modo compacto: esconde Adv, Macro, Script e Agenda."
+        ],
+        "tips": []
+      },
+      "point": {
+        "title": "Aba Point — coordenadas",
+        "body": [
+          "Defina X e Y manualmente ou use Capturar ponto (overlay em todos os monitores).",
+          "Sequência: lista de pontos com delay por passo. O motor cicla a lista quando não está vazia.",
+          "+ ponto usa a posição atual do cursor (ou XY se informados)."
+        ],
+        "tips": [
+          "Esc cancela a captura. Clique marca a posição real do cursor no SO."
+        ]
+      },
+      "profiles": {
+        "title": "Aba Perfis",
+        "body": [
+          "Salve a configuração atual com um nome em %APPDATA%/Clickr/profiles/.",
+          "Carregar aplica um perfil da lista. Exportar/Importar troca JSON com outras máquinas."
+        ],
+        "tips": []
+      },
+      "advanced": {
+        "title": "Aba Adv — filtro e burst",
+        "body": [
+          "Filtro de janela: só clica se o processo e/ou título da janela em foco baterem.",
+          "Burst: N cliques rápidos, pausa, e repete — útil para rajadas controladas.",
+          "Botões 4 e 5 ficam no seletor da aba Clique."
+        ],
+        "tips": [
+          "Com filtro ligado e critérios vazios, todos os cliques são permitidos."
+        ]
+      },
+      "macro": {
+        "title": "Aba Macro",
+        "body": [
+          "Gravar: captura mouse e teclado com tempos relativos.",
+          "Reproduzir: reenvia os eventos via SendInput.",
+          "Parar / Limpar interrompem ou apagam a gravação."
+        ],
+        "tips": [
+          "Durante a gravação, a hotkey de toggle do motor é ignorada."
+        ]
+      },
+      "script": {
+        "title": "Aba Script — DSL",
+        "body": [
+          "Comandos: click [botão], move X Y, wait ms, key NOME, loop N … end.",
+          "Limites: até 500 linhas, loops 1–1000, profundidade de loop ≤ 2.",
+          "Executar / Parar controlam o runner."
+        ],
+        "tips": [
+          "Exemplo: move 100 200 → click left → wait 100 → key SPACE"
+        ]
+      },
+      "schedule": {
+        "title": "Aba Agenda",
+        "body": [
+          "Escolha data/hora local e Agendar.",
+          "Quando chegar a hora, o motor de clique inicia sozinho.",
+          "Cancelar remove o agendamento pendente."
+        ],
+        "tips": []
+      },
+      "safety": {
+        "title": "Uso responsável",
+        "body": [
+          "Use só onde você tem autorização.",
+          "Em jogos online / anti-cheat, autoclicker pode violar termos e gerar ban.",
+          "O Clickr não contorna anti-cheat. Janelas como Administrador podem ignorar o input se o Clickr não estiver elevado."
+        ],
+        "tips": [
+          "Você é responsável pelo uso do software."
+        ]
+      }
+    },
+    "wizard": {
+      "welcomeTitle": "Assistente — primeiro preset",
+      "welcomeBody": "Vamos montar um preset passo a passo e salvar no final.",
+      "welcomeNote": "Nada começa a clicar sozinho até “Salvar e ativar”. Use o (i) nos próximos passos se alguma palavra for nova.",
+      "buttonTitle": "Qual botão do mouse?",
+      "buttonBody": "Escolha qual botão o Clickr vai “apertar” automaticamente.",
+      "buttonNote": "Dúvida no L R M 4 5? Abra o (i).",
+      "typeTitle": "Tipo de clique",
+      "typeBody": "Como o botão será acionado a cada ciclo.",
+      "intervalTitle": "Intervalo entre cliques",
+      "intervalBody": "Pausa entre um clique e o próximo (em ms).",
+      "positionTitle": "Onde clicar?",
+      "positionBody": "No cursor (móvel) ou sempre no mesmo ponto da tela.",
+      "positionCursorHint": "Modo cursor — não precisa capturar.",
+      "limitsTitle": "Limites (opcional)",
+      "limitsBody": "Travas para parar sozinho. Pode deixar vazio e seguir.",
+      "profileTitle": "Nome do perfil",
+      "profileBody": "Nome para guardar este preset e reutilizar depois.",
+      "profileNote": "Depois: aba Perfis. Editar valores: Clique / Run / Point.",
+      "finishTitle": "Tudo pronto",
+      "finishProfile": "Perfil: <strong>{name}</strong>",
+      "finishSummaryFixed": "fixo ({x},{y})",
+      "finishSummaryCursor": "cursor",
+      "saveOnly": "Só salvar",
+      "saveStart": "Salvar e ativar",
+      "back": "Voltar",
+      "finishTip1": "Clique / tipo / intervalo → aba <strong>Clique</strong>",
+      "finishTip2": "Delay, jitter, limites → aba <strong>Run</strong>",
+      "finishTip3": "Ponto fixo / sequência → aba <strong>Point</strong>",
+      "hintInfo": "Toque no (i) — a explicação abre numa janela ao lado.",
+      "defaultProfile": "meu-primeiro-preset",
+      "cpsLine": "≈ {cps} clicks/seg"
+    },
+    "info": {
+      "mouse_buttons": {
+        "title": "Botões do mouse (L R M 4 5)",
+        "body": [
+          "<strong>L</strong> — botão esquerdo (o clique “normal”).",
+          "<strong>R</strong> — botão direito (menu de contexto).",
+          "<strong>M</strong> — botão do meio (geralmente a rodinha, pressionada).",
+          "<strong>4</strong> e <strong>5</strong> — botões laterais do mouse (voltar/avançar), se o seu mouse tiver."
+        ]
+      },
+      "click_type": {
+        "title": "Tipo de clique",
+        "body": [
+          "<strong>Simples</strong> — um clique por vez, no ritmo do intervalo.",
+          "<strong>Duplo</strong> — dois cliques rápidos a cada ciclo (como dar dois cliques num ícone).",
+          "<strong>Hold</strong> — segura o botão pressionado até você parar o Clickr (não fica “clicando” repetido)."
+        ]
+      },
+      "interval": {
+        "title": "Intervalo e CPS",
+        "body": [
+          "<strong>Intervalo</strong> é a pausa entre um clique e o próximo, em milissegundos (ms). 1000 ms = 1 segundo.",
+          "Ex.: 80 ms ≈ 12,5 cliques por segundo (CPS).",
+          "Números menores = mais rápido. Comece mais lento se estiver testando."
+        ]
+      },
+      "position": {
+        "title": "Onde clicar",
+        "body": [
+          "<strong>Cursor</strong> — clica onde o mouse estiver na hora (você pode mover enquanto roda).",
+          "<strong>Ponto fixo</strong> — sempre na mesma coordenada da tela (X, Y).",
+          "<strong>Capturar ponto</strong> — a tela escurece; clique no lugar desejado (Esc cancela). Funciona em todos os monitores."
+        ]
+      },
+      "limits": {
+        "title": "O que são limites?",
+        "body": [
+          "São travas opcionais para o Clickr não rodar para sempre. Pode deixar tudo vazio/zero e ajustar depois na aba <strong>Run</strong>."
+        ]
+      },
+      "delay": {
+        "title": "Delay de início",
+        "body": [
+          "Tempo de espera <em>antes do primeiro clique</em>, depois que você dá Start.",
+          "Útil para você clicar em Start e ainda ter tempo de voltar para o jogo ou janela certa.",
+          "Ex.: 2000 ms = espera 2 segundos e só então começa a clicar."
+        ]
+      },
+      "jitter": {
+        "title": "Jitter (±)",
+        "body": [
+          "Variação aleatória no intervalo, para os cliques não ficarem com ritmo 100% robótico.",
+          "Ex.: intervalo 80 ms e jitter 10 → cada pausa fica entre ~70 e ~90 ms.",
+          "0 = sem variação (ritmo fixo)."
+        ]
+      },
+      "max_clicks": {
+        "title": "Limite de cliques",
+        "body": [
+          "Quantidade máxima de cliques. Ao chegar nesse número, o Clickr para sozinho.",
+          "Campo vazio (∞) = sem limite por quantidade."
+        ]
+      },
+      "max_duration": {
+        "title": "Duração máxima",
+        "body": [
+          "Tempo máximo que o motor fica ativo, em milissegundos.",
+          "Ex.: 10000 = para automaticamente após 10 segundos.",
+          "Campo vazio (∞) = sem limite por tempo."
+        ]
+      },
+      "profile": {
+        "title": "Perfil (preset)",
+        "body": [
+          "É um nome para guardar esta configuração e reutilizar depois.",
+          "Fica na aba <strong>Perfis</strong> (carregar, exportar, importar).",
+          "Depois você pode mudar botão, intervalo etc. nas abas Clique / Run / Point sem refazer o Assistente."
+        ]
+      }
+    }
+  }
+}

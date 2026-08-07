@@ -1,0 +1,131 @@
+{
+  "steps": [
+    {
+      "id": "welcome",
+      "title": "Bem-vindo ao Clickr",
+      "body": [
+        "Autoclicker para Windows com motor nativo (SendInput).",
+        "Use o botão pulse ou a hotkey (padrão F6) para iniciar e parar.",
+        "O X da janela não encerra o app — ele vai para a bandeja. Para sair de verdade: ícone na bandeja → Sair."
+      ],
+      "tips": [
+        "Clique no keycap F6 no rodapé para gravar outra tecla de atalho.",
+        "Quer montar um preset guiado? Use o modo Assistente no topo desta aba."
+      ],
+      "goto": null
+    },
+    {
+      "id": "click",
+      "title": "Aba Clique — essencial",
+      "body": [
+        "Intervalo (ms) + slider: tempo entre cliques. O CPS estimado aparece abaixo.",
+        "Botão: L / R / M / 4 / 5 (botões laterais do mouse).",
+        "Tipo: Simples, Duplo ou Hold (mantém pressionado até parar).",
+        "Posição: Cursor (onde o mouse estiver) ou Ponto fixo (coordenada XY)."
+      ],
+      "tips": [
+        "Hold solta o botão quando você parar o motor.",
+        "Depois do Assistente, altere tudo de novo nesta aba."
+      ],
+      "goto": "click"
+    },
+    {
+      "id": "run",
+      "title": "Aba Run — limites e extras",
+      "body": [
+        "Delay início: espera antes do primeiro clique (útil para voltar à janela alvo).",
+        "Jitter ±: variação aleatória no intervalo (cliques menos “mecânicos”).",
+        "Limite de cliques / duração máx.: para sozinho ao atingir N ou o tempo.",
+        "Sempre no topo: janela acima das outras. Modo compacto: esconde Adv, Macro, Script e Agenda."
+      ],
+      "tips": [],
+      "goto": "run"
+    },
+    {
+      "id": "point",
+      "title": "Aba Point — coordenadas",
+      "body": [
+        "Defina X e Y manualmente ou use Capturar ponto (overlay em todos os monitores).",
+        "Sequência: lista de pontos com delay por passo. O motor cicla a lista quando não está vazia.",
+        "+ ponto usa a posição atual do cursor (ou XY se informados)."
+      ],
+      "tips": [
+        "Esc cancela a captura. Clique marca a posição real do cursor no SO."
+      ],
+      "goto": "point"
+    },
+    {
+      "id": "profiles",
+      "title": "Aba Perfis",
+      "body": [
+        "Salve a configuração atual com um nome em %APPDATA%/Clickr/profiles/.",
+        "Carregar aplica um perfil da lista. Exportar/Importar troca JSON com outras máquinas."
+      ],
+      "tips": [],
+      "goto": "profiles"
+    },
+    {
+      "id": "advanced",
+      "title": "Aba Adv — filtro e burst",
+      "body": [
+        "Filtro de janela: só clica se o processo e/ou título da janela em foco baterem.",
+        "Burst: N cliques rápidos, pausa, e repete — útil para rajadas controladas.",
+        "Botões 4 e 5 ficam no seletor da aba Clique."
+      ],
+      "tips": [
+        "Com filtro ligado e critérios vazios, todos os cliques são permitidos."
+      ],
+      "goto": "advanced"
+    },
+    {
+      "id": "macro",
+      "title": "Aba Macro",
+      "body": [
+        "Gravar: captura mouse e teclado com tempos relativos.",
+        "Reproduzir: reenvia os eventos via SendInput.",
+        "Parar / Limpar interrompem ou apagam a gravação."
+      ],
+      "tips": [
+        "Durante a gravação, a hotkey de toggle do motor é ignorada."
+      ],
+      "goto": "macro"
+    },
+    {
+      "id": "script",
+      "title": "Aba Script — DSL",
+      "body": [
+        "Comandos: click [botão], move X Y, wait ms, key NOME, loop N … end.",
+        "Limites: até 500 linhas, loops 1–1000, profundidade de loop ≤ 2.",
+        "Executar / Parar controlam o runner."
+      ],
+      "tips": [
+        "Exemplo: move 100 200 → click left → wait 100 → key SPACE"
+      ],
+      "goto": "script"
+    },
+    {
+      "id": "schedule",
+      "title": "Aba Agenda",
+      "body": [
+        "Escolha data/hora local e Agendar.",
+        "Quando chegar a hora, o motor de clique inicia sozinho.",
+        "Cancelar remove o agendamento pendente."
+      ],
+      "tips": [],
+      "goto": "schedule"
+    },
+    {
+      "id": "safety",
+      "title": "Uso responsável",
+      "body": [
+        "Use só onde você tem autorização.",
+        "Em jogos online / anti-cheat, autoclicker pode violar termos e gerar ban.",
+        "O Clickr não contorna anti-cheat. Janelas como Administrador podem ignorar o input se o Clickr não estiver elevado."
+      ],
+      "tips": [
+        "Você é responsável pelo uso do software."
+      ],
+      "goto": null
+    }
+  ]
+}

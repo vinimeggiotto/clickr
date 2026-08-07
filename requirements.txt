@@ -1,0 +1,8 @@
+# Clickr — dependências (Windows)
+pywebview>=5.0
+pynput>=1.7
+pystray>=0.19
+Pillow>=10.0
+
+# Empacote:
+pyinstaller>=6.0
