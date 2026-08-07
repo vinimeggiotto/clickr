@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import io
+import struct
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -53,6 +55,28 @@ def make_icon(size: int) -> Image.Image:
     return im
 
 
+def save_ico(path: Path, images: list[Image.Image]) -> None:
+    """ICO multi-tamanho com PNG embutido (Vista+). Pillow sozinho gera só 16x16."""
+    images = sorted(images, key=lambda im: im.width)
+    count = len(images)
+    header = struct.pack("<HHH", 0, 1, count)
+    entries: list[bytes] = []
+    payloads: list[bytes] = []
+    offset = 6 + 16 * count
+
+    for im in images:
+        buf = io.BytesIO()
+        im.save(buf, format="PNG")
+        data = buf.getvalue()
+        w = 0 if im.width >= 256 else im.width
+        h = 0 if im.height >= 256 else im.height
+        entries.append(struct.pack("<BBBBHHII", w, h, 0, 0, 1, 32, len(data), offset))
+        payloads.append(data)
+        offset += len(data)
+
+    path.write_bytes(header + b"".join(entries) + b"".join(payloads))
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     icon64 = make_icon(64)
@@ -60,13 +84,7 @@ def main() -> None:
 
     sizes = [16, 32, 48, 64, 128, 256]
     images = [make_icon(s) for s in sizes]
-    # Pillow: primeiro frame define; append_images para demais tamanhos
-    images[0].save(
-        OUT / "icon.ico",
-        format="ICO",
-        sizes=[(im.width, im.height) for im in images],
-        append_images=images[1:],
-    )
+    save_ico(OUT / "icon.ico", images)
     print(f"OK: {OUT / 'icon.png'}")
     print(f"OK: {OUT / 'icon.ico'}")
 

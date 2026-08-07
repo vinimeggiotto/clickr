@@ -8,7 +8,8 @@ Expor ícone na bandeja do Windows com menu Mostrar / Ocultar / Sair (rótulos v
 
 - `pystray`
 - `PIL.Image` (Pillow)
-- Asset obrigatório: `assets/icon.png` (marca Clickr; `scripts/generate_icon.py` também gera `icon.ico` para o exe)
+- Asset obrigatório: `assets/icon.png` (marca Clickr)
+- `scripts/generate_icon.py` gera PNG + ICO multi-tamanho (16–256); `build_exe.ps1` regenera antes do PyInstaller (`Clickr.spec` → `icon='assets\\icon.ico'`)
 - Catálogos `ui/locales/{code}.json` (seção `tray.*`) via `app.paths.locales_dir`
 
 ## Lógica central

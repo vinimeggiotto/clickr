@@ -10,6 +10,13 @@ Write-Host "Instalando dependências (incl. pyinstaller)..."
 python -m pip install -r requirements.txt
 python -m pip install "pyinstaller>=6.0"
 
+Write-Host "Regenerando ícone da marca (icon.png / icon.ico)..."
+python .\scripts\generate_icon.py
+if (-not (Test-Path "assets\icon.ico")) {
+    Write-Error "Falha: assets\icon.ico não foi gerado."
+    exit 1
+}
+
 Write-Host "Limpando builds anteriores..."
 if (Test-Path dist) { Remove-Item -Recurse -Force dist }
 if (Test-Path build) { Remove-Item -Recurse -Force build }
