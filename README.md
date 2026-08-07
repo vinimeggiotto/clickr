@@ -12,6 +12,10 @@
 
 **Versão 1.0.1** · Repositório: [vinimeggiotto/clickr](https://github.com/vinimeggiotto/clickr)
 
+## Interface
+
+![Clickr — interface principal (pt-BR)](assets/screenshot.pt-br.png)
+
 ---
 
 ## Aviso legal e uso responsável
