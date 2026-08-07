@@ -1,6 +1,6 @@
 # Clickr
 
-![Version](https://img.shields.io/badge/version-1.0.0-f59e0b?style=flat-square)
+![Version](https://img.shields.io/badge/version-1.0.1-f59e0b?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0ea5e9?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.12-3776ab?style=flat-square&logo=python&logoColor=white)
 ![UI](https://img.shields.io/badge/UI-pywebview-1f2937?style=flat-square)
@@ -10,7 +10,7 @@
 
 **Autoclicker desktop multiplataforma** — UI amber no estilo “device”, motor de input nativo (SendInput no Windows; pynput no macOS/Linux), hotkeys, perfis, macros, scripts e agenda.
 
-**Versão 1.0.0** · Repositório: [vinimeggiotto/clickr](https://github.com/vinimeggiotto/clickr)
+**Versão 1.0.1** · Repositório: [vinimeggiotto/clickr](https://github.com/vinimeggiotto/clickr)
 
 ---
 
@@ -148,6 +148,7 @@ window_filter/ Filtro de janela por SO
 ui/            Interface (HTML/CSS/JS) e idiomas
 assets/        Ícones e logos
 packaging/     Specs PyInstaller por SO
+VERSION        Semver do app (splash + rodapé)
 Docs/          Documentação do projeto
 ```
 

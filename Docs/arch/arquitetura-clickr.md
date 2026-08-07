@@ -20,7 +20,8 @@ Clickr é um autoclicker desktop **multiplataforma** (Windows, macOS, Linux) com
 | `scheduler/` | Agendamento de início (datetime local) |
 | `scripts/` | DSL `click` / `move` / `wait` / `key` / `loop` |
 | `packaging/` | Specs PyInstaller por SO |
-| `app/paths.py` | Recursos (dev / `_MEIPASS`) e `user_data_dir()` multi-SO |
+| `VERSION` | Semver do app (fonte da verdade; embutido no bundle) |
+| `app/paths.py` | Recursos (dev / `_MEIPASS`), `app_version()`, `user_data_dir()` multi-SO |
 
 ## Fluxo
 

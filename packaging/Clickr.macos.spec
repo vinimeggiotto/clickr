@@ -19,6 +19,7 @@ a = Analysis(
     datas=[
         (os.path.join(ROOT, 'ui'), 'ui'),
         (os.path.join(ROOT, 'assets'), 'assets'),
+        (os.path.join(ROOT, 'VERSION'), '.'),
     ],
     hiddenimports=[
         'webview',
