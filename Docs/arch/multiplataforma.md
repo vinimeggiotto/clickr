@@ -30,3 +30,7 @@ Scripts na raiz + specs em `packaging/` (`Clickr.windows.spec`, `Clickr.macos.sp
 Em tags `v*`, o job `release` publica os artefatos multi-OS com [`softprops/action-gh-release`](https://github.com/softprops/action-gh-release) (`permissions.contents: write`): `Clickr.exe`, `Clickr.app.zip`, `Clickr`.
 
 Fora de escopo desta entrega: notarização Apple, assinatura de código paga, cross-compile.
+
+## Proteção de `main`
+
+Template documentado (não autoaplicado): [`protecao-branch-main.md`](protecao-branch-main.md) + [`github-ruleset-main.json`](github-ruleset-main.json).
