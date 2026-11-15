@@ -201,3 +201,73 @@ def test_capture_foreground_window_failure_is_reported(app, monkeypatch):
     app.capture_foreground_window(0.5)
     time.sleep(0.8)
     assert app.get_state()["last_error"]["code"] == "filter.unavailable"
+
+
+def test_profile_delete_and_rename_via_controller(app):
+    app.save_profile("um")
+    app.save_profile("dois")
+    state = app.rename_profile("um", "três")
+    assert state["renamed_profile"] == "três" and state["profiles"] == ["dois", "três"]
+    assert app.rename_profile("dois", "três")["last_error"]["code"] == "profile.exists"
+    state = app.delete_profile("dois")
+    assert state["deleted_profile"] == "dois" and state["profiles"] == ["três"]
+    assert app.delete_profile("dois")["last_error"]["code"] == "profile.notFound"
+
+
+def test_import_asks_before_overwriting(app, tmp_path, fixtures_dir):
+    app.set_config({"interval_ms": 77})
+    app.save_profile("farm-legado")
+    app.test_window.dialog_result = [str(fixtures_dir / "profile_v1_envelope.json")]
+    state = app.import_profile("")
+    assert state["import_conflict"] == "farm-legado"
+    assert state["config"]["interval_ms"] == 77  # nada aplicado ainda
+    saved = json.loads((tmp_path / "Clickr" / "profiles" / "farm-legado.json").read_text(encoding="utf-8"))
+    assert saved["config"]["interval_ms"] == 77
+    state = app.import_profile_confirm()
+    assert state["imported_profile"] == "farm-legado" and state["config"]["interval_ms"] == 150
+    # Sem conflito importa direto.
+    app.test_window.dialog_result = [str(fixtures_dir / "profile_v1_raw.json")]
+    assert app.import_profile("")["imported_profile"] == "profile_v1_raw"
+
+
+def test_schedule_targets_and_persistence(app, tmp_path, null_input):
+    null_input.set_cursor_pos_for_test(9000, 9000)
+    from datetime import datetime, timedelta
+
+    soon = (datetime.now() + timedelta(seconds=1.2)).isoformat(timespec="seconds")
+    app.save_script("click 4 4\nwait 300")
+    state = app.schedule_set(soon, {"target": "script"})
+    assert state["last_error"] is None and state["schedule"]["target"] == "script"
+    saved = json.loads((tmp_path / "Clickr" / "settings.json").read_text(encoding="utf-8"))
+    assert saved["schedule"]["target"] == "script"
+    deadline = time.time() + 4
+    while time.time() < deadline and ("click", "left") not in null_input.recorded():
+        time.sleep(0.05)
+    assert ("click", "left") in null_input.recorded()
+    assert app.get_state()["schedule"]["active"] is False
+    saved = json.loads((tmp_path / "Clickr" / "settings.json").read_text(encoding="utf-8"))
+    assert saved["schedule"] is None
+
+
+def test_recurring_schedule_survives_restart(app, tmp_path):
+    state = app.schedule_set("2020-01-01T07:30:00", {"repeat": "daily", "target": "engine"})
+    assert state["last_error"] is None and state["schedule"]["repeat"] == "daily"
+    app.shutdown()
+    from app.controller import AppController
+
+    again = AppController()
+    again.bootstrap_services()
+    try:
+        sched = again.get_state()["schedule"]
+        assert sched["active"] and sched["repeat"] == "daily" and sched["at"].endswith("T07:30:00")
+    finally:
+        again.shutdown()
+
+
+def test_schedule_validation_errors(app):
+    assert app.schedule_set("", {})["last_error"]["code"] == "schedule.empty"
+    assert app.schedule_set("2020-01-01T00:00", {})["last_error"]["code"] == "schedule.past"
+    err = app.schedule_set("2999-01-01T00:00", {"target": "profile", "profile": "nao"})["last_error"]
+    assert err["code"] == "profile.notFound"
+    err = app.schedule_set("2999-01-01T00:00", {"repeat": "interval", "interval_s": 1})["last_error"]
+    assert err["code"] == "schedule.badInterval"

@@ -130,8 +130,16 @@
     "savedLabel": "Perfis salvos",
     "listAria": "Lista de perfis",
     "needName": "Informe um nome de perfil.",
-    "needSelect": "Selecione um perfil para carregar.",
-    "delete": "Excluir"
+    "needSelect": "Selecione um perfil na lista.",
+    "delete": "Excluir",
+    "rename": "Renomear",
+    "renameTitle": "Renomeia o perfil selecionado para o nome digitado acima",
+    "needNewName": "Digite o novo nome no campo acima.",
+    "deleteTitle": "Excluir perfil",
+    "deleteBody": "O perfil “{name}” será apagado do disco. Esta ação não pode ser desfeita.",
+    "overwriteTitle": "Substituir perfil",
+    "overwriteBody": "Já existe um perfil chamado “{name}”. O conteúdo atual dele será substituído.",
+    "overwrite": "Substituir"
   },
   "manualUi": {
     "modeAria": "Modo do Manual",
@@ -188,7 +196,25 @@
     "none": "Nenhum agendamento ativo.",
     "active": "Agendado: {at}",
     "set": "Agendar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "repeat": "Repetição",
+    "once": "UMA VEZ",
+    "daily": "DIÁRIO",
+    "interval": "A CADA",
+    "every": "Repetir a cada",
+    "target": "O que iniciar",
+    "targetEngine": "Autoclique (configuração atual)",
+    "targetProfile": "Um perfil salvo",
+    "targetMacro": "Macro carregada",
+    "targetScript": "Script",
+    "profile": "Perfil",
+    "activeFull": "Agendado para {at}: {what}.",
+    "target_engine": "autoclique",
+    "target_profile": "perfil “{name}”",
+    "target_macro": "macro",
+    "target_script": "script",
+    "repeatsDaily": "Repete todos os dias.",
+    "repeatsEvery": "Repete a cada {every}."
   },
   "footer": {
     "hotkeyTitle": "Clique para gravar nova tecla",
@@ -240,7 +266,9 @@
     "schedule": {
       "empty": "Informe data e hora para agendar.",
       "invalid": "Data/hora inválida.",
-      "past": "O horário de agendamento deve ser no futuro."
+      "past": "O horário de agendamento deve ser no futuro.",
+      "badInterval": "O intervalo de repetição deve ficar entre {min} s e 7 dias.",
+      "needProfile": "Escolha o perfil a ser iniciado."
     },
     "script": {
       "empty": "Script vazio.",
@@ -278,7 +306,9 @@
     "hide": "Ocultar",
     "quit": "Sair",
     "notifyTitle": "Ainda está rodando",
-    "notifyBody": "O Clickr continua em execução na bandeja. Use Sair no ícone para encerrar de verdade."
+    "notifyBody": "O Clickr continua em execução na bandeja. Use Sair no ícone para encerrar de verdade.",
+    "start": "Iniciar",
+    "stop": "Parar"
   },
   "overlay": {
     "title": "Capturar ponto",

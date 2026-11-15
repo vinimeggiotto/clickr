@@ -130,8 +130,16 @@
     "savedLabel": "Perfiles guardados",
     "listAria": "Lista de perfiles",
     "needName": "Indica un nombre de perfil.",
-    "needSelect": "Selecciona un perfil para cargar.",
-    "delete": "Eliminar"
+    "needSelect": "Selecciona un perfil de la lista.",
+    "delete": "Eliminar",
+    "rename": "Renombrar",
+    "renameTitle": "Renombra el perfil seleccionado con el nombre escrito arriba",
+    "needNewName": "Escribe el nuevo nombre en el campo de arriba.",
+    "deleteTitle": "Eliminar perfil",
+    "deleteBody": "El perfil “{name}” se borrará del disco. Esta acción no se puede deshacer.",
+    "overwriteTitle": "Reemplazar perfil",
+    "overwriteBody": "Ya existe un perfil llamado “{name}”. Su contenido actual será reemplazado.",
+    "overwrite": "Reemplazar"
   },
   "manualUi": {
     "modeAria": "Modo del Manual",
@@ -188,7 +196,25 @@
     "none": "Ninguna programación activa.",
     "active": "Programado: {at}",
     "set": "Programar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "repeat": "Repetición",
+    "once": "UNA VEZ",
+    "daily": "DIARIO",
+    "interval": "CADA",
+    "every": "Repetir cada",
+    "target": "Qué iniciar",
+    "targetEngine": "Autoclic (configuración actual)",
+    "targetProfile": "Un perfil guardado",
+    "targetMacro": "Macro cargada",
+    "targetScript": "Script",
+    "profile": "Perfil",
+    "activeFull": "Programado para {at}: {what}.",
+    "target_engine": "autoclic",
+    "target_profile": "perfil “{name}”",
+    "target_macro": "macro",
+    "target_script": "script",
+    "repeatsDaily": "Se repite todos los días.",
+    "repeatsEvery": "Se repite cada {every}."
   },
   "footer": {
     "hotkeyTitle": "Clic para grabar una nueva tecla",
@@ -240,7 +266,9 @@
     "schedule": {
       "empty": "Indica fecha y hora para programar.",
       "invalid": "Fecha/hora no válida.",
-      "past": "La hora programada debe ser futura."
+      "past": "La hora programada debe ser futura.",
+      "badInterval": "El intervalo de repetición debe estar entre {min} s y 7 días.",
+      "needProfile": "Elige el perfil a iniciar."
     },
     "script": {
       "empty": "Script vacío.",
@@ -278,7 +306,9 @@
     "hide": "Ocultar",
     "quit": "Salir",
     "notifyTitle": "Sigue en ejecución",
-    "notifyBody": "Clickr sigue en la bandeja. Usa Salir en el icono para cerrar de verdad."
+    "notifyBody": "Clickr sigue en la bandeja. Usa Salir en el icono para cerrar de verdad.",
+    "start": "Iniciar",
+    "stop": "Detener"
   },
   "overlay": {
     "title": "Capturar punto",

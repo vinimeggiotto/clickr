@@ -322,12 +322,16 @@
             <button type="button" class="action-btn" id="saveProfileBtn" data-i18n="profiles.save">Salvar</button>
             <button type="button" class="action-btn ghost" id="loadProfileBtn" data-i18n="profiles.load">Carregar</button>
           </div>
+          <label class="field-label" for="profileList" data-i18n="profiles.savedLabel">Perfis salvos</label>
+          <select id="profileList" class="profile-select" size="5" data-i18n-aria="profiles.listAria" aria-label="Lista de perfis"></select>
+          <div class="action-row">
+            <button type="button" class="action-btn ghost" id="renameProfileBtn" data-i18n="profiles.rename" data-i18n-title="profiles.renameTitle" title="Renomeia o perfil selecionado para o nome digitado acima">Renomear</button>
+            <button type="button" class="action-btn ghost" id="deleteProfileBtn" data-i18n="profiles.delete">Excluir</button>
+          </div>
           <div class="action-row">
             <button type="button" class="action-btn ghost" id="exportProfileBtn" data-i18n="profiles.export">Exportar</button>
             <button type="button" class="action-btn ghost" id="importProfileBtn" data-i18n="profiles.import">Importar</button>
           </div>
-          <label class="field-label" for="profileList" data-i18n="profiles.savedLabel">Perfis salvos</label>
-          <select id="profileList" class="profile-select" size="2" data-i18n-aria="profiles.listAria" aria-label="Lista de perfis"></select>
         </section>
 
         <section class="panel" id="panel-keys" role="tabpanel" hidden>
@@ -466,6 +470,38 @@
             <div class="lcd-input">
               <input type="datetime-local" id="scheduleAt" step="1">
             </div>
+          </div>
+          <div class="field">
+            <span class="field-label" data-i18n="schedule.repeat">Repetição</span>
+            <div class="segmented" id="scheduleRepeat" role="group" data-i18n-aria="schedule.repeat" aria-label="Repetição">
+              <button type="button" class="seg active" data-val="once" data-i18n="schedule.once">UMA VEZ</button>
+              <button type="button" class="seg" data-val="daily" data-i18n="schedule.daily">DIÁRIO</button>
+              <button type="button" class="seg" data-val="interval" data-i18n="schedule.interval">A CADA</button>
+            </div>
+          </div>
+          <div class="field" id="scheduleIntervalRow" hidden>
+            <label for="scheduleEvery" data-i18n="schedule.every">Repetir a cada</label>
+            <div class="lcd-input compact">
+              <input type="number" id="scheduleEvery" value="30" min="0" step="any">
+              <select class="unit-select" id="scheduleEveryUnit" data-i18n-aria="run.unitAria" aria-label="Unidade de tempo">
+                <option value="s">s</option>
+                <option value="min" selected>min</option>
+                <option value="h">h</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="scheduleTarget" data-i18n="schedule.target">O que iniciar</label>
+            <select id="scheduleTarget" class="plain-select">
+              <option value="engine" data-i18n="schedule.targetEngine">Autoclique (configuração atual)</option>
+              <option value="profile" data-i18n="schedule.targetProfile">Um perfil salvo</option>
+              <option value="macro" data-i18n="schedule.targetMacro">Macro carregada</option>
+              <option value="script" data-i18n="schedule.targetScript">Script</option>
+            </select>
+          </div>
+          <div class="field" id="scheduleProfileRow" hidden>
+            <label for="scheduleProfile" data-i18n="schedule.profile">Perfil</label>
+            <select id="scheduleProfile" class="plain-select"></select>
           </div>
           <div class="fixed-hint" id="scheduleHint" data-i18n="schedule.none">Nenhum agendamento ativo.</div>
           <div class="action-row">

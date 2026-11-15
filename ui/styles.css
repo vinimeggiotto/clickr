@@ -1622,3 +1622,29 @@ body:not(.booting) .splash {
   flex: 1 0 150px;
   min-height: 150px;
 }
+
+/* Select simples (alvo do agendamento, perfil) */
+.plain-select {
+  width: 100%;
+  margin-top: 6px;
+  background: var(--groove);
+  color: var(--text);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
+  outline: none;
+  cursor: pointer;
+}
+
+.plain-select:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+
+.plain-select option {
+  background: var(--panel);
+  color: var(--text);
+}

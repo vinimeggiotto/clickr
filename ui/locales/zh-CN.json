@@ -130,8 +130,16 @@
     "savedLabel": "已保存配置",
     "listAria": "配置列表",
     "needName": "请输入配置名称。",
-    "needSelect": "请选择要加载的配置。",
-    "delete": "删除"
+    "needSelect": "请从列表中选择一个配置。",
+    "delete": "删除",
+    "rename": "重命名",
+    "renameTitle": "将所选配置重命名为上方输入的名称",
+    "needNewName": "请在上方字段输入新名称。",
+    "deleteTitle": "删除配置",
+    "deleteBody": "配置“{name}”将从磁盘删除，此操作无法撤销。",
+    "overwriteTitle": "替换配置",
+    "overwriteBody": "已存在名为“{name}”的配置，其当前内容将被替换。",
+    "overwrite": "替换"
   },
   "manualUi": {
     "modeAria": "手册模式",
@@ -188,7 +196,25 @@
     "none": "没有活动计划。",
     "active": "已计划：{at}",
     "set": "计划",
-    "cancel": "取消"
+    "cancel": "取消",
+    "repeat": "重复",
+    "once": "一次",
+    "daily": "每天",
+    "interval": "每隔",
+    "every": "重复间隔",
+    "target": "启动内容",
+    "targetEngine": "自动点击（当前设置）",
+    "targetProfile": "已保存的配置",
+    "targetMacro": "已加载的宏",
+    "targetScript": "脚本",
+    "profile": "配置",
+    "activeFull": "已计划于 {at}：{what}。",
+    "target_engine": "自动点击",
+    "target_profile": "配置“{name}”",
+    "target_macro": "宏",
+    "target_script": "脚本",
+    "repeatsDaily": "每天重复。",
+    "repeatsEvery": "每 {every} 重复一次。"
   },
   "footer": {
     "hotkeyTitle": "点击以录制新快捷键",
@@ -240,7 +266,9 @@
     "schedule": {
       "empty": "请输入要计划的日期和时间。",
       "invalid": "日期/时间无效。",
-      "past": "计划时间必须在将来。"
+      "past": "计划时间必须在将来。",
+      "badInterval": "重复间隔必须在 {min} 秒到 7 天之间。",
+      "needProfile": "请选择要启动的配置。"
     },
     "script": {
       "empty": "脚本为空。",
@@ -278,7 +306,9 @@
     "hide": "隐藏",
     "quit": "退出",
     "notifyTitle": "仍在运行",
-    "notifyBody": "Clickr 仍在托盘中运行。请在图标上使用“退出”以真正结束。"
+    "notifyBody": "Clickr 仍在托盘中运行。请在图标上使用“退出”以真正结束。",
+    "start": "开始",
+    "stop": "停止"
   },
   "overlay": {
     "title": "捕获坐标",

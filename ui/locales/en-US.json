@@ -130,8 +130,16 @@
     "savedLabel": "Saved profiles",
     "listAria": "Profile list",
     "needName": "Enter a profile name.",
-    "needSelect": "Select a profile to load.",
-    "delete": "Delete"
+    "needSelect": "Select a profile from the list.",
+    "delete": "Delete",
+    "rename": "Rename",
+    "renameTitle": "Renames the selected profile to the name typed above",
+    "needNewName": "Type the new name in the field above.",
+    "deleteTitle": "Delete profile",
+    "deleteBody": "The profile “{name}” will be deleted from disk. This cannot be undone.",
+    "overwriteTitle": "Replace profile",
+    "overwriteBody": "A profile named “{name}” already exists. Its current content will be replaced.",
+    "overwrite": "Replace"
   },
   "manualUi": {
     "modeAria": "Manual mode",
@@ -188,7 +196,25 @@
     "none": "No active schedule.",
     "active": "Scheduled: {at}",
     "set": "Schedule",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "repeat": "Repeat",
+    "once": "ONCE",
+    "daily": "DAILY",
+    "interval": "EVERY",
+    "every": "Repeat every",
+    "target": "What to start",
+    "targetEngine": "Auto-click (current settings)",
+    "targetProfile": "A saved profile",
+    "targetMacro": "Loaded macro",
+    "targetScript": "Script",
+    "profile": "Profile",
+    "activeFull": "Scheduled for {at}: {what}.",
+    "target_engine": "auto-click",
+    "target_profile": "profile “{name}”",
+    "target_macro": "macro",
+    "target_script": "script",
+    "repeatsDaily": "Repeats every day.",
+    "repeatsEvery": "Repeats every {every}."
   },
   "footer": {
     "hotkeyTitle": "Click to record a new key",
@@ -240,7 +266,9 @@
     "schedule": {
       "empty": "Enter a date and time to schedule.",
       "invalid": "Invalid date/time.",
-      "past": "The scheduled time must be in the future."
+      "past": "The scheduled time must be in the future.",
+      "badInterval": "The repeat interval must be between {min} s and 7 days.",
+      "needProfile": "Choose the profile to start."
     },
     "script": {
       "empty": "Empty script.",
@@ -278,7 +306,9 @@
     "hide": "Hide",
     "quit": "Quit",
     "notifyTitle": "Still running",
-    "notifyBody": "Clickr is still running in the tray. Use Quit on the icon to exit for real."
+    "notifyBody": "Clickr is still running in the tray. Use Quit on the icon to exit for real.",
+    "start": "Start",
+    "stop": "Stop"
   },
   "overlay": {
     "title": "Capture point",

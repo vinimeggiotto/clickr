@@ -130,8 +130,16 @@
     "savedLabel": "Gespeicherte Profile",
     "listAria": "Profilliste",
     "needName": "Profilnamen eingeben.",
-    "needSelect": "Profil zum Laden auswählen.",
-    "delete": "Löschen"
+    "needSelect": "Profil aus der Liste auswählen.",
+    "delete": "Löschen",
+    "rename": "Umbenennen",
+    "renameTitle": "Benennt das gewählte Profil in den oben eingegebenen Namen um",
+    "needNewName": "Neuen Namen in das Feld oben eingeben.",
+    "deleteTitle": "Profil löschen",
+    "deleteBody": "Das Profil „{name}“ wird von der Festplatte gelöscht. Das kann nicht rückgängig gemacht werden.",
+    "overwriteTitle": "Profil ersetzen",
+    "overwriteBody": "Ein Profil namens „{name}“ existiert bereits. Sein Inhalt wird ersetzt.",
+    "overwrite": "Ersetzen"
   },
   "manualUi": {
     "modeAria": "Handbuchmodus",
@@ -188,7 +196,25 @@
     "none": "Kein aktiver Plan.",
     "active": "Geplant: {at}",
     "set": "Planen",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "repeat": "Wiederholung",
+    "once": "EINMAL",
+    "daily": "TÄGLICH",
+    "interval": "ALLE",
+    "every": "Wiederholen alle",
+    "target": "Was gestartet wird",
+    "targetEngine": "Autoklick (aktuelle Einstellungen)",
+    "targetProfile": "Ein gespeichertes Profil",
+    "targetMacro": "Geladenes Makro",
+    "targetScript": "Skript",
+    "profile": "Profil",
+    "activeFull": "Geplant für {at}: {what}.",
+    "target_engine": "Autoklick",
+    "target_profile": "Profil „{name}“",
+    "target_macro": "Makro",
+    "target_script": "Skript",
+    "repeatsDaily": "Wiederholt sich täglich.",
+    "repeatsEvery": "Wiederholt sich alle {every}."
   },
   "footer": {
     "hotkeyTitle": "Klicken, um neue Taste aufzunehmen",
@@ -240,7 +266,9 @@
     "schedule": {
       "empty": "Datum und Uhrzeit für die Planung eingeben.",
       "invalid": "Ungültiges Datum/Uhrzeit.",
-      "past": "Der geplante Zeitpunkt muss in der Zukunft liegen."
+      "past": "Der geplante Zeitpunkt muss in der Zukunft liegen.",
+      "badInterval": "Das Wiederholungsintervall muss zwischen {min} s und 7 Tagen liegen.",
+      "needProfile": "Zu startendes Profil auswählen."
     },
     "script": {
       "empty": "Leeres Skript.",
@@ -278,7 +306,9 @@
     "hide": "Ausblenden",
     "quit": "Beenden",
     "notifyTitle": "Läuft noch",
-    "notifyBody": "Clickr läuft weiter im Tray. Nutzen Sie Beenden am Symbol zum echten Beenden."
+    "notifyBody": "Clickr läuft weiter im Tray. Nutzen Sie Beenden am Symbol zum echten Beenden.",
+    "start": "Starten",
+    "stop": "Stoppen"
   },
   "overlay": {
     "title": "Punkt erfassen",

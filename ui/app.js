@@ -55,6 +55,15 @@
   const pickSeqBtn = document.getElementById("pickSeqBtn");
   const wfCaptureBtn = document.getElementById("wfCaptureBtn");
   const scriptHint = document.getElementById("scriptHint");
+  const renameProfileBtn = document.getElementById("renameProfileBtn");
+  const deleteProfileBtn = document.getElementById("deleteProfileBtn");
+  const scheduleRepeat = document.getElementById("scheduleRepeat");
+  const scheduleIntervalRow = document.getElementById("scheduleIntervalRow");
+  const scheduleEvery = document.getElementById("scheduleEvery");
+  const scheduleEveryUnit = document.getElementById("scheduleEveryUnit");
+  const scheduleTarget = document.getElementById("scheduleTarget");
+  const scheduleProfileRow = document.getElementById("scheduleProfileRow");
+  const scheduleProfile = document.getElementById("scheduleProfile");
   const macroRepeat = document.getElementById("macroRepeat");
   const macroSpeed = document.getElementById("macroSpeed");
   const macroName = document.getElementById("macroName");
@@ -331,6 +340,13 @@
     const payload = {};
     payload[key] = ms;
     pushConfig(payload);
+  }
+
+  /** 90 → "90 s", 600 → "10 min", 7200 → "2 h". */
+  function formatSpan(seconds) {
+    if (seconds % 3600 === 0 && seconds >= 3600) return `${seconds / 3600} h`;
+    if (seconds % 60 === 0 && seconds >= 60) return `${seconds / 60} min`;
+    return `${seconds} s`;
   }
 
   function formatClock(ms) {
@@ -620,12 +636,21 @@
     }
 
     if (schedule.active && schedule.at) {
-      scheduleHint.textContent = t("schedule.active", {
-        at: schedule.at.replace("T", " "),
+      const what = t("schedule.target_" + (schedule.target || "engine"), {
+        name: schedule.profile || "",
       });
+      let how = "";
+      if (schedule.repeat === "daily") how = t("schedule.repeatsDaily");
+      else if (schedule.repeat === "interval") {
+        how = t("schedule.repeatsEvery", { every: formatSpan(schedule.interval_s || 0) });
+      }
+      scheduleHint.textContent =
+        t("schedule.activeFull", { at: schedule.at.replace("T", " "), what }) +
+        (how ? " " + how : "");
     } else {
       scheduleHint.textContent = t("schedule.none");
     }
+    scheduleCancelBtn.disabled = !schedule.active;
 
     if (Array.isArray(state.profiles)) {
       refreshProfileList(state.profiles);
@@ -706,21 +731,15 @@
     }
   }
 
+  let profileNames = [];
+
   function refreshProfileList(names) {
     const key = JSON.stringify(names);
     if (key === lastProfilesKey) return;
     lastProfilesKey = key;
-    const selected = profileList.value;
-    profileList.innerHTML = "";
-    names.forEach((name) => {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      profileList.appendChild(opt);
-    });
-    if (selected && names.includes(selected)) {
-      profileList.value = selected;
-    }
+    profileNames = names.slice();
+    fillSelect(profileList, names);
+    fillSelect(scheduleProfile, names);
   }
 
   function setSegmentActive(group, value) {
@@ -867,7 +886,7 @@
     unitFields[field].input.addEventListener("change", () => commitUnitField(field));
   });
 
-  document.querySelectorAll(".unit-select").forEach((select) => {
+  document.querySelectorAll(".unit-select[data-unit]").forEach((select) => {
     select.addEventListener("change", () => {
       const field = select.dataset.unit;
       appSettings.time_units = { ...appSettings.time_units, [field]: select.value };
@@ -998,6 +1017,15 @@
       showLocalError(t("profiles.needName"));
       return;
     }
+    const exists = profileNames.some((n) => n.toLowerCase() === name.toLowerCase());
+    if (exists) {
+      const ok = await confirmDialog(
+        t("profiles.overwriteTitle"),
+        t("profiles.overwriteBody", { name }),
+        t("profiles.overwrite")
+      );
+      if (!ok) return;
+    }
     const state = await call("save_profile", name);
     if (state && state.saved_profile) profileName.value = state.saved_profile;
   });
@@ -1012,12 +1040,55 @@
     if (state && !state.last_error) profileName.value = name;
   });
 
+  renameProfileBtn.addEventListener("click", async () => {
+    const from = (profileList.value || "").trim();
+    const to = (profileName.value || "").trim();
+    if (!from) {
+      showLocalError(t("profiles.needSelect"));
+      return;
+    }
+    if (!to || to === from) {
+      showLocalError(t("profiles.needNewName"));
+      return;
+    }
+    const state = await call("rename_profile", from, to);
+    if (state && state.renamed_profile) {
+      profileName.value = state.renamed_profile;
+      profileList.value = state.renamed_profile;
+    }
+  });
+
+  deleteProfileBtn.addEventListener("click", async () => {
+    const name = (profileList.value || "").trim();
+    if (!name) {
+      showLocalError(t("profiles.needSelect"));
+      return;
+    }
+    const ok = await confirmDialog(
+      t("profiles.deleteTitle"),
+      t("profiles.deleteBody", { name }),
+      t("profiles.delete")
+    );
+    if (!ok) return;
+    const state = await call("delete_profile", name);
+    if (state && state.deleted_profile && profileName.value === name) profileName.value = "";
+  });
+
   exportProfileBtn.addEventListener("click", () => {
     call("export_profile", (profileName.value || profileList.value || "").trim());
   });
 
   importProfileBtn.addEventListener("click", async () => {
-    const state = await call("import_profile", (profileName.value || "").trim());
+    let state = await call("import_profile", (profileName.value || "").trim());
+    if (state && state.import_conflict) {
+      const ok = await confirmDialog(
+        t("profiles.overwriteTitle"),
+        t("profiles.overwriteBody", { name: state.import_conflict }),
+        t("profiles.overwrite")
+      );
+      if (!ok) return;
+      state = await call("import_profile_confirm");
+    }
     if (state && state.imported_profile) profileName.value = state.imported_profile;
   });
 
@@ -1106,8 +1177,34 @@
   scriptRunBtn.addEventListener("click", () => call("script_run", scriptSource.value || ""));
   scriptStopBtn.addEventListener("click", () => call("script_stop"));
 
+  let scheduleRepeatValue = "once";
+
+  function syncScheduleForm() {
+    scheduleRepeat.querySelectorAll(".seg").forEach((seg) => {
+      seg.classList.toggle("active", seg.dataset.val === scheduleRepeatValue);
+    });
+    scheduleIntervalRow.hidden = scheduleRepeatValue !== "interval";
+    scheduleProfileRow.hidden = scheduleTarget.value !== "profile";
+  }
+
+  scheduleRepeat.addEventListener("click", (e) => {
+    const seg = e.target.closest(".seg");
+    if (!seg) return;
+    scheduleRepeatValue = seg.dataset.val;
+    syncScheduleForm();
+  });
+  scheduleTarget.addEventListener("change", syncScheduleForm);
+  syncScheduleForm();
+
   scheduleSetBtn.addEventListener("click", () => {
-    call("schedule_set", (scheduleAt.value || "").trim());
+    const options = { repeat: scheduleRepeatValue, target: scheduleTarget.value };
+    if (scheduleRepeatValue === "interval") {
+      const every = parseFloat(String(scheduleEvery.value || "").replace(",", "."));
+      const factor = { s: 1, min: 60, h: 3600 }[scheduleEveryUnit.value] || 60;
+      options.interval_s = Number.isFinite(every) ? Math.round(every * factor) : 0;
+    }
+    if (options.target === "profile") options.profile = scheduleProfile.value || "";
+    call("schedule_set", (scheduleAt.value || "").trim(), options);
   });
   scheduleCancelBtn.addEventListener("click", () => call("schedule_cancel"));
 

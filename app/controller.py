@@ -88,6 +88,8 @@ class AppController:
         self._recording_hotkey = False
         self._recording_hotkey_action = ""
         self._hold_watch: Any = None
+        self._pending_import: Optional[tuple[Path, str]] = None
+        self._tray_running: Optional[bool] = None
         self._pick_target = "fixed"
         self._pick_delay_ms = 0
         self._wf_capture_until: Optional[float] = None
@@ -151,6 +153,10 @@ class AppController:
         self._macro_player.set_on_tick(signal)
         self._macro_player.set_on_done(signal)
         self._scheduler.set_on_change(signal)
+        self._scheduler.set_on_fire(self._on_schedule_fire)
+        saved_schedule = self._settings.get("schedule")
+        if saved_schedule and not self._scheduler.restore(saved_schedule):
+            self._settings.update({"schedule": None})
         self._script.set_on_tick(signal)
         self._script.set_on_done(signal)
         self._ui_alive = True
@@ -170,6 +176,7 @@ class AppController:
                 on_show=self._tray_show,
                 on_hide=self._tray_hide,
                 on_quit=self._tray_quit,
+                on_toggle=self._tray_toggle,
                 locale=self._settings.get_locale(),
             )
             tray.start(detached=detached)
@@ -183,7 +190,9 @@ class AppController:
         self._ui_alive = False
         self._notifier.stop()
         self._clear_ui_callbacks()
-        self._scheduler.cancel()
+        # Encerra a thread sem apagar o agendamento salvo (ele volta no próximo início).
+        self._scheduler.set_on_fire(None)
+        self._scheduler.shutdown()
         self._macro_recorder.stop()
         self._macro_player.stop()
         self._script.stop()
@@ -272,8 +281,8 @@ class AppController:
             "name": macro_prefs["name"],
         }
         state["schedule"] = {
-            "active": sched["active"],
-            "at": sched["at"],
+            key: sched[key]
+            for key in ("active", "at", "repeat", "interval_s", "target", "profile")
         }
         state["script"] = {
             "running": script_status["running"],
@@ -694,23 +703,35 @@ class AppController:
     # --- Scheduler -----------------------------------------------------
 
     @api
-    def schedule_set(self, when: str) -> dict[str, Any]:
-        """Agenda início do motor. when: ISO local 'YYYY-MM-DDTHH:MM' ou com segundos."""
-        raw = (when or "").strip()
-        if not raw:
-            raise ClickrError("schedule.empty", "Informe data e hora para agendar.")
-        try:
-            dt = datetime.fromisoformat(raw)
-        except ValueError:
+    def schedule_set(self, when: str, options: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+        """
+        Agenda um disparo. when: ISO local 'YYYY-MM-DDTHH:MM[:SS]'.
+        options: repeat (once|daily|interval), interval_s, target
+        (engine|macro|script|profile) e profile.
+        """
+        opts = dict(options or {})
+        if opts.get("target") == "profile" and not self._profiles.exists(
+            str(opts.get("profile") or "")
+        ):
             raise ClickrError(
-                "schedule.invalid", "Data/hora inválida. Use AAAA-MM-DDTHH:MM."
-            ) from None
-        self._scheduler.schedule(dt, self._on_schedule_fire)
+                "profile.notFound",
+                f"Perfil não encontrado: {opts.get('profile')}",
+                name=str(opts.get("profile") or ""),
+            )
+        self._scheduler.schedule(
+            (when or "").strip(),
+            repeat=opts.get("repeat"),
+            interval_s=opts.get("interval_s"),
+            target=opts.get("target"),
+            profile=opts.get("profile"),
+        )
+        self._settings.update({"schedule": self._scheduler.to_dict()})
         return self.get_state()
 
     @api
     def schedule_cancel(self) -> dict[str, Any]:
         self._scheduler.cancel()
+        self._settings.update({"schedule": None})
         return self.get_state()
 
     # --- Script --------------------------------------------------------
@@ -772,6 +793,26 @@ class AppController:
         self._apply_config(merged, allow_prefs=True)
 
     @api
+    def delete_profile(self, name: str) -> dict[str, Any]:
+        deleted = self._profiles.delete(name)
+        state = self._state_with_profiles()
+        state["deleted_profile"] = deleted
+        return state
+
+    @api
+    def rename_profile(self, old: str, new: str) -> dict[str, Any]:
+        renamed = self._profiles.rename(old, new)
+        # Um agendamento que apontava para o nome antigo acompanha a mudança.
+        sched = self._scheduler.to_dict()
+        if sched and sched.get("target") == "profile" and sched.get("profile") == str(old).strip():
+            sched["profile"] = renamed
+            if self._scheduler.restore(sched):
+                self._settings.update({"schedule": self._scheduler.to_dict()})
+        state = self._state_with_profiles()
+        state["renamed_profile"] = renamed
+        return state
+
+    @api
     def export_profile(self, name: str = "") -> dict[str, Any]:
         """Abre diálogo Salvar e exporta perfil (salvo ou config atual) em JSON."""
         label = (name or "").strip() or "clickr-perfil"
@@ -794,7 +835,13 @@ class AppController:
 
     @api
     def import_profile(self, name: str = "") -> dict[str, Any]:
-        """Abre diálogo Abrir e importa JSON para a pasta de perfis."""
+        """
+        Abre diálogo Abrir e importa JSON para a pasta de perfis.
+
+        Se já existir um perfil com o nome resultante, nada é gravado: o estado
+        volta com `import_conflict` e a UI pede confirmação antes de chamar
+        import_profile_confirm().
+        """
         result = self._file_dialog(
             webview.OPEN_DIALOG,
             allow_multiple=False,
@@ -804,7 +851,24 @@ class AppController:
             return self.get_state()
         src = Path(result[0] if isinstance(result, (list, tuple)) else result)
         override = (name or "").strip() or None
-        saved = self._profiles.import_from(src, name=override)
+        target = self._profiles.resolve_import_name(src, override)
+        if self._profiles.exists(target):
+            self._pending_import = (src, target)
+            state = self.get_state()
+            state["import_conflict"] = target
+            return state
+        return self._finish_import(src, target)
+
+    @api
+    def import_profile_confirm(self) -> dict[str, Any]:
+        """Conclui a importação pendente, sobrescrevendo o perfil existente."""
+        pending, self._pending_import = self._pending_import, None
+        if not pending:
+            return self.get_state()
+        return self._finish_import(*pending)
+
+    def _finish_import(self, src: Path, name: str) -> dict[str, Any]:
+        saved = self._profiles.import_from(src, name=name)
         self._load_profile_document(self._profiles.load_document(saved))
         state = self._state_with_profiles()
         state["imported_profile"] = saved
@@ -1019,10 +1083,31 @@ class AppController:
         self._script.stop()
         if not keep_schedule:
             self._scheduler.cancel()
+            self._settings.update({"schedule": None})
 
-    def _on_schedule_fire(self) -> None:
+    def _on_schedule_fire(self, item: Optional[dict[str, Any]] = None) -> None:
+        """Executa o alvo do agendamento (chamado pela thread do Scheduler)."""
+        target = (item or {}).get("target") or "engine"
+        self._clear_errors()
         self._stop_tier3_runners(keep_schedule=True)
-        self._engine.start()
+        if target == "macro":
+            self._engine.stop()
+            prefs = self._settings.get("macro")
+            self._macro_player.play(
+                self._macro_recorder.get_events(), repeat=prefs["repeat"], speed=prefs["speed"]
+            )
+        elif target == "script":
+            self._engine.stop()
+            self._script.run(self._settings.get("last_script") or "")
+        else:
+            if target == "profile":
+                self._engine.stop()
+                self._load_profile_document(
+                    self._profiles.load_document(str((item or {}).get("profile") or ""))
+                )
+            self._engine.start()
+        # Recorrentes continuam ativos; o disparo único some do arquivo.
+        self._settings.update({"schedule": self._scheduler.to_dict()})
         self._notifier.signal()
 
     def _apply_always_on_top(self, enabled: bool) -> None:
@@ -1217,7 +1302,9 @@ class AppController:
         if window is None:
             return
         try:
-            payload = json.dumps(self.get_state())
+            state = self.get_state()
+            self._sync_tray(bool(state.get("running")))
+            payload = json.dumps(state)
             window.evaluate_js(f"window.__clickrApplyState && window.__clickrApplyState({payload})")
         except Exception:
             # Janela em destruição ou webview ocupado: o próximo sinal reenvia.
@@ -1249,6 +1336,29 @@ class AppController:
             info.destroy()
         except Exception:
             log.info("Janela de info já estava fechada")
+
+    def _sync_tray(self, running: bool) -> None:
+        """Reflete no ícone/menu da bandeja se algo está em execução."""
+        if self._tray is None or running == self._tray_running:
+            return
+        self._tray_running = running
+        try:
+            self._tray.set_running(running)
+        except Exception:
+            log.exception("Falha ao atualizar a bandeja")
+
+    def _tray_toggle(self) -> None:
+        """Item Iniciar/Parar do menu da bandeja."""
+        try:
+            self._clear_errors()
+            if self.get_state()["running"] or self._macro_recorder.is_recording():
+                self._stop_everything()
+            else:
+                self._stop_tier3_runners(keep_schedule=True)
+                self._engine.start()
+        except Exception:
+            log.exception("Falha ao alternar pela bandeja")
+        self._notifier.signal()
 
     def _tray_show(self) -> None:
         window = self._window
