@@ -8,7 +8,7 @@
 ## Comportamento — Guia
 
 1. Modo **Guia** na aba Manual (toggle Guia / Assistente).
-2. Passos com Anterior / Próximo; **Concluir** marca `clickr_manual_seen_v1` e volta para Clique.
+2. Passos com Anterior / Próximo; **Concluir** marca o manual como visto e volta para Clique.
 3. **Experimentar** navega para a aba citada sem alterar config nem dar start.
 4. Conteúdo do Guia/Assistente/INFO vem do catálogo i18n ativo (`ui/locales/{locale}.json`, chaves `manual.*`).
 
@@ -27,12 +27,18 @@ Passos (aplicam `set_config` ao avançar):
 
 - Salvar usa `save_profile`.
 - Ativar chama `start` após salvar.
-- Marca `clickr_wizard_done_v1` e `clickr_manual_seen_v1`.
-- Primeira execução (nenhuma das flags): abre Manual no modo **Assistente**.
+- Ao concluir, marca o manual como visto.
+- Primeira execução (manual ainda não visto): abre Manual no modo **Assistente**.
+
+## Persistência do "já visto"
+
+- Preferência `manual_seen` em `settings.json`, gravada pela bridge `set_manual_seen(true)` e lida no boot via `get_settings().manual_seen`.
+- Não usa mais `localStorage` do webview (que não persiste entre execuções).
 
 ## Regras
 
 - Guia não grava config nem inicia o motor.
 - Assistente não configura Adv/Macro/Script/Agenda (apenas aponta no Guia).
 - Explicações longas ficam no botão **(i)** → janela separada (`info.html`); texto do passo permanece curto.
+- Falha ao salvar o perfil ou iniciar pelo Assistente aparece como mensagem de erro na UI (não avança silenciosamente).
 - Sem dependências novas.

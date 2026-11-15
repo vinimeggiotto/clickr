@@ -12,7 +12,8 @@ Permitir cliques com os botões laterais do mouse.
 | `x2` | `MOUSEEVENTF_XDOWN/UP` + `XBUTTON2` | `Button.x2` se existir no enum |
 
 - Mesmos modos que L/R/M: simples, duplo, hold, cursor, ponto fixo, sequência, burst.
-- UI: seletor compacto `L R M 4 5` no device.
+- Também aceitos no script (`click x1`, `dclick x2 …`, `drag … x1`) e gravados/reproduzidos em macros.
+- UI: seletor compacto `L R M 4 5` no device (oculto quando a ação é **TECLA**).
 - Fora do Windows, se o backend não expuser X1/X2 → `OSError` explícito (sem mapear para outro botão).
 
 ## Regras
