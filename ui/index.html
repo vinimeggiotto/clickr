@@ -106,6 +106,21 @@
           </div>
 
           <div class="row">
+            <div class="segmented" data-group="action" role="group" data-i18n-aria="click.actionAria" aria-label="O que repetir">
+              <button type="button" class="seg active" data-val="mouse" data-i18n="click.actionMouse">MOUSE</button>
+              <button type="button" class="seg" data-val="key" data-i18n="click.actionKey">TECLA</button>
+            </div>
+          </div>
+
+          <div class="field" id="keyRow" hidden>
+            <label for="keyName" data-i18n="click.key">Tecla</label>
+            <div class="lcd-input compact key-input">
+              <input type="text" id="keyName" maxlength="40" value="SPACE" autocomplete="off" spellcheck="false" data-i18n-placeholder="click.keyPlaceholder" placeholder="SPACE, E, CTRL+C">
+              <button type="button" class="keycap" id="keyCaptureBtn" data-i18n="click.keyCapture">capturar</button>
+            </div>
+          </div>
+
+          <div class="row" id="mouseButtonRow">
             <div class="segmented dense" data-group="button" role="group" data-i18n-aria="click.buttonAria" aria-label="Botão do mouse">
               <button type="button" class="seg active" data-val="left">L</button>
               <button type="button" class="seg" data-val="right">R</button>
@@ -123,7 +138,7 @@
             </div>
           </div>
 
-          <div class="row">
+          <div class="row" id="positionRow">
             <div class="segmented" data-group="position_mode" role="group" data-i18n-aria="click.positionAria" aria-label="Modo de posição">
               <button type="button" class="seg active" data-val="cursor" data-i18n="click.cursor">CURSOR</button>
               <button type="button" class="seg" data-val="fixed" data-i18n="click.fixed">PONTO FIXO</button>
@@ -191,6 +206,18 @@
           </div>
           <button type="button" class="action-btn" id="pickBtn" data-i18n="point.pick">Capturar ponto</button>
           <div class="fixed-hint" id="fixedHint"></div>
+          <div class="field">
+            <label for="posJitter" data-i18n="point.jitter">Variação da posição ±</label>
+            <div class="lcd-input compact">
+              <input type="number" id="posJitter" value="0" min="0" max="500" step="1">
+              <span>px</span>
+            </div>
+          </div>
+          <label class="toggle-row">
+            <span data-i18n="point.restoreCursor">Devolver o cursor após o clique</span>
+            <input type="checkbox" id="restoreCursor">
+            <span class="toggle-ui" aria-hidden="true"></span>
+          </label>
 
           <div class="seq-block">
             <div class="seq-head">

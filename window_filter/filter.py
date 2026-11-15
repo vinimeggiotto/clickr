@@ -63,6 +63,20 @@ def point_in_own_window(x: int, y: int) -> Optional[bool]:
     return pid.value != 0 and pid.value == own_pid
 
 
+def foreground_is_own_window() -> Optional[bool]:
+    """True se a janela em foco pertence a este processo; None se desconhecido."""
+    if sys.platform != "win32":
+        return None
+    user32, own_pid = _load_own_window_api()
+    user32.GetForegroundWindow.restype = wintypes.HWND
+    hwnd = user32.GetForegroundWindow()
+    if not hwnd:
+        return False
+    pid = wintypes.DWORD(0)
+    user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+    return pid.value != 0 and pid.value == own_pid
+
+
 class WindowFilter:
     """
     Regra ativa: se enabled e critérios definidos, `allows()` exige

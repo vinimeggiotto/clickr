@@ -10,7 +10,7 @@ from typing import Any, Callable, Optional, Union
 
 from core import sendinput
 from core.errors import ClickrError, error_from_exception
-from core.keys import name_to_vk
+from core.keys import parse_key_sequence
 from core.sendinput import ButtonName
 
 MAX_LINES = 500
@@ -109,18 +109,7 @@ def _button(line_no: int, token: str) -> ButtonName:
 
 def parse_combo(text: str) -> tuple[int, ...]:
     """'CTRL+SHIFT+A' → códigos VK na ordem de pressionamento. ValueError se inválido."""
-    pieces: list[str] = []
-    for piece in (text or "").split("+"):
-        piece = piece.strip()
-        if piece == "" and pieces:
-            pieces[-1] += "+"  # ex.: NUM+
-        elif piece == "":
-            raise ValueError("combinação vazia")
-        else:
-            pieces.append(piece)
-    if not pieces:
-        raise ValueError("combinação vazia")
-    return tuple(name_to_vk(piece) for piece in pieces)
+    return parse_key_sequence(text)
 
 
 def parse_script(source: str) -> list[Command]:

@@ -107,3 +107,62 @@ def test_rate_is_close_to_interval(null_input):
     engine.stop()
     n = engine.get_state().click_count
     assert 40 <= n <= 56, n
+
+
+def test_restore_cursor(null_input):
+    null_input.set_cursor_pos_for_test(500, 500)
+    engine = ClickEngine()
+    engine.update_config(
+        {"interval_ms": 1, "max_clicks": 2, "position_mode": "fixed", "fixed_x": 10, "fixed_y": 20,
+         "restore_cursor": True}
+    )
+    engine.start()
+    _wait_stopped(engine)
+    rec = null_input.recorded()
+    assert rec[:3] == [("move", 10, 20), ("click", "left"), ("move", 500, 500)]
+    assert null_input.get_cursor_pos() == (500, 500)
+
+
+def test_position_jitter_stays_in_range(null_input):
+    engine = ClickEngine()
+    engine.update_config(
+        {"interval_ms": 1, "max_clicks": 40, "position_mode": "fixed", "fixed_x": 100,
+         "fixed_y": 100, "position_jitter_px": 5}
+    )
+    engine.start()
+    _wait_stopped(engine)
+    moves = [c for c in null_input.recorded() if c[0] == "move"]
+    assert len(moves) == 40
+    assert all(95 <= x <= 105 and 95 <= y <= 105 for _, x, y in moves)
+    assert len({(x, y) for _, x, y in moves}) > 3
+
+
+def test_key_action(null_input):
+    engine = ClickEngine()
+    engine.update_config({"interval_ms": 1, "max_clicks": 3, "action": "key", "key_name": "ctrl+e"})
+    engine.start()
+    _wait_stopped(engine)
+    rec = null_input.recorded()
+    assert rec[:4] == [("key_down", 0x11), ("key_down", ord("E")), ("key_up", ord("E")), ("key_up", 0x11)]
+    assert [c for c in rec if c[0] == "click"] == []
+    assert engine.get_state().click_count == 3
+
+
+def test_key_hold_releases(null_input):
+    engine = ClickEngine()
+    engine.update_config({"action": "key", "key_name": "W", "click_type": "hold"})
+    engine.start()
+    time.sleep(0.08)
+    engine.stop()
+    rec = null_input.recorded()
+    assert rec.count(("key_down", ord("W"))) == 1 and rec.count(("key_up", ord("W"))) == 1
+
+
+def test_key_guard_blocks(null_input):
+    engine = ClickEngine()
+    engine.set_key_guard(lambda: True)
+    engine.update_config({"interval_ms": 2, "action": "key", "key_name": "A"})
+    engine.start()
+    time.sleep(0.05)
+    engine.stop()
+    assert null_input.recorded() == []

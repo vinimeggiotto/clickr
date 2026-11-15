@@ -64,7 +64,13 @@
     "double": "双击",
     "hold": "按住",
     "cursor": "光标",
-    "fixed": "固定点"
+    "fixed": "固定点",
+    "actionAria": "重复的操作",
+    "actionMouse": "鼠标",
+    "actionKey": "按键",
+    "key": "按键",
+    "keyPlaceholder": "SPACE, E, CTRL+C",
+    "keyCapture": "捕获"
   },
   "run": {
     "startDelay": "启动延迟",
@@ -87,7 +93,9 @@
     "seqRemove": "移除",
     "seqDelayMeta": "延迟 {ms} ms",
     "fixedPoint": "点：<strong>{x}, {y}</strong>",
-    "fixedHintCursor": "启用固定点或捕获坐标。"
+    "fixedHintCursor": "启用固定点或捕获坐标。",
+    "jitter": "位置随机偏移 ±",
+    "restoreCursor": "点击后将光标移回原位"
   },
   "advanced": {
     "windowFilter": "窗口过滤",
@@ -214,6 +222,9 @@
       "exists": "已存在名为“{name}”的配置。",
       "invalidFile": "配置文件无效。",
       "fileNotFound": "未找到文件。"
+    },
+    "key": {
+      "unsupported": "不支持的按键：{key}"
     }
   },
   "tray": {

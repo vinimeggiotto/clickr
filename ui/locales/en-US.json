@@ -64,7 +64,13 @@
     "double": "DOUBLE",
     "hold": "HOLD",
     "cursor": "CURSOR",
-    "fixed": "FIXED POINT"
+    "fixed": "FIXED POINT",
+    "actionAria": "What to repeat",
+    "actionMouse": "MOUSE",
+    "actionKey": "KEY",
+    "key": "Key",
+    "keyPlaceholder": "SPACE, E, CTRL+C",
+    "keyCapture": "capture"
   },
   "run": {
     "startDelay": "Start delay",
@@ -87,7 +93,9 @@
     "seqRemove": "Remove",
     "seqDelayMeta": "delay {ms} ms",
     "fixedPoint": "Point: <strong>{x}, {y}</strong>",
-    "fixedHintCursor": "Enable FIXED POINT or capture a coordinate."
+    "fixedHintCursor": "Enable FIXED POINT or capture a coordinate.",
+    "jitter": "Position variation ±",
+    "restoreCursor": "Return the cursor after the click"
   },
   "advanced": {
     "windowFilter": "Window filter",
@@ -214,6 +222,9 @@
       "exists": "A profile named “{name}” already exists.",
       "invalidFile": "Invalid profile file.",
       "fileNotFound": "File not found."
+    },
+    "key": {
+      "unsupported": "Unsupported key: {key}"
     }
   },
   "tray": {

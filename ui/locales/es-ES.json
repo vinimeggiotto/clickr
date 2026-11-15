@@ -64,7 +64,13 @@
     "double": "DOBLE",
     "hold": "HOLD",
     "cursor": "CURSOR",
-    "fixed": "PUNTO FIJO"
+    "fixed": "PUNTO FIJO",
+    "actionAria": "Qué repetir",
+    "actionMouse": "RATÓN",
+    "actionKey": "TECLA",
+    "key": "Tecla",
+    "keyPlaceholder": "SPACE, E, CTRL+C",
+    "keyCapture": "capturar"
   },
   "run": {
     "startDelay": "Retardo inicio",
@@ -87,7 +93,9 @@
     "seqRemove": "Quitar",
     "seqDelayMeta": "retardo {ms} ms",
     "fixedPoint": "Punto: <strong>{x}, {y}</strong>",
-    "fixedHintCursor": "Activa PUNTO FIJO o captura una coordenada."
+    "fixedHintCursor": "Activa PUNTO FIJO o captura una coordenada.",
+    "jitter": "Variación de posición ±",
+    "restoreCursor": "Devolver el cursor tras el clic"
   },
   "advanced": {
     "windowFilter": "Filtro de ventana",
@@ -214,6 +222,9 @@
       "exists": "Ya existe un perfil llamado “{name}”.",
       "invalidFile": "Archivo de perfil no válido.",
       "fileNotFound": "Archivo no encontrado."
+    },
+    "key": {
+      "unsupported": "Tecla no compatible: {key}"
     }
   },
   "tray": {

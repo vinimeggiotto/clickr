@@ -141,3 +141,19 @@ def test_tray_hint_and_manual_flags_persist(app):
     assert app.get_settings()["manual_seen"] is False
     app.set_manual_seen(True)
     assert app.get_settings()["manual_seen"] is True
+
+
+def test_invalid_key_name_rejected(app):
+    state = app.set_config({"action": "key", "key_name": "???"})
+    assert state["last_error"]["code"] == "key.unsupported"
+    assert state["config"]["action"] == "key" and state["config"]["key_name"] == "SPACE"
+
+
+def test_legacy_profile_resets_new_fields(app, tmp_path, fixtures_dir):
+    profiles = tmp_path / "Clickr" / "profiles"
+    profiles.mkdir(parents=True, exist_ok=True)
+    shutil.copy(fixtures_dir / "profile_v1_envelope.json", profiles / "antigo.json")
+    app.set_config({"restore_cursor": True, "position_jitter_px": 9, "action": "key", "key_name": "E"})
+    cfg = app.load_profile("antigo")["config"]
+    assert cfg["restore_cursor"] is False and cfg["position_jitter_px"] == 0
+    assert cfg["action"] == "mouse"

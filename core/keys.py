@@ -150,3 +150,24 @@ _MOD_FAMILY = {
 def modifier_family(vk: int) -> Optional[str]:
     """CTRL / ALT / SHIFT / WIN para qualquer variante (esq./dir.) do modificador."""
     return _MOD_FAMILY.get(int(vk))
+
+
+def parse_key_sequence(text: str) -> tuple:
+    """
+    'E' ou 'CTRL+SHIFT+A' → códigos VK na ordem de pressionamento.
+
+    Diferente de um atalho, aqui cada parte é uma tecla a pressionar de verdade
+    (modificadores incluídos). ValueError se alguma parte for inválida.
+    """
+    pieces: list = []
+    for piece in (text or "").split("+"):
+        piece = piece.strip()
+        if piece == "" and pieces:
+            pieces[-1] += "+"  # ex.: NUM+
+        elif piece == "":
+            raise ValueError("combinação vazia")
+        else:
+            pieces.append(piece)
+    if not pieces:
+        raise ValueError("combinação vazia")
+    return tuple(name_to_vk(piece) for piece in pieces)

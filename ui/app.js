@@ -49,6 +49,13 @@
   const scheduleHint = document.getElementById("scheduleHint");
   const scheduleSetBtn = document.getElementById("scheduleSetBtn");
   const scheduleCancelBtn = document.getElementById("scheduleCancelBtn");
+  const keyRow = document.getElementById("keyRow");
+  const keyName = document.getElementById("keyName");
+  const keyCaptureBtn = document.getElementById("keyCaptureBtn");
+  const mouseButtonRow = document.getElementById("mouseButtonRow");
+  const positionRow = document.getElementById("positionRow");
+  const posJitter = document.getElementById("posJitter");
+  const restoreCursor = document.getElementById("restoreCursor");
 
   for (let i = 0; i < 16; i++) {
     strip.appendChild(document.createElement("span"));
@@ -87,6 +94,10 @@
     burst_pause_ms: null,
     sequence: [],
     window_filter: { enabled: false, process: "", title_contains: "" },
+    restore_cursor: false,
+    position_jitter_px: 0,
+    action: "mouse",
+    key_name: "SPACE",
   };
 
   // Preferências do aplicativo (não fazem parte dos perfis).
@@ -386,7 +397,20 @@
           process: wf.process || "",
           title_contains: wf.title_contains || "",
         },
+        restore_cursor: !!cfg.restore_cursor,
+        position_jitter_px: cfg.position_jitter_px || 0,
+        action: cfg.action === "key" ? "key" : "mouse",
+        key_name: cfg.key_name || "SPACE",
       });
+      const keyMode = localConfig.action === "key";
+      keyRow.hidden = !keyMode;
+      mouseButtonRow.hidden = keyMode;
+      positionRow.hidden = keyMode;
+      setSegmentActive("action", localConfig.action);
+      if (!isFocused(keyName)) keyName.value = localConfig.key_name;
+      keyCaptureBtn.classList.toggle("recording", recordingAction === "action_key");
+      if (!isFocused(posJitter)) posJitter.value = String(localConfig.position_jitter_px);
+      if (!isFocused(restoreCursor)) restoreCursor.checked = localConfig.restore_cursor;
 
       if (!isFocused(intervalMs, intervalSlider)) {
         intervalMs.value = String(cfg.interval_ms);
@@ -626,6 +650,30 @@
   fixedY.addEventListener("change", () => {
     const y = parseInt(fixedY.value || "0", 10) || 0;
     pushConfig({ fixed_y: y, position_mode: "fixed" });
+  });
+
+  keyName.addEventListener("change", () => {
+    const value = (keyName.value || "").trim();
+    if (!value) {
+      keyName.value = localConfig.key_name;
+      return;
+    }
+    pushConfig({ key_name: value });
+  });
+
+  keyCaptureBtn.addEventListener("click", () => {
+    if (recordingAction) call("cancel_record_hotkey");
+    else call("capture_action_key");
+  });
+
+  posJitter.addEventListener("change", () => {
+    const px = Math.min(500, Math.max(0, parseInt(posJitter.value || "0", 10) || 0));
+    posJitter.value = String(px);
+    pushConfig({ position_jitter_px: px });
+  });
+
+  restoreCursor.addEventListener("change", () => {
+    pushConfig({ restore_cursor: restoreCursor.checked });
   });
 
   wfEnabled.addEventListener("change", () => {

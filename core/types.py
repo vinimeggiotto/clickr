@@ -8,10 +8,13 @@ from typing import Any, Literal, Optional
 ButtonName = Literal["left", "right", "middle", "x1", "x2"]
 ClickType = Literal["single", "double", "hold"]
 PositionMode = Literal["cursor", "fixed"]
+ActionKind = Literal["mouse", "key"]
 
 _VALID_BUTTONS = frozenset({"left", "right", "middle", "x1", "x2"})
 _VALID_CLICK_TYPES = frozenset({"single", "double", "hold"})
 _VALID_POSITION_MODES = frozenset({"cursor", "fixed"})
+_VALID_ACTIONS = frozenset({"mouse", "key"})
+MAX_POSITION_JITTER_PX = 500
 
 # Chaves que perfis da versão 1 guardavam junto com a config de clique e que
 # hoje são preferências do aplicativo.
@@ -100,6 +103,11 @@ class ClickConfig:
     burst_pause_ms: Optional[int] = None
     sequence: list[SequenceStep] = field(default_factory=list)
     window_filter: WindowFilterConfig = field(default_factory=WindowFilterConfig)
+    # --- Campos adicionados na 1.1 (padrões = comportamento da 1.0) ---
+    restore_cursor: bool = False
+    position_jitter_px: int = 0
+    action: ActionKind = "mouse"
+    key_name: str = "SPACE"
 
     def clamped_interval_ms(self) -> int:
         return max(1, int(self.interval_ms))
@@ -130,6 +138,10 @@ class ClickConfig:
             "burst_pause_ms": self.burst_pause_ms,
             "sequence": [s.to_dict() for s in self.sequence],
             "window_filter": self.window_filter.to_dict(),
+            "restore_cursor": bool(self.restore_cursor),
+            "position_jitter_px": int(self.position_jitter_px),
+            "action": self.action,
+            "key_name": self.key_name,
         }
 
     @classmethod
@@ -158,6 +170,17 @@ class ClickConfig:
             merged["jitter_ms"] = max(0, int(merged["jitter_ms"]))
         if "hold" in merged:
             merged["hold"] = bool(merged["hold"])
+        if "restore_cursor" in merged:
+            merged["restore_cursor"] = bool(merged["restore_cursor"])
+        if "position_jitter_px" in merged:
+            merged["position_jitter_px"] = min(
+                MAX_POSITION_JITTER_PX, max(0, int(merged["position_jitter_px"]))
+            )
+        if "action" in merged:
+            act = str(merged["action"]).lower()
+            merged["action"] = act if act in _VALID_ACTIONS else "mouse"
+        if "key_name" in merged:
+            merged["key_name"] = str(merged["key_name"]).strip().upper() or "SPACE"
         if "button" in merged and merged["button"] is not None:
             btn = str(merged["button"]).lower()
             if btn not in _VALID_BUTTONS:

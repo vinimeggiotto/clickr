@@ -9,6 +9,7 @@ import time
 from typing import Callable, Optional
 
 from core import sendinput
+from core.keys import parse_key_sequence
 from core.types import ClickConfig, RuntimeState
 from sequence.runner import SequenceRunner
 from window_filter.filter import WindowFilter
@@ -66,6 +67,8 @@ class ClickEngine:
         self._started_at: Optional[float] = None
         self._last_error: Optional[object] = None
         self._hold_button: Optional[str] = None
+        self._hold_keys: tuple = ()
+        self._key_guard: Optional[Callable[[], bool]] = None
         self._on_tick: Optional[Callable[[], None]] = None
         self._click_guard: Optional[Callable[[int, int], bool]] = None
         self._window_filter = WindowFilter()
@@ -79,6 +82,10 @@ class ClickEngine:
     def set_click_guard(self, guard: Optional[Callable[[int, int], bool]]) -> None:
         """guard(x, y) → True bloqueia o clique naquele ponto de tela."""
         self._click_guard = guard
+
+    def set_key_guard(self, guard: Optional[Callable[[], bool]]) -> None:
+        """guard() → True bloqueia o envio de teclas (ex.: Clickr em foco)."""
+        self._key_guard = guard
 
     @property
     def window_filter(self) -> WindowFilter:
@@ -125,6 +132,7 @@ class ClickEngine:
             self._stop_event.clear()
             self._running = True
             self._hold_button = None
+            self._hold_keys = ()
             self._due = None
             self._window_filter.configure(self._config.window_filter)
             self._sequence.reset(self._config.sequence)
@@ -174,15 +182,19 @@ class ClickEngine:
             pass
 
     def _release_hold_if_needed(self) -> None:
-        button = self._hold_button
-        if button is None:
-            return
+        button, self._hold_button = self._hold_button, None
+        keys, self._hold_keys = self._hold_keys, ()
         try:
-            sendinput.button_up(button)  # type: ignore[arg-type]
+            if button is not None:
+                sendinput.button_up(button)  # type: ignore[arg-type]
+            for vk in reversed(keys):
+                sendinput.key_up(vk)
         except (OSError, ValueError) as exc:
             self._last_error = str(exc)
-        finally:
-            self._hold_button = None
+
+    @property
+    def _holding(self) -> bool:
+        return self._hold_button is not None or bool(self._hold_keys)
 
     def _is_hold(self, config: ClickConfig) -> bool:
         return config.click_type == "hold" or config.hold
@@ -246,13 +258,18 @@ class ClickEngine:
         Retorna (use_fixed, x, y, step_delay_ms).
 
         step_delay_ms só vem da sequência; None = usar interval_ms.
+        O jitter de posição desloca pontos fixos/da sequência; no modo cursor
+        não se aplica (o cursor é do usuário).
         """
+        jitter = max(0, int(config.position_jitter_px))
+        dx = random.randint(-jitter, jitter) if jitter else 0
+        dy = random.randint(-jitter, jitter) if jitter else 0
         if config.has_sequence() and not self._is_hold(config):
             target = self._sequence.peek()
             if target is not None:
-                return True, target.x, target.y, target.delay_ms
+                return True, target.x + dx, target.y + dy, target.delay_ms
         if config.position_mode == "fixed":
-            return True, config.fixed_x, config.fixed_y, None
+            return True, config.fixed_x + dx, config.fixed_y + dy, None
         return False, 0, 0, None
 
     def _guard_blocks(self, use_fixed: bool, x: int, y: int) -> bool:
@@ -266,6 +283,33 @@ class ClickEngine:
         except Exception:
             return False
 
+    def _key_guard_blocks(self) -> bool:
+        guard = self._key_guard
+        if guard is None:
+            return False
+        try:
+            return bool(guard())
+        except Exception:
+            return False
+
+    def _perform_key_action(self, config: ClickConfig) -> int:
+        """Ação de teclado: pressiona a tecla/combinação configurada."""
+        vks = parse_key_sequence(config.key_name)
+        if self._is_hold(config):
+            if self._hold_keys:
+                return 0
+            for vk in vks:
+                sendinput.key_down(vk)
+            self._hold_keys = tuple(vks)
+            return 1
+        times = 2 if config.click_type == "double" else 1
+        for _ in range(times):
+            for vk in vks:
+                sendinput.key_down(vk)
+            for vk in reversed(vks):
+                sendinput.key_up(vk)
+        return times
+
     def _perform_action(
         self,
         config: ClickConfig,
@@ -275,6 +319,7 @@ class ClickEngine:
     ) -> int:
         """Executa a ação do tick. Retorna quantos cliques contabilizar."""
         button = config.button
+        restore = bool(config.restore_cursor)
 
         if self._is_hold(config):
             if self._hold_button is None:
@@ -287,26 +332,31 @@ class ClickEngine:
 
         if config.click_type == "double":
             if use_fixed:
-                sendinput.double_click_at(button, x, y)
+                sendinput.double_click_at(button, x, y, restore=restore)
             else:
                 sendinput.double_click(button)
             return 2
 
         if use_fixed:
-            sendinput.click_at(button, x, y)
+            sendinput.click_at(button, x, y, restore=restore)
         else:
             sendinput.click(button)
         return 1
 
     def _maybe_click(self, config: ClickConfig) -> tuple[int, Optional[int]]:
         """
-        Tenta um clique se o filtro e o guard permitirem.
+        Tenta uma ação se o filtro e os guards permitirem.
 
         Retorna (clicks_added, step_delay_ms).
-        Clique pulado: (0, None) e não avança a sequência.
+        Ação pulada: (0, None) e não avança a sequência.
         """
         if not self._window_filter.allows():
             return 0, None
+
+        if config.action == "key":
+            if self._key_guard_blocks():
+                return 0, None
+            return self._perform_key_action(config), None
 
         use_fixed, x, y, step_delay = self._resolve_target(config)
         if self._guard_blocks(use_fixed, x, y):
@@ -375,7 +425,7 @@ class ClickEngine:
         added, _ = self._maybe_click(config)
         if self._apply_click_result(added, config, loop_start):
             return True
-        if self._hold_button is not None:
+        if self._holding:
             return self._wait_interruptible(0.05)
         # Filtro bloqueou o press — espera intervalo e tenta de novo
         return self._wait_interruptible(self._interval_with_jitter_s(config))

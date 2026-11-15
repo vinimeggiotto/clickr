@@ -1387,3 +1387,20 @@ body:not(.booting) .splash {
 .field > .segmented {
   margin-top: 6px;
 }
+
+.key-input {
+  align-items: center;
+}
+
+.key-input .keycap {
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.row[hidden],
+.field[hidden] {
+  display: none;
+}

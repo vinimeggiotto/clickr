@@ -19,6 +19,7 @@ from app.settings import ACTIVATION_MODES, HOTKEY_ACTIONS, SUPPORTED_LOCALES, Ap
 from core import sendinput
 from core.engine import ClickEngine
 from core.errors import ClickrError, error_from_exception, normalize_error
+from core.keys import parse_key_sequence
 from core.types import LEGACY_APP_KEYS, PROFILE_VERSION, V1_CONFIG_KEYS, ClickConfig
 from hotkeys.service import HotkeyService
 from macros.player import MacroPlayer
@@ -26,7 +27,7 @@ from macros.recorder import MacroRecorder
 from profiles.repo import ProfilesRepo
 from scheduler.service import Scheduler
 from scripts.runner import ScriptRunner
-from window_filter.filter import point_in_own_window
+from window_filter.filter import foreground_is_own_window, point_in_own_window
 
 UI_DIR = ui_dir()
 log = get_logger()
@@ -136,6 +137,7 @@ class AppController:
         self._apply_always_on_top(bool(self._settings.get("always_on_top")))
         self.start_tray()
         self._engine.set_click_guard(self._click_guard)
+        self._engine.set_key_guard(self._key_guard)
         self._macro_recorder.set_ignore_point(self._click_guard)
         signal = self._notifier.signal
         self._engine.set_on_tick(signal)
@@ -471,6 +473,22 @@ class AppController:
         return self.get_state()
 
     @api
+    def capture_action_key(self) -> dict[str, Any]:
+        """Captura a próxima tecla/combinação como a tecla do autoclique de teclado."""
+        if self._recording_hotkey:
+            return self.get_state()
+        self._recording_hotkey = True
+        self._recording_hotkey_action = "action_key"
+        try:
+            self._hotkeys.begin_capture(self._on_action_key_captured)
+        except Exception:
+            self._recording_hotkey = False
+            self._recording_hotkey_action = ""
+            raise
+        self._notifier.signal()
+        return self.get_state()
+
+    @api
     def set_hotkey(self, action: str = "toggle", combo: str = "") -> dict[str, Any]:
         """Define o atalho de uma ação por texto (ex.: 'CTRL+ALT+F6'); vazio remove."""
         self._set_hotkey(str(action or "toggle"), str(combo or ""))
@@ -798,6 +816,12 @@ class AppController:
         """
         data = dict(data)
         prefs = {key: data.pop(key) for key in LEGACY_APP_KEYS if key in data}
+        if data.get("key_name") is not None:
+            try:
+                parse_key_sequence(str(data["key_name"]))
+            except ValueError:
+                bad = str(data.pop("key_name"))
+                self._fail("key.unsupported", f"Tecla não suportada: {bad}", key=bad)
         try:
             if replace:
                 data = ClickConfig.from_dict(data).to_dict()
@@ -883,6 +907,17 @@ class AppController:
                 self._error = exc.to_dict()
         self._notifier.signal()
 
+    def _on_action_key_captured(self, text: str) -> None:
+        self._recording_hotkey = False
+        self._recording_hotkey_action = ""
+        self._clear_errors()
+        if text:
+            try:
+                self._apply_config({"action": "key", "key_name": text})
+            except ClickrError as exc:
+                self._error = exc.to_dict()
+        self._notifier.signal()
+
     def _on_hotkey_action(self, action: str) -> None:
         """Chamado pela thread de despacho do HotkeyService."""
         if self._recording_hotkey:
@@ -964,6 +999,11 @@ class AppController:
         self._engine.stop()
         if not self._macro_recorder.start():
             self._fail("macro.recordFailed", "Não foi possível iniciar a gravação da macro.")
+
+    def _key_guard(self) -> bool:
+        """True quando as teclas iriam para a própria janela do Clickr."""
+        native = foreground_is_own_window()
+        return bool(native) if native is not None else False
 
     def _click_guard(self, x: int, y: int) -> bool:
         """True quando o clique cairia sobre uma janela do próprio Clickr."""
