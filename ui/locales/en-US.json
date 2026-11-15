@@ -164,7 +164,52 @@
     "infoUnavailable": "Info window unavailable.",
     "pickHint": "Click the screen to mark the point (Esc cancels)…",
     "wizardSavedStart": "Profile “{name}” saved and engine started.",
-    "wizardSavedOnly": "Profile “{name}” saved. Tweak later in Click / Run / Point."
+    "wizardSavedOnly": "Profile “{name}” saved. Tweak later in Click / Run / Point.",
+    "overlayMissing": "Capture overlay not found.",
+    "alwaysOnTop": "Could not apply “always on top”.",
+    "config": {
+      "invalid": "Invalid configuration."
+    },
+    "hotkey": {
+      "unsupported": "Unsupported hotkey: {key}"
+    },
+    "sequence": {
+      "badIndex": "Invalid sequence step."
+    },
+    "macro": {
+      "empty": "Empty macro — record events before playing.",
+      "recordFailed": "Could not start macro recording.",
+      "busy": "Stop the macro before continuing.",
+      "unsupportedKey": "The macro contains an unsupported key: {key}",
+      "unknownEvent": "Unknown macro event: {kind}"
+    },
+    "schedule": {
+      "empty": "Enter a date and time to schedule.",
+      "invalid": "Invalid date/time.",
+      "past": "The scheduled time must be in the future."
+    },
+    "script": {
+      "empty": "Empty script.",
+      "tooLong": "The script exceeds {max} lines.",
+      "unknownCommand": "Line {line}: unknown command “{op}”.",
+      "usage": "Line {line}: use “{usage}”.",
+      "badNumber": "Line {line}: invalid number “{value}”.",
+      "badButton": "Line {line}: invalid button “{value}”.",
+      "badKey": "Line {line}: unsupported key “{value}”.",
+      "negativeWait": "Line {line}: invalid wait (use MS or MIN-MAX).",
+      "loopRange": "Line {line}: loop must be between 1 and {max}.",
+      "loopDepth": "Line {line}: at most {max} nested loops.",
+      "endWithoutLoop": "Line {line}: “end” without a matching loop.",
+      "loopNoEnd": "A loop is missing its “end”."
+    },
+    "profile": {
+      "invalidName": "Invalid profile name. Use letters, numbers, space, _ . - (max. 64).",
+      "reservedName": "“{name}” is reserved by the system. Choose another name.",
+      "notFound": "Profile not found: {name}",
+      "exists": "A profile named “{name}” already exists.",
+      "invalidFile": "Invalid profile file.",
+      "fileNotFound": "File not found."
+    }
   },
   "tray": {
     "show": "Show",

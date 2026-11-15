@@ -63,3 +63,47 @@ def test_stop_and_toggle(null_input):
     time.sleep(0.05)
     assert engine.toggle() is False
     assert not engine.is_running()
+
+
+def test_notifies_when_limit_reached(null_input):
+    engine = ClickEngine()
+    seen = []
+    engine.set_on_tick(lambda: seen.append(engine.is_running()))
+    engine.update_config({"interval_ms": 1, "max_clicks": 3})
+    engine.start()
+    _wait_stopped(engine)
+    time.sleep(0.05)
+    assert seen and seen[-1] is False
+
+
+def test_hold_releases_pressed_button_even_if_config_changes(null_input):
+    engine = ClickEngine()
+    engine.update_config({"click_type": "hold", "button": "right"})
+    engine.start()
+    time.sleep(0.08)
+    engine.update_config({"button": "left"})
+    engine.stop()
+    rec = null_input.recorded()
+    assert ("up", "right") in rec
+    assert ("up", "left") not in rec
+
+
+def test_click_guard_blocks(null_input):
+    engine = ClickEngine()
+    engine.set_click_guard(lambda x, y: True)
+    engine.update_config({"interval_ms": 2})
+    engine.start()
+    time.sleep(0.06)
+    engine.stop()
+    assert [c for c in null_input.recorded() if c[0] == "click"] == []
+    assert engine.get_state().click_count == 0
+
+
+def test_rate_is_close_to_interval(null_input):
+    engine = ClickEngine()
+    engine.update_config({"interval_ms": 10})
+    engine.start()
+    time.sleep(0.5)
+    engine.stop()
+    n = engine.get_state().click_count
+    assert 40 <= n <= 56, n

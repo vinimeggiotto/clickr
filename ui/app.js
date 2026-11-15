@@ -59,6 +59,17 @@
   let pollTimer = null;
   let apiReady = false;
   let applying = false;
+  let toggling = false;
+  let stateError = "";
+  let localError = "";
+  let localErrorTimer = null;
+  let intervalTimer = null;
+  let lastSequenceKey = null;
+  let lastProfilesKey = null;
+
+  const POLL_MS = 500;
+  const LOCAL_ERROR_MS = 8000;
+  const INTERVAL_DEBOUNCE_MS = 400;
 
   const localConfig = {
     interval_ms: 80,
@@ -121,12 +132,75 @@
     return n;
   }
 
+  /** Erro vindo do backend: {code, message, params} | string | null → texto. */
+  function formatError(err) {
+    if (!err) return "";
+    if (typeof err === "string") return err;
+    if (!err.code || err.code === "generic") return err.message || "";
+    const key = "errors." + err.code;
+    const text = t(key, err.params || {});
+    if (typeof text === "string" && text !== key) return text;
+    return err.message || String(err.code || "");
+  }
+
+  function renderError() {
+    errorLabel.textContent = localError || stateError || "";
+  }
+
+  /**
+   * Mensagem gerada na própria UI (validação, exceção da bridge, aviso do
+   * assistente). Não é apagada pelas atualizações de estado: some sozinha
+   * depois de alguns segundos ou quando outra mensagem a substitui.
+   */
+  function showLocalError(message) {
+    localError = message ? String(message) : "";
+    if (localErrorTimer) {
+      clearTimeout(localErrorTimer);
+      localErrorTimer = null;
+    }
+    if (localError) {
+      localErrorTimer = setTimeout(() => {
+        localError = "";
+        localErrorTimer = null;
+        renderError();
+      }, LOCAL_ERROR_MS);
+    }
+    renderError();
+  }
+
+  function clearLocalError() {
+    showLocalError("");
+  }
+
+  /**
+   * Chama um método da bridge. Se o retorno for um estado, aplica na UI.
+   * Exceções da bridge viram mensagem local; retorna null nesse caso.
+   */
+  async function call(method, ...args) {
+    const bridge = api();
+    if (!bridge || typeof bridge[method] !== "function") return null;
+    try {
+      const result = await bridge[method](...args);
+      if (result && typeof result === "object" && result.config) {
+        clearLocalError();
+        applyVisual(result);
+      }
+      return result;
+    } catch (err) {
+      showLocalError(String((err && err.message) || err));
+      return null;
+    }
+  }
+
   function isFocused(...els) {
     return els.some((el) => document.activeElement === el);
   }
 
-  function renderSequence(sequence) {
+  function renderSequence(sequence, force) {
     const steps = Array.isArray(sequence) ? sequence : [];
+    const key = JSON.stringify(steps);
+    if (!force && key === lastSequenceKey) return;
+    lastSequenceKey = key;
     seqList.innerHTML = "";
     steps.forEach((step, index) => {
       const li = document.createElement("li");
@@ -140,15 +214,7 @@
       rm.className = "rm";
       rm.title = t("point.seqRemove");
       rm.textContent = "×";
-      rm.addEventListener("click", async () => {
-        const bridge = api();
-        if (!bridge) return;
-        try {
-          applyVisual(await bridge.remove_sequence_point(index));
-        } catch (err) {
-          errorLabel.textContent = String(err.message || err);
-        }
-      });
+      rm.addEventListener("click", () => call("remove_sequence_point", index));
       li.appendChild(info);
       li.appendChild(rm);
       seqList.appendChild(li);
@@ -200,7 +266,8 @@
     }
     lastCount = count;
 
-    errorLabel.textContent = state.last_error || "";
+    stateError = formatError(state.last_error);
+    renderError();
 
     const recording = !!state.recording_hotkey;
     hotkeyBtn.classList.toggle("recording", recording);
@@ -209,6 +276,7 @@
     pickBtn.textContent = state.picking ? t("point.picking") : t("point.pick");
 
     const evCount = macro.event_count || 0;
+    macroRecordBtn.dataset.recording = macro.recording ? "1" : "0";
     if (macro.recording) {
       macroHint.textContent = t("macro.recording", { n: evCount });
       macroRecordBtn.textContent = t("macro.stopRecord");
@@ -311,6 +379,9 @@
   }
 
   function refreshProfileList(names) {
+    const key = JSON.stringify(names);
+    if (key === lastProfilesKey) return;
+    lastProfilesKey = key;
     const selected = profileList.value;
     profileList.innerHTML = "";
     names.forEach((name) => {
@@ -346,14 +417,7 @@
   async function pushConfig(partial) {
     if (applying) return;
     Object.assign(localConfig, partial);
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      const state = await bridge.set_config(partial);
-      applyVisual(state);
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+    await call("set_config", partial);
   }
 
   async function pushWindowFilter(partial) {
@@ -365,17 +429,23 @@
   async function refreshState() {
     const bridge = api();
     if (!bridge) return;
-    const state = await bridge.get_state();
-    applyVisual(state);
+    try {
+      applyVisual(await bridge.get_state());
+    } catch (_) {
+      /* bridge ocupada ou encerrando: o próximo ciclo tenta de novo */
+    }
   }
 
-  window.__clickrApplyState = () => {
-    refreshState();
+  // O backend envia o estado pronto (com limite de frequência); sem argumento,
+  // a UI busca por conta própria.
+  window.__clickrApplyState = (state) => {
+    if (state && typeof state === "object") applyVisual(state);
+    else refreshState();
   };
 
   function startPolling() {
     if (pollTimer) return;
-    pollTimer = setInterval(refreshState, 100);
+    pollTimer = setInterval(refreshState, POLL_MS);
   }
 
   function stopPolling() {
@@ -385,25 +455,24 @@
   }
 
   async function toggleRun() {
-    const bridge = api();
-    if (!bridge) return;
-    const state = await bridge.get_state();
-    const macro = state.macro || {};
-    const script = state.script || {};
-    let next;
-    if (macro.recording) {
-      next = await bridge.macro_record_stop();
-    } else if (macro.playing) {
-      next = await bridge.macro_stop();
-    } else if (script.running) {
-      next = await bridge.script_stop();
-    } else if (state.running) {
-      next = await bridge.stop();
-    } else {
-      next = await bridge.start();
+    if (toggling) return;
+    toggling = true;
+    try {
+      const bridge = api();
+      if (!bridge) return;
+      const state = await bridge.get_state();
+      const macro = state.macro || {};
+      const script = state.script || {};
+      if (macro.recording) await call("macro_record_stop");
+      else if (macro.playing) await call("macro_stop");
+      else if (script.running) await call("script_stop");
+      else if (state.running) await call("stop");
+      else await call("start");
+    } catch (err) {
+      showLocalError(String((err && err.message) || err));
+    } finally {
+      toggling = false;
     }
-    applyVisual(next);
-    startPolling();
   }
 
   function activateTab(name) {
@@ -419,19 +488,51 @@
     });
   }
 
+  /** Lê o intervalo digitado; null se vazio ou inválido (nada é enviado). */
+  function readInterval(el) {
+    const raw = String(el.value || "").trim();
+    if (raw === "") return null;
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n) || n < 1) return null;
+    return n;
+  }
+
+  function commitInterval(el) {
+    if (intervalTimer) {
+      clearTimeout(intervalTimer);
+      intervalTimer = null;
+    }
+    const ms = readInterval(el);
+    if (ms == null) {
+      // Campo vazio/inválido: mantém o valor em vigor.
+      intervalMs.value = String(localConfig.interval_ms);
+      syncCps();
+      return;
+    }
+    if (ms !== localConfig.interval_ms) pushConfig({ interval_ms: ms });
+  }
+
+  function scheduleInterval(el) {
+    if (intervalTimer) clearTimeout(intervalTimer);
+    if (readInterval(el) == null) return;
+    intervalTimer = setTimeout(() => commitInterval(el), INTERVAL_DEBOUNCE_MS);
+  }
+
   intervalMs.addEventListener("input", () => {
-    intervalSlider.value = intervalMs.value;
-    syncCps();
-    const ms = Math.max(1, parseInt(intervalMs.value || "1", 10));
-    pushConfig({ interval_ms: ms });
+    if (readInterval(intervalMs) != null) {
+      intervalSlider.value = intervalMs.value;
+      syncCps();
+    }
+    scheduleInterval(intervalMs);
   });
+  intervalMs.addEventListener("change", () => commitInterval(intervalMs));
 
   intervalSlider.addEventListener("input", () => {
     intervalMs.value = intervalSlider.value;
     syncCps();
-    const ms = Math.max(1, parseInt(intervalSlider.value || "1", 10));
-    pushConfig({ interval_ms: ms });
+    scheduleInterval(intervalSlider);
   });
+  intervalSlider.addEventListener("change", () => commitInterval(intervalSlider));
   syncCps();
 
   startDelay.addEventListener("change", () => {
@@ -458,16 +559,9 @@
     pushConfig({ always_on_top: alwaysOnTop.checked });
   });
 
-  compactMode.addEventListener("change", async () => {
-    const enabled = compactMode.checked;
-    applyCompactMode(enabled);
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.set_compact_mode(enabled));
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+  compactMode.addEventListener("change", () => {
+    applyCompactMode(compactMode.checked);
+    call("set_compact_mode", compactMode.checked);
   });
 
   fixedX.addEventListener("change", () => {
@@ -500,133 +594,52 @@
     pushConfig({ burst_pause_ms: parseOptionalNonNeg(burstPause) });
   });
 
-  pickBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      const state = await bridge.pick_location();
-      applyVisual(state);
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
-  });
+  pickBtn.addEventListener("click", () => call("pick_location"));
 
-  addSeqBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
+  addSeqBtn.addEventListener("click", () => {
     const delay = Math.max(0, parseInt(seqDelay.value || "0", 10) || 0);
-    try {
-      // Usa XY do ponto fixo se modo fixed; senão cursor atual (omitido)
-      const payload =
-        localConfig.position_mode === "fixed"
-          ? {
-              x: localConfig.fixed_x,
-              y: localConfig.fixed_y,
-              delay_ms: delay,
-            }
-          : { delay_ms: delay };
-      let state;
-      if (payload.x != null) {
-        state = await bridge.add_sequence_point(payload.x, payload.y, payload.delay_ms);
-      } else {
-        state = await bridge.add_sequence_point(null, null, delay);
-      }
-      applyVisual(state);
-      errorLabel.textContent = "";
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
+    // Usa XY do ponto fixo se modo fixed; senão cursor atual (omitido)
+    if (localConfig.position_mode === "fixed") {
+      call("add_sequence_point", localConfig.fixed_x, localConfig.fixed_y, delay);
+    } else {
+      call("add_sequence_point", null, null, delay);
     }
   });
 
-  clearSeqBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.clear_sequence());
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
-  });
+  clearSeqBtn.addEventListener("click", () => call("clear_sequence"));
 
   hotkeyBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      const state = await bridge.get_state();
-      if (state.recording_hotkey) {
-        applyVisual(await bridge.cancel_record_hotkey());
-      } else {
-        applyVisual(await bridge.record_hotkey());
-      }
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+    const recording = hotkeyBtn.classList.contains("recording");
+    await call(recording ? "cancel_record_hotkey" : "record_hotkey");
   });
 
   saveProfileBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
     const name = (profileName.value || profileList.value || "").trim();
     if (!name) {
-      errorLabel.textContent = t("profiles.needName");
+      showLocalError(t("profiles.needName"));
       return;
     }
-    try {
-      const state = await bridge.save_profile(name);
-      profileName.value = state.saved_profile || name;
-      applyVisual(state);
-      errorLabel.textContent = "";
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+    const state = await call("save_profile", name);
+    if (state && state.saved_profile) profileName.value = state.saved_profile;
   });
 
   loadProfileBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
     const name = (profileList.value || profileName.value || "").trim();
     if (!name) {
-      errorLabel.textContent = t("profiles.needSelect");
+      showLocalError(t("profiles.needSelect"));
       return;
     }
-    try {
-      const state = await bridge.load_profile(name);
-      profileName.value = name;
-      applyVisual(state);
-      errorLabel.textContent = "";
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+    const state = await call("load_profile", name);
+    if (state && !state.last_error) profileName.value = name;
   });
 
-  exportProfileBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    const name = (profileName.value || profileList.value || "").trim();
-    try {
-      const state = await bridge.export_profile(name);
-      applyVisual(state);
-      if (state.exported_path) {
-        errorLabel.textContent = "";
-      }
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+  exportProfileBtn.addEventListener("click", () => {
+    call("export_profile", (profileName.value || profileList.value || "").trim());
   });
 
   importProfileBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    const name = (profileName.value || "").trim();
-    try {
-      const state = await bridge.import_profile(name);
-      if (state.imported_profile) {
-        profileName.value = state.imported_profile;
-      }
-      applyVisual(state);
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+    const state = await call("import_profile", (profileName.value || "").trim());
+    if (state && state.imported_profile) profileName.value = state.imported_profile;
   });
 
   profileList.addEventListener("change", () => {
@@ -638,87 +651,21 @@
   });
 
   macroRecordBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      const state = await bridge.get_state();
-      const recording = state.macro && state.macro.recording;
-      applyVisual(recording ? await bridge.macro_record_stop() : await bridge.macro_record_start());
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+    const recording = macroRecordBtn.dataset.recording === "1";
+    await call(recording ? "macro_record_stop" : "macro_record_start");
   });
 
-  macroPlayBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.macro_play());
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
-  });
+  macroPlayBtn.addEventListener("click", () => call("macro_play"));
+  macroStopBtn.addEventListener("click", () => call("macro_stop"));
+  macroClearBtn.addEventListener("click", () => call("macro_clear"));
 
-  macroStopBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.macro_stop());
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
-  });
+  scriptRunBtn.addEventListener("click", () => call("script_run", scriptSource.value || ""));
+  scriptStopBtn.addEventListener("click", () => call("script_stop"));
 
-  macroClearBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.macro_clear());
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+  scheduleSetBtn.addEventListener("click", () => {
+    call("schedule_set", (scheduleAt.value || "").trim());
   });
-
-  scriptRunBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.script_run(scriptSource.value || ""));
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
-  });
-
-  scriptStopBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.script_stop());
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
-  });
-
-  scheduleSetBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    const raw = (scheduleAt.value || "").trim();
-    try {
-      applyVisual(await bridge.schedule_set(raw));
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
-  });
-
-  scheduleCancelBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.schedule_cancel());
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
-  });
+  scheduleCancelBtn.addEventListener("click", () => call("schedule_cancel"));
 
   mainBtn.addEventListener("click", () => {
     toggleRun();
@@ -727,15 +674,9 @@
   const winMin = document.getElementById("winMin");
   const winClose = document.getElementById("winClose");
   if (winMin) {
-    winMin.addEventListener("click", async (e) => {
+    winMin.addEventListener("click", (e) => {
       e.stopPropagation();
-      const bridge = api();
-      if (!bridge || !bridge.window_minimize) return;
-      try {
-        await bridge.window_minimize();
-      } catch (err) {
-        errorLabel.textContent = String(err.message || err);
-      }
+      call("window_minimize");
     });
   }
   const trayModal = document.getElementById("trayModal");
@@ -765,15 +706,9 @@
     });
   }
   if (trayModalOk) {
-    trayModalOk.addEventListener("click", async () => {
+    trayModalOk.addEventListener("click", () => {
       closeTrayModal();
-      const bridge = api();
-      if (!bridge || !bridge.window_close) return;
-      try {
-        await bridge.window_close();
-      } catch (err) {
-        errorLabel.textContent = String(err.message || err);
-      }
+      call("window_close");
     });
   }
   if (trayModal) {
@@ -883,6 +818,8 @@
     if (window.ClickrManual && window.ClickrManual.reloadLocale) {
       window.ClickrManual.reloadLocale();
     }
+    // Textos montados por código precisam ser refeitos no novo idioma.
+    lastSequenceKey = null;
     await refreshState();
   }
 
@@ -895,13 +832,18 @@
       try {
         await applyLocale(code, true);
       } catch (err) {
-        errorLabel.textContent = String(err.message || err);
+        showLocalError(String(err.message || err));
       }
     });
   }
 
   function bindManualHooks() {
     if (!window.ClickrManual) return;
+    const requireOk = (state) => {
+      if (!state) throw new Error(localError || t("errors.bridgeUnavailable"));
+      if (state.last_error) throw new Error(formatError(state.last_error));
+      return state;
+    };
     window.ClickrManual.bind({
       activateTab,
       pushConfig,
@@ -913,30 +855,14 @@
         applyVisual(state);
         return state;
       },
-      setError: (msg) => {
-        errorLabel.textContent = msg || "";
-      },
-      pickLocation: async () => {
-        const bridge = api();
-        if (!bridge) return null;
-        return bridge.pick_location();
-      },
+      setError: (msg) => showLocalError(msg || ""),
+      pickLocation: () => call("pick_location"),
       saveProfile: async (name) => {
-        const bridge = api();
-        if (!bridge) throw new Error(t("errors.bridgeUnavailable"));
-        const state = await bridge.save_profile(name);
+        const state = requireOk(await call("save_profile", name));
         if (profileName) profileName.value = state.saved_profile || name;
-        applyVisual(state);
         return state;
       },
-      start: async () => {
-        const bridge = api();
-        if (!bridge) throw new Error(t("errors.bridgeUnavailable"));
-        const state = await bridge.start();
-        applyVisual(state);
-        startPolling();
-        return state;
-      },
+      start: async () => requireOk(await call("start")),
     });
   }
 
@@ -955,6 +881,9 @@
       const settings = bridge && bridge.get_settings ? await bridge.get_settings() : {};
       if (settings && settings.version) {
         applyVersion(settings.version);
+      }
+      if (settings && Array.isArray(settings.profiles)) {
+        refreshProfileList(settings.profiles);
       }
 
       const elapsedSplash = Date.now() - splashStarted;
@@ -985,7 +914,7 @@
         }
       }
     } catch (err) {
-      errorLabel.textContent = String(err.message || err);
+      showLocalError(String(err.message || err));
       hideSplash();
     }
   }
@@ -996,7 +925,7 @@
     window.addEventListener("pywebviewready", boot);
     setTimeout(() => {
       if (!apiReady) {
-        errorLabel.textContent = t("errors.waitingBridge");
+        showLocalError(t("errors.waitingBridge"));
       }
     }, 800);
   }

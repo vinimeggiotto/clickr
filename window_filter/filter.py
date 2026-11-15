@@ -8,12 +8,59 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from ctypes import wintypes
 from typing import Optional
 
 from core.types import WindowFilterConfig
 
 PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+GA_ROOT = 2
+
+# Fora do Windows a consulta abre subprocessos (osascript / xprop); o resultado
+# é reaproveitado por este intervalo para não distorcer o ritmo dos cliques.
+_FOREGROUND_CACHE_TTL_S = 0.25
+
+
+_own_window_api: Optional[tuple] = None
+
+
+def _load_own_window_api() -> tuple:
+    global _own_window_api
+    if _own_window_api is None:
+        user32 = ctypes.WinDLL("user32", use_last_error=True)
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        user32.WindowFromPoint.argtypes = (wintypes.POINT,)
+        user32.WindowFromPoint.restype = wintypes.HWND
+        user32.GetAncestor.argtypes = (wintypes.HWND, wintypes.UINT)
+        user32.GetAncestor.restype = wintypes.HWND
+        user32.GetWindowThreadProcessId.argtypes = (
+            wintypes.HWND,
+            ctypes.POINTER(wintypes.DWORD),
+        )
+        user32.GetWindowThreadProcessId.restype = wintypes.DWORD
+        kernel32.GetCurrentProcessId.restype = wintypes.DWORD
+        _own_window_api = (user32, int(kernel32.GetCurrentProcessId()))
+    return _own_window_api
+
+
+def point_in_own_window(x: int, y: int) -> Optional[bool]:
+    """
+    True se o ponto de tela (x, y) está sobre uma janela visível deste processo.
+
+    Retorna None quando o SO não oferece a consulta (macOS / Linux): o chamador
+    deve usar outro critério (ex.: retângulo da janela principal).
+    """
+    if sys.platform != "win32":
+        return None
+    user32, own_pid = _load_own_window_api()
+    hwnd = user32.WindowFromPoint(wintypes.POINT(int(x), int(y)))
+    if not hwnd:
+        return False
+    root = user32.GetAncestor(hwnd, GA_ROOT) or hwnd
+    pid = wintypes.DWORD(0)
+    user32.GetWindowThreadProcessId(root, ctypes.byref(pid))
+    return pid.value != 0 and pid.value == own_pid
 
 
 class WindowFilter:
@@ -29,6 +76,7 @@ class WindowFilter:
 
     def __init__(self) -> None:
         self._config = WindowFilterConfig()
+        self._cache: Optional[tuple[float, tuple[Optional[str], str]]] = None
         if sys.platform == "win32":
             self._user32 = ctypes.WinDLL("user32", use_last_error=True)
             self._kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
@@ -95,7 +143,7 @@ class WindowFilter:
         if not want_process and not want_title:
             return True
 
-        process_name, title = self._foreground_info()
+        process_name, title = self._foreground_cached()
 
         if want_title:
             if want_title not in (title or "").lower():
@@ -108,6 +156,21 @@ class WindowFilter:
                 return False
 
         return True
+
+    def foreground_info(self) -> tuple[Optional[str], str]:
+        """(processo/app, título) da janela em foco agora, sem cache."""
+        return self._foreground_info()
+
+    def _foreground_cached(self) -> tuple[Optional[str], str]:
+        if sys.platform == "win32":
+            return self._foreground_info()
+        now = time.monotonic()
+        cached = self._cache
+        if cached is not None and (now - cached[0]) < _FOREGROUND_CACHE_TTL_S:
+            return cached[1]
+        info = self._foreground_info()
+        self._cache = (now, info)
+        return info
 
     def _foreground_info(self) -> tuple[Optional[str], str]:
         """Retorna (nome_processo_ou_app, título). Levanta OSError se indisponível."""

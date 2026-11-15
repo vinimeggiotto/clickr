@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+import sys
+
 import webview
 
 from app.controller import AppController
+from app.log import get_logger
 from app.paths import ui_dir
+from app.single_instance import SingleInstance
+
+log = get_logger()
 
 UI_DIR = ui_dir()
 # Largura: conteúdo ~340 + rail lateral ~96 + paddings
@@ -37,10 +43,21 @@ def create_app() -> tuple[webview.Window, AppController]:
 
 
 def run() -> None:
+    instance = SingleInstance()
+    if not instance.acquire():
+        # Já existe um Clickr aberto: pede que ele apareça e encerra este.
+        instance.request_show()
+        log.info("Outra instância em execução; encerrando esta.")
+        return
+
     window, controller = create_app()
+    instance.watch(controller.show_window)
 
     def on_start() -> None:
-        controller.bootstrap_services()
+        try:
+            controller.bootstrap_services()
+        except Exception:
+            log.exception("Falha ao iniciar serviços")
 
     def on_closing() -> bool:
         # Oculta na bandeja em vez de encerrar (Sair vem do tray).
@@ -54,4 +71,10 @@ def run() -> None:
 
     window.events.closing += on_closing
     window.events.closed += on_closed
-    webview.start(on_start, debug=False)
+    if sys.platform == "darwin":
+        # pystray no macOS exige a thread principal, antes do loop do pywebview.
+        controller.start_tray(detached=True)
+    try:
+        webview.start(on_start, debug=False)
+    finally:
+        instance.release()

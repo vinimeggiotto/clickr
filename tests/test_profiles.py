@@ -56,3 +56,45 @@ def test_legacy_file_placed_directly_in_folder(tmp_path, fixtures_dir):
     assert repo.load("antigo")["interval_ms"] == 150
     # A carga não reescreve o arquivo legado.
     assert json.loads((tmp_path / "antigo.json").read_text(encoding="utf-8")) == json.loads(raw)
+
+
+def test_unicode_names_accepted(tmp_path):
+    repo = ProfilesRepo(tmp_path)
+    for name in ["Configuração", "ação rápida", "プロファイル1", "meu-preset", "a.b_c 1"]:
+        assert repo.save(name, {}) == name
+    assert set(repo.list_profiles()) >= {"Configuração", "meu-preset"}
+
+
+@pytest.mark.parametrize("name", ["CON", "nul", "COM1", "LPT9.backup", "a/b", "a\\b", "x:y", "_a", " "])
+def test_bad_new_names_rejected(tmp_path, name):
+    with pytest.raises(ValueError):
+        ProfilesRepo(tmp_path).save(name, {})
+
+
+def test_delete_and_rename(tmp_path):
+    repo = ProfilesRepo(tmp_path)
+    repo.save("a", {"interval_ms": 5})
+    repo.save("b", {})
+    assert repo.rename("a", "c") == "c"
+    assert repo.list_profiles() == ["b", "c"]
+    assert repo.load("c")["interval_ms"] == 5
+    with pytest.raises(ValueError):
+        repo.rename("c", "b")
+    repo.delete("b")
+    assert repo.list_profiles() == ["c"]
+    with pytest.raises(ValueError):
+        repo.delete("b")
+
+
+def test_no_temp_files_left(tmp_path):
+    repo = ProfilesRepo(tmp_path)
+    repo.save("x", {})
+    assert [p.name for p in tmp_path.iterdir()] == ["x.json"]
+
+
+def test_import_preserves_legacy_app_keys(tmp_path, fixtures_dir):
+    repo = ProfilesRepo(tmp_path)
+    repo.import_from(fixtures_dir / "profile_v1_envelope.json")
+    doc = repo.load_document("farm-legado")
+    assert doc["version"] == 1
+    assert doc["config"]["hotkey"] == "F8"

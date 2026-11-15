@@ -1,20 +1,26 @@
-"""ScriptRunner — DSL mínima: click, move, wait, key, loops limitados."""
+"""ScriptRunner — DSL mínima: clique, movimento, espera, teclas, texto e loops."""
 
 from __future__ import annotations
 
+import random
 import threading
 import time
 from dataclasses import dataclass
 from typing import Any, Callable, Optional, Union
 
 from core import sendinput
+from core.errors import ClickrError, error_from_exception
+from core.keys import name_to_vk
 from core.sendinput import ButtonName
 
 MAX_LINES = 500
 MAX_LOOP_COUNT = 1000
 MAX_LOOP_DEPTH = 2
+MAX_TYPE_LEN = 2000
 
 _VALID_BUTTONS = frozenset({"left", "right", "middle", "x1", "x2"})
+_DRAG_STEPS = 12
+_DRAG_DURATION_S = 0.18
 
 
 @dataclass(frozen=True)
@@ -22,52 +28,122 @@ class CmdClick:
     button: ButtonName
     x: Optional[int] = None
     y: Optional[int] = None
+    double: bool = False
+    line: int = 0
 
 
 @dataclass(frozen=True)
 class CmdMove:
     x: int
     y: int
+    line: int = 0
 
 
 @dataclass(frozen=True)
 class CmdWait:
     ms: int
+    max_ms: Optional[int] = None
+    line: int = 0
 
 
 @dataclass(frozen=True)
 class CmdKey:
     key: str
+    vks: tuple[int, ...] = ()
+    line: int = 0
+
+
+@dataclass(frozen=True)
+class CmdType:
+    text: str
+    line: int = 0
+
+
+@dataclass(frozen=True)
+class CmdScroll:
+    amount: int
+    line: int = 0
+
+
+@dataclass(frozen=True)
+class CmdDrag:
+    x1: int
+    y1: int
+    x2: int
+    y2: int
+    button: ButtonName = "left"
+    line: int = 0
 
 
 @dataclass(frozen=True)
 class CmdLoop:
     count: int
     body: tuple[Any, ...]
+    line: int = 0
 
 
-Command = Union[CmdClick, CmdMove, CmdWait, CmdKey, CmdLoop]
+Command = Union[CmdClick, CmdMove, CmdWait, CmdKey, CmdType, CmdScroll, CmdDrag, CmdLoop]
+
+
+def _err(code: str, message: str, **params: Any) -> ClickrError:
+    return ClickrError(f"script.{code}", message, **params)
+
+
+def _int(line_no: int, token: str) -> int:
+    try:
+        return int(token)
+    except (TypeError, ValueError):
+        raise _err(
+            "badNumber", f"Linha {line_no}: número inválido '{token}'", line=line_no, value=token
+        ) from None
+
+
+def _button(line_no: int, token: str) -> ButtonName:
+    btn = token.lower()
+    if btn not in _VALID_BUTTONS:
+        raise _err(
+            "badButton", f"Linha {line_no}: botão inválido '{token}'", line=line_no, value=token
+        )
+    return btn  # type: ignore[return-value]
+
+
+def parse_combo(text: str) -> tuple[int, ...]:
+    """'CTRL+SHIFT+A' → códigos VK na ordem de pressionamento. ValueError se inválido."""
+    pieces: list[str] = []
+    for piece in (text or "").split("+"):
+        piece = piece.strip()
+        if piece == "" and pieces:
+            pieces[-1] += "+"  # ex.: NUM+
+        elif piece == "":
+            raise ValueError("combinação vazia")
+        else:
+            pieces.append(piece)
+    if not pieces:
+        raise ValueError("combinação vazia")
+    return tuple(name_to_vk(piece) for piece in pieces)
 
 
 def parse_script(source: str) -> list[Command]:
     """
-    Analisa DSL linha a linha.
+    Analisa a DSL linha a linha.
 
     Gramática (por linha):
-      click [button] [x y]
+      click  [button] [x y]
+      dclick [button] [x y]
       move x y
-      wait ms
-      key NAME
-      loop N
-      ...comandos indentados ou até end
-      end
+      drag x1 y1 x2 y2 [button]
+      scroll N                 (positivo = para cima)
+      wait ms | wait min-max   (min-max = espera aleatória)
+      key NAME | key CTRL+C
+      type "texto"
+      loop N ... end
       # comentário
     """
     if source is None:
-        raise ValueError("Script vazio")
+        raise _err("empty", "Script vazio")
     raw_lines = source.replace("\r\n", "\n").replace("\r", "\n").split("\n")
     if len(raw_lines) > MAX_LINES:
-        raise ValueError(f"Script excede {MAX_LINES} linhas")
+        raise _err("tooLong", f"Script excede {MAX_LINES} linhas", max=MAX_LINES)
 
     lines: list[tuple[int, str]] = []
     for i, line in enumerate(raw_lines, start=1):
@@ -79,8 +155,14 @@ def parse_script(source: str) -> list[Command]:
     commands, idx = _parse_block(lines, 0, depth=0)
     if idx < len(lines):
         line_no, text = lines[idx]
-        raise ValueError(f"Linha {line_no}: token inesperado '{text}'")
+        raise _err(
+            "unknownCommand", f"Linha {line_no}: token inesperado '{text}'", line=line_no, op=text
+        )
     return commands
+
+
+def _usage(line_no: int, usage: str) -> ClickrError:
+    return _err("usage", f"Linha {line_no}: use '{usage}'", line=line_no, usage=usage)
 
 
 def _parse_block(
@@ -95,86 +177,135 @@ def _parse_block(
 
         if op == "end":
             if depth == 0:
-                raise ValueError(f"Linha {line_no}: 'end' sem loop correspondente")
+                raise _err(
+                    "endWithoutLoop",
+                    f"Linha {line_no}: 'end' sem loop correspondente",
+                    line=line_no,
+                )
             return commands, i + 1
 
         if op == "loop":
             if depth >= MAX_LOOP_DEPTH:
-                raise ValueError(f"Linha {line_no}: profundidade de loop > {MAX_LOOP_DEPTH}")
+                raise _err(
+                    "loopDepth",
+                    f"Linha {line_no}: profundidade de loop > {MAX_LOOP_DEPTH}",
+                    line=line_no,
+                    max=MAX_LOOP_DEPTH,
+                )
             if len(parts) != 2:
-                raise ValueError(f"Linha {line_no}: use 'loop N'")
-            try:
-                count = int(parts[1])
-            except ValueError as exc:
-                raise ValueError(f"Linha {line_no}: contagem de loop inválida") from exc
+                raise _usage(line_no, "loop N")
+            count = _int(line_no, parts[1])
             if count < 1 or count > MAX_LOOP_COUNT:
-                raise ValueError(
-                    f"Linha {line_no}: loop deve ser entre 1 e {MAX_LOOP_COUNT}"
+                raise _err(
+                    "loopRange",
+                    f"Linha {line_no}: loop deve ser entre 1 e {MAX_LOOP_COUNT}",
+                    line=line_no,
+                    max=MAX_LOOP_COUNT,
                 )
             body, next_i = _parse_block(lines, i + 1, depth + 1)
-            commands.append(CmdLoop(count=count, body=tuple(body)))
+            commands.append(CmdLoop(count=count, body=tuple(body), line=line_no))
             i = next_i
             continue
 
-        if op == "click":
-            commands.append(_parse_click(line_no, parts))
-            i += 1
-            continue
-        if op == "move":
-            if len(parts) != 3:
-                raise ValueError(f"Linha {line_no}: use 'move X Y'")
-            commands.append(CmdMove(x=int(parts[1]), y=int(parts[2])))
-            i += 1
-            continue
-        if op == "wait":
-            if len(parts) != 2:
-                raise ValueError(f"Linha {line_no}: use 'wait MS'")
-            ms = int(parts[1])
-            if ms < 0:
-                raise ValueError(f"Linha {line_no}: wait não pode ser negativo")
-            commands.append(CmdWait(ms=ms))
-            i += 1
-            continue
-        if op == "key":
-            if len(parts) != 2:
-                raise ValueError(f"Linha {line_no}: use 'key NOME'")
-            key = parts[1].upper()
-            sendinput.name_to_vk(key)  # valida
-            commands.append(CmdKey(key=key))
-            i += 1
-            continue
-
-        raise ValueError(f"Linha {line_no}: comando desconhecido '{op}'")
+        commands.append(_parse_simple(line_no, op, parts, text))
+        i += 1
 
     if depth > 0:
-        raise ValueError("loop sem 'end'")
+        raise _err("loopNoEnd", "loop sem 'end'")
     return commands, i
 
 
-def _parse_click(line_no: int, parts: list[str]) -> CmdClick:
-    # click
-    # click left
-    # click 100 200
-    # click left 100 200
-    if len(parts) == 1:
-        return CmdClick(button="left")
-    if len(parts) == 2:
-        token = parts[1].lower()
-        if token in _VALID_BUTTONS:
-            return CmdClick(button=token)  # type: ignore[arg-type]
-        raise ValueError(f"Linha {line_no}: botão inválido '{parts[1]}'")
-    if len(parts) == 3:
-        return CmdClick(button="left", x=int(parts[1]), y=int(parts[2]))
-    if len(parts) == 4:
-        btn = parts[1].lower()
-        if btn not in _VALID_BUTTONS:
-            raise ValueError(f"Linha {line_no}: botão inválido '{parts[1]}'")
-        return CmdClick(button=btn, x=int(parts[2]), y=int(parts[3]))  # type: ignore[arg-type]
-    raise ValueError(f"Linha {line_no}: sintaxe click inválida")
+def _parse_simple(line_no: int, op: str, parts: list[str], text: str) -> Command:
+    if op in ("click", "dclick"):
+        return _parse_click(line_no, parts, double=(op == "dclick"))
+    if op == "move":
+        if len(parts) != 3:
+            raise _usage(line_no, "move X Y")
+        return CmdMove(x=_int(line_no, parts[1]), y=_int(line_no, parts[2]), line=line_no)
+    if op == "wait":
+        if len(parts) != 2:
+            raise _usage(line_no, "wait MS | wait MIN-MAX")
+        return _parse_wait(line_no, parts[1])
+    if op == "key":
+        if len(parts) != 2:
+            raise _usage(line_no, "key NOME | key CTRL+C")
+        key = parts[1].upper()
+        try:
+            vks = parse_combo(key)
+        except ValueError:
+            raise _err(
+                "badKey", f"Linha {line_no}: tecla não suportada '{parts[1]}'",
+                line=line_no, value=parts[1],
+            ) from None
+        return CmdKey(key=key, vks=vks, line=line_no)
+    if op == "type":
+        rest = text[len(parts[0]):].strip()
+        if not rest:
+            raise _usage(line_no, 'type "texto"')
+        return CmdType(text=_unquote(rest)[:MAX_TYPE_LEN], line=line_no)
+    if op == "scroll":
+        if len(parts) != 2:
+            raise _usage(line_no, "scroll N")
+        return CmdScroll(amount=_int(line_no, parts[1]), line=line_no)
+    if op == "drag":
+        if len(parts) not in (5, 6):
+            raise _usage(line_no, "drag X1 Y1 X2 Y2 [botão]")
+        nums = [_int(line_no, tok) for tok in parts[1:5]]
+        btn: ButtonName = _button(line_no, parts[5]) if len(parts) == 6 else "left"
+        return CmdDrag(*nums, button=btn, line=line_no)
+    raise _err(
+        "unknownCommand", f"Linha {line_no}: comando desconhecido '{op}'", line=line_no, op=op
+    )
+
+
+def _parse_wait(line_no: int, token: str) -> CmdWait:
+    if "-" in token[1:]:
+        low_s, _, high_s = token.partition("-") if not token.startswith("-") else ("", "", "")
+        if not low_s or not high_s:
+            raise _err("negativeWait", f"Linha {line_no}: wait não pode ser negativo", line=line_no)
+        low, high = _int(line_no, low_s), _int(line_no, high_s)
+        if high < low:
+            low, high = high, low
+        return CmdWait(ms=low, max_ms=high, line=line_no)
+    ms = _int(line_no, token)
+    if ms < 0:
+        raise _err("negativeWait", f"Linha {line_no}: wait não pode ser negativo", line=line_no)
+    return CmdWait(ms=ms, line=line_no)
+
+
+def _unquote(text: str) -> str:
+    if len(text) >= 2 and text[0] == text[-1] and text[0] in ('"', "'"):
+        text = text[1:-1]
+    return (
+        text.replace("\\n", "\n").replace("\\t", "\t").replace('\\"', '"').replace("\\'", "'")
+    )
+
+
+def _parse_click(line_no: int, parts: list[str], double: bool) -> CmdClick:
+    # click | click left | click 100 200 | click left 100 200
+    n = len(parts)
+    if n == 1:
+        return CmdClick(button="left", double=double, line=line_no)
+    if n == 2:
+        return CmdClick(button=_button(line_no, parts[1]), double=double, line=line_no)
+    if n == 3:
+        return CmdClick(
+            button="left", x=_int(line_no, parts[1]), y=_int(line_no, parts[2]),
+            double=double, line=line_no,
+        )
+    if n == 4:
+        return CmdClick(
+            button=_button(line_no, parts[1]),
+            x=_int(line_no, parts[2]),
+            y=_int(line_no, parts[3]),
+            double=double,
+            line=line_no,
+        )
+    raise _usage(line_no, f"{parts[0].lower()} [botão] [X Y]")
 
 
 class ScriptRunner:
-    """Executa comandos parseados em thread dedicada via SendInput."""
+    """Executa comandos parseados em thread dedicada via backend de input."""
 
     def __init__(self) -> None:
         self._lock = threading.RLock()
@@ -182,10 +313,11 @@ class ScriptRunner:
         self._thread: Optional[threading.Thread] = None
         self._running = False
         self._current_line: Optional[int] = None
-        self._last_error: Optional[str] = None
+        self._last_error: Optional[dict[str, Any]] = None
         self._on_done: Optional[Callable[[], None]] = None
         self._on_tick: Optional[Callable[[], None]] = None
-        self._source_line = 0
+        self._held_button: Optional[str] = None
+        self._held_keys: list[int] = []
 
     def set_on_done(self, callback: Optional[Callable[[], None]]) -> None:
         self._on_done = callback
@@ -201,9 +333,13 @@ class ScriptRunner:
         with self._lock:
             return self._current_line
 
-    def last_error(self) -> Optional[str]:
+    def last_error(self) -> Optional[dict[str, Any]]:
         with self._lock:
             return self._last_error
+
+    def clear_error(self) -> None:
+        with self._lock:
+            self._last_error = None
 
     def run(self, source: str) -> bool:
         with self._lock:
@@ -211,11 +347,10 @@ class ScriptRunner:
                 return False
             try:
                 commands = parse_script(source)
+                if not commands:
+                    raise _err("empty", "Script vazio")
             except (ValueError, TypeError) as exc:
-                self._last_error = str(exc)
-                return False
-            if not commands:
-                self._last_error = "Script vazio"
+                self._last_error = error_from_exception(exc)
                 return False
             self._last_error = None
             self._stop_event.clear()
@@ -235,8 +370,12 @@ class ScriptRunner:
             if not self._running and self._thread is None:
                 return False
             self._stop_event.set()
-        thread = self._thread
-        if thread is not None and thread.is_alive():
+            thread = self._thread
+        if (
+            thread is not None
+            and thread.is_alive()
+            and thread is not threading.current_thread()
+        ):
             thread.join(timeout=2.0)
         with self._lock:
             self._running = False
@@ -257,16 +396,38 @@ class ScriptRunner:
             self._exec_list(commands)
         except Exception as exc:
             with self._lock:
-                self._last_error = str(exc)
+                line = self._current_line
+                err = error_from_exception(exc)
+                if line is not None:
+                    err.setdefault("params", {})["line"] = line
+                self._last_error = err
         finally:
+            self._release_held()
             with self._lock:
                 self._running = False
                 self._thread = None
                 self._current_line = None
             done = self._on_done
             if done is not None:
-                done()
+                try:
+                    done()
+                except Exception:
+                    pass
             self._tick()
+
+    def _release_held(self) -> None:
+        button, self._held_button = self._held_button, None
+        keys, self._held_keys = list(reversed(self._held_keys)), []
+        try:
+            if button is not None:
+                sendinput.button_up(button)  # type: ignore[arg-type]
+        except Exception:
+            pass
+        for vk in keys:
+            try:
+                sendinput.key_up(vk)
+            except Exception:
+                pass
 
     def _exec_list(self, commands: list[Command]) -> None:
         for cmd in commands:
@@ -275,6 +436,8 @@ class ScriptRunner:
             self._exec_one(cmd)
 
     def _exec_one(self, cmd: Command) -> None:
+        with self._lock:
+            self._current_line = cmd.line or None
         if isinstance(cmd, CmdLoop):
             for _ in range(cmd.count):
                 if self._stop_event.is_set():
@@ -282,23 +445,60 @@ class ScriptRunner:
                 self._exec_list(list(cmd.body))
             return
         if isinstance(cmd, CmdWait):
-            self._wait_ms(cmd.ms)
+            self._tick()
+            ms = cmd.ms if cmd.max_ms is None else random.randint(cmd.ms, cmd.max_ms)
+            self._wait_ms(ms)
             return
         if isinstance(cmd, CmdMove):
             sendinput.move_absolute(cmd.x, cmd.y)
-            self._tick()
-            return
-        if isinstance(cmd, CmdClick):
-            if cmd.x is not None and cmd.y is not None:
-                sendinput.click_at(cmd.button, cmd.x, cmd.y)
+        elif isinstance(cmd, CmdClick):
+            self._click(cmd)
+        elif isinstance(cmd, CmdKey):
+            self._press_combo(cmd)
+        elif isinstance(cmd, CmdType):
+            sendinput.type_text(cmd.text)
+        elif isinstance(cmd, CmdScroll):
+            sendinput.scroll(cmd.amount)
+        elif isinstance(cmd, CmdDrag):
+            self._drag(cmd)
+        self._tick()
+
+    def _click(self, cmd: CmdClick) -> None:
+        if cmd.x is not None and cmd.y is not None:
+            if cmd.double:
+                sendinput.double_click_at(cmd.button, cmd.x, cmd.y)
             else:
-                sendinput.click(cmd.button)
-            self._tick()
-            return
-        if isinstance(cmd, CmdKey):
-            sendinput.key_press_name(cmd.key)
-            self._tick()
-            return
+                sendinput.click_at(cmd.button, cmd.x, cmd.y)
+        elif cmd.double:
+            sendinput.double_click(cmd.button)
+        else:
+            sendinput.click(cmd.button)
+
+    def _press_combo(self, cmd: CmdKey) -> None:
+        vks = cmd.vks or parse_combo(cmd.key)
+        for vk in vks:
+            sendinput.key_down(vk)
+            self._held_keys.append(vk)
+        for vk in reversed(vks):
+            sendinput.key_up(vk)
+            self._held_keys.remove(vk)
+
+    def _drag(self, cmd: CmdDrag) -> None:
+        sendinput.move_absolute(cmd.x1, cmd.y1)
+        sendinput.button_down(cmd.button)
+        self._held_button = cmd.button
+        self._wait_ms(30)
+        for step in range(1, _DRAG_STEPS + 1):
+            if self._stop_event.is_set():
+                break
+            frac = step / _DRAG_STEPS
+            sendinput.move_absolute(
+                round(cmd.x1 + (cmd.x2 - cmd.x1) * frac),
+                round(cmd.y1 + (cmd.y2 - cmd.y1) * frac),
+            )
+            self._wait_ms(int(_DRAG_DURATION_S * 1000 / _DRAG_STEPS))
+        sendinput.button_up(cmd.button)
+        self._held_button = None
 
     def _wait_ms(self, ms: int) -> None:
         deadline = time.perf_counter() + (ms / 1000.0)
@@ -311,4 +511,7 @@ class ScriptRunner:
     def _tick(self) -> None:
         cb = self._on_tick
         if cb is not None:
-            cb()
+            try:
+                cb()
+            except Exception:
+                pass

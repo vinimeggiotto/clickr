@@ -7,6 +7,7 @@ import time
 from typing import Any, Callable, Optional
 
 from core.sendinput import button_from_pynput
+from hotkeys.keynames import describe_key
 
 # Throttle de movimentos para não explodir a lista
 _MOVE_MIN_INTERVAL_S = 0.016
@@ -18,7 +19,8 @@ class MacroRecorder:
 
     Formato de evento:
       {"t": float, "kind": str, ...campos por kind}
-    kinds: mouse_move, mouse_down, mouse_up, key_down, key_up
+    kinds: mouse_move, mouse_down, mouse_up, mouse_scroll, key_down, key_up
+    Eventos de tecla: {"key": nome, "vk"?: código Win32, "char"?: caractere}.
     """
 
     def __init__(self) -> None:
@@ -71,6 +73,7 @@ class MacroRecorder:
             self._mouse_listener = mouse.Listener(
                 on_move=self._on_move,
                 on_click=self._on_click,
+                on_scroll=self._on_scroll,
             )
             self._key_listener = keyboard.Listener(
                 on_press=self._on_key_press,
@@ -126,21 +129,35 @@ class MacroRecorder:
         kind = "mouse_down" if pressed else "mouse_up"
         self._append({"t": self._elapsed(), "kind": kind, "x": int(x), "y": int(y), "button": btn})
 
-    def _on_key_press(self, key: object) -> None:
-        from hotkeys.service import format_key
+    def _on_scroll(self, x: int, y: int, dx: int, dy: int) -> None:
+        self._append(
+            {
+                "t": self._elapsed(),
+                "kind": "mouse_scroll",
+                "x": int(x),
+                "y": int(y),
+                "dx": int(dx),
+                "dy": int(dy),
+            }
+        )
 
-        name = format_key(key)
-        if name is None:
+    def _key_event(self, kind: str, key: object) -> None:
+        info = describe_key(key)
+        if info is None:
             return
-        self._append({"t": self._elapsed(), "kind": "key_down", "key": name})
+        event: dict[str, Any] = {"t": self._elapsed(), "kind": kind, "key": info["name"]}
+        # Código/char gravados para reproduzir qualquer tecla (Ctrl, Alt, ç, ; ...).
+        if "vk" in info:
+            event["vk"] = info["vk"]
+        if "char" in info:
+            event["char"] = info["char"]
+        self._append(event)
+
+    def _on_key_press(self, key: object) -> None:
+        self._key_event("key_down", key)
 
     def _on_key_release(self, key: object) -> None:
-        from hotkeys.service import format_key
-
-        name = format_key(key)
-        if name is None:
-            return
-        self._append({"t": self._elapsed(), "kind": "key_up", "key": name})
+        self._key_event("key_up", key)
 
     def _notify(self) -> None:
         cb = self._on_change

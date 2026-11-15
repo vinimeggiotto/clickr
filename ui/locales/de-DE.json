@@ -164,7 +164,52 @@
     "infoUnavailable": "Info-Fenster nicht verfügbar.",
     "pickHint": "Auf den Bildschirm klicken, um den Punkt zu markieren (Esc bricht ab)…",
     "wizardSavedStart": "Profil „{name}“ gespeichert und Engine gestartet.",
-    "wizardSavedOnly": "Profil „{name}“ gespeichert. Später unter Klick / Run / Punkt anpassen."
+    "wizardSavedOnly": "Profil „{name}“ gespeichert. Später unter Klick / Run / Punkt anpassen.",
+    "overlayMissing": "Erfassungs-Overlay nicht gefunden.",
+    "alwaysOnTop": "„Immer im Vordergrund“ konnte nicht angewendet werden.",
+    "config": {
+      "invalid": "Ungültige Konfiguration."
+    },
+    "hotkey": {
+      "unsupported": "Nicht unterstützte Tastenkombination: {key}"
+    },
+    "sequence": {
+      "badIndex": "Ungültiger Sequenzschritt."
+    },
+    "macro": {
+      "empty": "Leeres Makro – zuerst Ereignisse aufzeichnen.",
+      "recordFailed": "Makroaufzeichnung konnte nicht gestartet werden.",
+      "busy": "Makro zuerst stoppen.",
+      "unsupportedKey": "Das Makro enthält eine nicht unterstützte Taste: {key}",
+      "unknownEvent": "Unbekanntes Makroereignis: {kind}"
+    },
+    "schedule": {
+      "empty": "Datum und Uhrzeit für die Planung eingeben.",
+      "invalid": "Ungültiges Datum/Uhrzeit.",
+      "past": "Der geplante Zeitpunkt muss in der Zukunft liegen."
+    },
+    "script": {
+      "empty": "Leeres Skript.",
+      "tooLong": "Das Skript überschreitet {max} Zeilen.",
+      "unknownCommand": "Zeile {line}: unbekannter Befehl „{op}“.",
+      "usage": "Zeile {line}: „{usage}“ verwenden.",
+      "badNumber": "Zeile {line}: ungültige Zahl „{value}“.",
+      "badButton": "Zeile {line}: ungültige Taste „{value}“.",
+      "badKey": "Zeile {line}: nicht unterstützte Taste „{value}“.",
+      "negativeWait": "Zeile {line}: ungültiges wait (MS oder MIN-MAX).",
+      "loopRange": "Zeile {line}: loop muss zwischen 1 und {max} liegen.",
+      "loopDepth": "Zeile {line}: höchstens {max} verschachtelte Schleifen.",
+      "endWithoutLoop": "Zeile {line}: „end“ ohne zugehörige Schleife.",
+      "loopNoEnd": "Einer Schleife fehlt das „end“."
+    },
+    "profile": {
+      "invalidName": "Ungültiger Profilname. Buchstaben, Ziffern, Leerzeichen, _ . - (max. 64).",
+      "reservedName": "„{name}“ ist vom System reserviert. Anderen Namen wählen.",
+      "notFound": "Profil nicht gefunden: {name}",
+      "exists": "Ein Profil namens „{name}“ existiert bereits.",
+      "invalidFile": "Ungültige Profildatei.",
+      "fileNotFound": "Datei nicht gefunden."
+    }
   },
   "tray": {
     "show": "Anzeigen",

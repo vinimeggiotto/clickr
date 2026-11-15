@@ -77,10 +77,14 @@ def click(button: ButtonName) -> None:
     _log("click", button)
 
 
-def click_at(button: ButtonName, x: int, y: int) -> None:
+def click_at(button: ButtonName, x: int, y: int, restore: bool = False, count: int = 1) -> None:
     _check(button)
+    origin = get_cursor_pos()
     move_absolute(x, y)
-    _log("click", button)
+    for _ in range(max(1, int(count))):
+        _log("click", button)
+    if restore:
+        move_absolute(*origin)
 
 
 def double_click(button: ButtonName) -> None:
@@ -88,9 +92,12 @@ def double_click(button: ButtonName) -> None:
     click(button)
 
 
-def double_click_at(button: ButtonName, x: int, y: int) -> None:
-    click_at(button, x, y)
-    click_at(button, x, y)
+def double_click_at(button: ButtonName, x: int, y: int, restore: bool = False) -> None:
+    click_at(button, x, y, restore=restore, count=2)
+
+
+def scroll(dy: int, dx: int = 0) -> None:
+    _log("scroll", int(dy), int(dx))
 
 
 def key_down(vk: int) -> None:
@@ -116,6 +123,18 @@ def key_down_name(name: str) -> None:
 
 def key_up_name(name: str) -> None:
     key_up(name_to_vk(name))
+
+
+def key_down_char(char: str) -> None:
+    _log("char_down", char)
+
+
+def key_up_char(char: str) -> None:
+    _log("char_up", char)
+
+
+def type_text(text: str) -> None:
+    _log("type", text or "")
 
 
 def button_from_pynput(button: object) -> Optional[ButtonName]:

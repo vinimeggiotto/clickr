@@ -12,6 +12,8 @@ from pynput.keyboard import Key, KeyCode
 from pynput.mouse import Button
 from pynput.mouse import Controller as MouseController
 
+from core.keys import name_to_vk
+
 ButtonName = Literal["left", "right", "middle", "x1", "x2"]
 
 _mouse = MouseController()
@@ -29,36 +31,6 @@ if hasattr(Button, "x1"):
 if hasattr(Button, "x2"):
     _BUTTON_MAP["x2"] = Button.x2  # type: ignore[attr-defined]
 
-# Nomes → códigos VK Win32 (mesma tabela do backend Windows, para API estável).
-_VK_SPECIAL: dict[str, int] = {
-    "SPACE": 0x20,
-    "ENTER": 0x0D,
-    "RETURN": 0x0D,
-    "TAB": 0x09,
-    "ESC": 0x1B,
-    "ESCAPE": 0x1B,
-    "BACKSPACE": 0x08,
-    "DELETE": 0x2E,
-    "INSERT": 0x2D,
-    "HOME": 0x24,
-    "END": 0x23,
-    "PAGEUP": 0x21,
-    "PAGE UP": 0x21,
-    "PAGEDOWN": 0x22,
-    "PAGE DOWN": 0x22,
-    "UP": 0x26,
-    "DOWN": 0x28,
-    "LEFT": 0x25,
-    "RIGHT": 0x27,
-    "SHIFT": 0x10,
-    "CTRL": 0x11,
-    "CONTROL": 0x11,
-    "ALT": 0x12,
-    "WIN": 0x5B,
-    "LWIN": 0x5B,
-    "RWIN": 0x5C,
-}
-
 def _super_key() -> Key:
     if hasattr(Key, "cmd"):
         return Key.cmd  # type: ignore[return-value]
@@ -67,28 +39,53 @@ def _super_key() -> Key:
     raise OSError("Tecla Super/Cmd indisponível neste backend pynput")
 
 
-_VK_TO_KEY: dict[int, Union[Key, KeyCode]] = {
-    0x20: Key.space,
-    0x0D: Key.enter,
-    0x09: Key.tab,
-    0x1B: Key.esc,
-    0x08: Key.backspace,
-    0x2E: Key.delete,
-    0x2D: Key.insert,
-    0x24: Key.home,
-    0x23: Key.end,
-    0x21: Key.page_up,
-    0x22: Key.page_down,
-    0x26: Key.up,
-    0x28: Key.down,
-    0x25: Key.left,
-    0x27: Key.right,
-    0x10: Key.shift,
-    0x11: Key.ctrl,
-    0x12: Key.alt,
-    0x5B: _super_key(),
-    0x5C: getattr(Key, "cmd_r", None) or _super_key(),
-}
+def _key(*names: str) -> Optional[Key]:
+    """Primeiro membro existente de pynput.keyboard.Key entre os nomes dados."""
+    for name in names:
+        member = getattr(Key, name, None)
+        if member is not None:
+            return member
+    return None
+
+
+_VK_TO_KEY: dict[int, Union[Key, KeyCode]] = {}
+for _vk, _names in {
+    0x08: ("backspace",),
+    0x09: ("tab",),
+    0x0D: ("enter",),
+    0x10: ("shift",),
+    0x11: ("ctrl",),
+    0x12: ("alt",),
+    0x13: ("pause",),
+    0x14: ("caps_lock",),
+    0x1B: ("esc",),
+    0x20: ("space",),
+    0x21: ("page_up",),
+    0x22: ("page_down",),
+    0x23: ("end",),
+    0x24: ("home",),
+    0x25: ("left",),
+    0x26: ("up",),
+    0x27: ("right",),
+    0x28: ("down",),
+    0x2C: ("print_screen",),
+    0x2D: ("insert",),
+    0x2E: ("delete",),
+    0x5B: ("cmd", "cmd_l"),
+    0x5C: ("cmd_r", "cmd"),
+    0x5D: ("menu",),
+    0x90: ("num_lock",),
+    0x91: ("scroll_lock",),
+    0xA0: ("shift_l", "shift"),
+    0xA1: ("shift_r", "shift"),
+    0xA2: ("ctrl_l", "ctrl"),
+    0xA3: ("ctrl_r", "ctrl"),
+    0xA4: ("alt_l", "alt"),
+    0xA5: ("alt_gr", "alt_r", "alt"),
+}.items():
+    _member = _key(*_names)
+    if _member is not None:
+        _VK_TO_KEY[_vk] = _member
 
 for _i in range(1, 25):
     _fk = getattr(Key, f"f{_i}", None)
@@ -97,6 +94,16 @@ for _i in range(1, 25):
 
 for _ch in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789":
     _VK_TO_KEY[ord(_ch)] = KeyCode.from_char(_ch.lower() if _ch.isalpha() else _ch)
+
+for _vk, _ch in {
+    0xBA: ";", 0xBB: "=", 0xBC: ",", 0xBD: "-", 0xBE: ".", 0xBF: "/", 0xC0: "`",
+    0xDB: "[", 0xDC: "\\", 0xDD: "]", 0xDE: "'",
+    0x6A: "*", 0x6B: "+", 0x6D: "-", 0x6E: ".", 0x6F: "/",
+}.items():
+    _VK_TO_KEY[_vk] = KeyCode.from_char(_ch)
+
+for _i in range(10):
+    _VK_TO_KEY[0x60 + _i] = KeyCode.from_char(str(_i))
 
 
 def _resolve_button(button: ButtonName) -> Button:
@@ -230,36 +237,26 @@ def click(button: ButtonName) -> None:
     _mouse.click(_resolve_button(button), 1)
 
 
-def click_at(button: ButtonName, x: int, y: int) -> None:
+def click_at(button: ButtonName, x: int, y: int, restore: bool = False, count: int = 1) -> None:
+    origin = _mouse.position if restore else None
     move_absolute(x, y)
-    click(button)
+    _mouse.click(_resolve_button(button), max(1, int(count)))
+    if origin is not None:
+        _mouse.position = (int(origin[0]), int(origin[1]))
 
 
 def double_click(button: ButtonName) -> None:
     _mouse.click(_resolve_button(button), 2)
 
 
-def double_click_at(button: ButtonName, x: int, y: int) -> None:
-    move_absolute(x, y)
-    double_click(button)
+def double_click_at(button: ButtonName, x: int, y: int, restore: bool = False) -> None:
+    click_at(button, x, y, restore=restore, count=2)
 
 
-def name_to_vk(name: str) -> int:
-    """Converte nome de tecla para código VK (compatível com a API Windows)."""
-    key_name = (name or "").strip().upper()
-    if not key_name:
-        raise ValueError("Nome de tecla vazio")
-    if key_name.startswith("F") and key_name[1:].isdigit():
-        n = int(key_name[1:])
-        if 1 <= n <= 24:
-            return 0x70 + (n - 1)
-    if key_name in _VK_SPECIAL:
-        return _VK_SPECIAL[key_name]
-    if len(key_name) == 1:
-        ch = key_name
-        if "A" <= ch <= "Z" or "0" <= ch <= "9":
-            return ord(ch)
-    raise ValueError(f"Tecla não suportada: {name}")
+def scroll(dy: int, dx: int = 0) -> None:
+    """Rola a roda do mouse: dy > 0 para cima, dx > 0 para a direita."""
+    if dy or dx:
+        _mouse.scroll(int(dx), int(dy))
 
 
 def _vk_to_pynput(vk: int) -> Union[Key, KeyCode]:
@@ -293,6 +290,18 @@ def key_down_name(name: str) -> None:
 
 def key_up_name(name: str) -> None:
     key_up(name_to_vk(name))
+
+
+def key_down_char(char: str) -> None:
+    _keyboard.press(KeyCode.from_char(char))
+
+
+def key_up_char(char: str) -> None:
+    _keyboard.release(KeyCode.from_char(char))
+
+
+def type_text(text: str) -> None:
+    _keyboard.type(text or "")
 
 
 def button_from_pynput(button: object) -> Optional[ButtonName]:

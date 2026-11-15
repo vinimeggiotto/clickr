@@ -164,7 +164,52 @@
     "infoUnavailable": "Ventana de información no disponible.",
     "pickHint": "Haz clic en la pantalla para marcar el punto (Esc cancela)…",
     "wizardSavedStart": "Perfil “{name}” guardado y motor iniciado.",
-    "wizardSavedOnly": "Perfil “{name}” guardado. Ajústalo luego en Clic / Run / Punto."
+    "wizardSavedOnly": "Perfil “{name}” guardado. Ajústalo luego en Clic / Run / Punto.",
+    "overlayMissing": "No se encontró la pantalla de captura.",
+    "alwaysOnTop": "No se pudo aplicar “siempre visible”.",
+    "config": {
+      "invalid": "Configuración no válida."
+    },
+    "hotkey": {
+      "unsupported": "Atajo no compatible: {key}"
+    },
+    "sequence": {
+      "badIndex": "Paso de secuencia no válido."
+    },
+    "macro": {
+      "empty": "Macro vacía: graba eventos antes de reproducir.",
+      "recordFailed": "No se pudo iniciar la grabación de la macro.",
+      "busy": "Detén la macro antes de continuar.",
+      "unsupportedKey": "La macro contiene una tecla no compatible: {key}",
+      "unknownEvent": "Evento de macro desconocido: {kind}"
+    },
+    "schedule": {
+      "empty": "Indica fecha y hora para programar.",
+      "invalid": "Fecha/hora no válida.",
+      "past": "La hora programada debe ser futura."
+    },
+    "script": {
+      "empty": "Script vacío.",
+      "tooLong": "El script supera las {max} líneas.",
+      "unknownCommand": "Línea {line}: comando desconocido “{op}”.",
+      "usage": "Línea {line}: usa “{usage}”.",
+      "badNumber": "Línea {line}: número no válido “{value}”.",
+      "badButton": "Línea {line}: botón no válido “{value}”.",
+      "badKey": "Línea {line}: tecla no compatible “{value}”.",
+      "negativeWait": "Línea {line}: wait no válido (usa MS o MIN-MAX).",
+      "loopRange": "Línea {line}: loop debe estar entre 1 y {max}.",
+      "loopDepth": "Línea {line}: máximo {max} loops anidados.",
+      "endWithoutLoop": "Línea {line}: “end” sin loop correspondiente.",
+      "loopNoEnd": "Hay un loop sin “end”."
+    },
+    "profile": {
+      "invalidName": "Nombre de perfil no válido. Usa letras, números, espacio, _ . - (máx. 64).",
+      "reservedName": "“{name}” es un nombre reservado por el sistema. Elige otro.",
+      "notFound": "Perfil no encontrado: {name}",
+      "exists": "Ya existe un perfil llamado “{name}”.",
+      "invalidFile": "Archivo de perfil no válido.",
+      "fileNotFound": "Archivo no encontrado."
+    }
   },
   "tray": {
     "show": "Mostrar",

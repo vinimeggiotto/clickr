@@ -6,6 +6,8 @@ import threading
 from datetime import datetime
 from typing import Any, Callable, Optional
 
+from core.errors import ClickrError, error_from_exception
+
 
 class Scheduler:
     """
@@ -21,7 +23,7 @@ class Scheduler:
         self._when: Optional[datetime] = None
         self._on_fire: Optional[Callable[[], None]] = None
         self._on_change: Optional[Callable[[], None]] = None
-        self._last_error: Optional[str] = None
+        self._last_error: Optional[dict[str, Any]] = None
 
     def set_on_change(self, callback: Optional[Callable[[], None]]) -> None:
         self._on_change = callback
@@ -29,11 +31,11 @@ class Scheduler:
     def schedule(self, when: datetime, on_fire: Callable[[], None]) -> None:
         """Agenda disparo único. when deve ser timezone-naive local no futuro."""
         if when.tzinfo is not None:
-            raise ValueError("Use data/hora local sem timezone (naive).")
+            raise ClickrError("schedule.invalid", "Use data/hora local sem timezone (naive).")
         now = datetime.now()
         delay = (when - now).total_seconds()
         if delay <= 0:
-            raise ValueError("Horário de agendamento deve ser no futuro.")
+            raise ClickrError("schedule.past", "Horário de agendamento deve ser no futuro.")
 
         with self._lock:
             self._cancel_locked()
@@ -61,9 +63,13 @@ class Scheduler:
         with self._lock:
             return self._when
 
-    def last_error(self) -> Optional[str]:
+    def last_error(self) -> Optional[dict[str, Any]]:
         with self._lock:
             return self._last_error
+
+    def clear_error(self) -> None:
+        with self._lock:
+            self._last_error = None
 
     def status(self) -> dict[str, Any]:
         with self._lock:
@@ -92,7 +98,7 @@ class Scheduler:
                 callback()
         except Exception as exc:
             with self._lock:
-                self._last_error = str(exc)
+                self._last_error = error_from_exception(exc)
         self._notify()
 
     def _notify(self) -> None:

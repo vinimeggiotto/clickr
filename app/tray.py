@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sys
 import threading
 from typing import Callable, Optional
 
@@ -34,11 +35,19 @@ class SystemTray:
         self._icon: Optional[pystray.Icon] = None
         self._thread: Optional[threading.Thread] = None
 
-    def start(self) -> None:
+    def start(self, detached: bool = False) -> None:
+        """
+        Inicia o ícone. No macOS o pystray precisa ser iniciado na thread
+        principal com run_detached (antes do loop do pywebview); nos demais SOs
+        roda em thread própria.
+        """
         if self._icon is not None:
             return
         image = self._load_icon()
         self._icon = pystray.Icon("Clickr", image, "Clickr", self._build_menu())
+        if detached or sys.platform == "darwin":
+            self._icon.run_detached()
+            return
         self._thread = threading.Thread(target=self._icon.run, name="SystemTray", daemon=True)
         self._thread.start()
 
@@ -68,6 +77,8 @@ class SystemTray:
         icon = self._icon
         if icon is None:
             return
+        if not getattr(icon, "HAS_NOTIFICATION", True):
+            return
         icon.notify(message, title)
 
     def notify_still_running(self) -> None:
@@ -96,9 +107,17 @@ class SystemTray:
 
     @staticmethod
     def _load_icon() -> Image.Image:
-        if not ICON_PATH.is_file():
-            raise FileNotFoundError(f"Ícone da bandeja não encontrado: {ICON_PATH}")
-        return Image.open(ICON_PATH).convert("RGBA")
+        if ICON_PATH.is_file():
+            try:
+                return Image.open(ICON_PATH).convert("RGBA")
+            except OSError:
+                pass
+        # Ícone ausente/corrompido não pode impedir a bandeja: desenha um substituto.
+        from PIL import ImageDraw
+
+        image = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+        ImageDraw.Draw(image).ellipse((6, 6, 58, 58), fill=(242, 163, 59, 255))
+        return image
 
     @staticmethod
     def _load_labels(code: str) -> dict[str, str]:

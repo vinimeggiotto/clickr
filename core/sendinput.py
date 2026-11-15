@@ -32,7 +32,11 @@ click = _backend.click
 click_at = _backend.click_at
 double_click = _backend.double_click
 double_click_at = _backend.double_click_at
+scroll = _backend.scroll
 name_to_vk = _backend.name_to_vk
+key_down_char = _backend.key_down_char
+key_up_char = _backend.key_up_char
+type_text = _backend.type_text
 key_down = _backend.key_down
 key_up = _backend.key_up
 key_press = _backend.key_press
@@ -52,7 +56,11 @@ __all__ = [
     "click_at",
     "double_click",
     "double_click_at",
+    "scroll",
     "name_to_vk",
+    "key_down_char",
+    "key_up_char",
+    "type_text",
     "key_down",
     "key_up",
     "key_press",

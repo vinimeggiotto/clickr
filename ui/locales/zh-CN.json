@@ -164,7 +164,52 @@
     "infoUnavailable": "信息窗口不可用。",
     "pickHint": "点击屏幕标记坐标（Esc 取消）…",
     "wizardSavedStart": "配置“{name}”已保存并启动引擎。",
-    "wizardSavedOnly": "配置“{name}”已保存。稍后可在 点击 / 运行 / 坐标 中调整。"
+    "wizardSavedOnly": "配置“{name}”已保存。稍后可在 点击 / 运行 / 坐标 中调整。",
+    "overlayMissing": "未找到捕获叠加层。",
+    "alwaysOnTop": "无法应用“窗口置顶”。",
+    "config": {
+      "invalid": "配置无效。"
+    },
+    "hotkey": {
+      "unsupported": "不支持的快捷键：{key}"
+    },
+    "sequence": {
+      "badIndex": "序列步骤无效。"
+    },
+    "macro": {
+      "empty": "宏为空——请先录制事件再播放。",
+      "recordFailed": "无法开始录制宏。",
+      "busy": "请先停止宏再继续。",
+      "unsupportedKey": "宏包含不支持的按键：{key}",
+      "unknownEvent": "未知的宏事件：{kind}"
+    },
+    "schedule": {
+      "empty": "请输入要计划的日期和时间。",
+      "invalid": "日期/时间无效。",
+      "past": "计划时间必须在将来。"
+    },
+    "script": {
+      "empty": "脚本为空。",
+      "tooLong": "脚本超过 {max} 行。",
+      "unknownCommand": "第 {line} 行：未知命令“{op}”。",
+      "usage": "第 {line} 行：请使用“{usage}”。",
+      "badNumber": "第 {line} 行：数字无效“{value}”。",
+      "badButton": "第 {line} 行：按钮无效“{value}”。",
+      "badKey": "第 {line} 行：不支持的按键“{value}”。",
+      "negativeWait": "第 {line} 行：wait 无效（使用 MS 或 MIN-MAX）。",
+      "loopRange": "第 {line} 行：loop 必须在 1 到 {max} 之间。",
+      "loopDepth": "第 {line} 行：最多嵌套 {max} 层 loop。",
+      "endWithoutLoop": "第 {line} 行：“end”没有对应的 loop。",
+      "loopNoEnd": "有 loop 缺少“end”。"
+    },
+    "profile": {
+      "invalidName": "配置名称无效。请使用字母、数字、空格、_ . -（最多 64 个字符）。",
+      "reservedName": "“{name}”是系统保留名称，请另选一个。",
+      "notFound": "未找到配置：{name}",
+      "exists": "已存在名为“{name}”的配置。",
+      "invalidFile": "配置文件无效。",
+      "fileNotFound": "未找到文件。"
+    }
   },
   "tray": {
     "show": "显示",

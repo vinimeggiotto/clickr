@@ -6,13 +6,24 @@ import sys
 
 
 def main() -> int:
+    from app.log import setup_logging
+
+    log = setup_logging()
+
     from core.dpi import enable_dpi_awareness
 
-    enable_dpi_awareness()
+    try:
+        enable_dpi_awareness()
+    except OSError:
+        log.exception("Falha ao ativar DPI awareness")
 
-    from app.bootstrap import run
+    try:
+        from app.bootstrap import run
 
-    run()
+        run()
+    except Exception:
+        log.exception("Erro fatal")
+        raise
     return 0
 
 

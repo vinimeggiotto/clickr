@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any, Optional
 
+from app.fsutil import atomic_write_json
 from app.paths import user_data_dir
 
 SUPPORTED_LOCALES = (
@@ -67,11 +68,7 @@ class AppSettings:
         payload: dict[str, Any] = {
             "locale": locale if isinstance(locale, str) and locale in SUPPORTED_LOCALES else None,
         }
-        self.ensure_dir()
-        self._path.write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        atomic_write_json(self._path, payload)
         return dict(payload)
 
     def get_locale(self) -> Optional[str]:

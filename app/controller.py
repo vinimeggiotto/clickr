@@ -2,18 +2,21 @@
 
 from __future__ import annotations
 
+import functools
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import webview
 
+from app.log import get_logger
+from app.notifier import UiNotifier
 from app.paths import app_version, locales_dir, ui_dir
 from app.settings import SUPPORTED_LOCALES, AppSettings
-from app.tray import SystemTray
 from core import sendinput
 from core.engine import ClickEngine
+from core.errors import ClickrError, error_from_exception, normalize_error
 from core.types import ClickConfig
 from hotkeys.service import HotkeyService
 from macros.player import MacroPlayer
@@ -21,8 +24,32 @@ from macros.recorder import MacroRecorder
 from profiles.repo import ProfilesRepo
 from scheduler.service import Scheduler
 from scripts.runner import ScriptRunner
+from window_filter.filter import point_in_own_window
 
 UI_DIR = ui_dir()
+log = get_logger()
+
+
+def api(fn: Callable[..., Any]) -> Callable[..., Any]:
+    """
+    Envolve um método da bridge JS: limpa erros anteriores, executa e, em caso
+    de exceção, registra o erro (com código traduzível) e devolve o estado em
+    vez de propagar a exceção para o JavaScript.
+    """
+
+    @functools.wraps(fn)
+    def wrapper(self: "AppController", *args: Any, **kwargs: Any) -> Any:
+        self._clear_errors()
+        try:
+            return fn(self, *args, **kwargs)
+        except ClickrError as exc:
+            self._error = exc.to_dict()
+        except Exception as exc:  # noqa: BLE001 - fronteira da bridge
+            log.exception("Falha em %s", fn.__name__)
+            self._error = error_from_exception(exc)
+        return self.get_state()
+
+    return wrapper
 
 
 class AppController:
@@ -44,7 +71,10 @@ class AppController:
         self._overlay: Any = None
         self._info: Any = None
         self._info_payload: dict[str, str] = {"title": "", "body_html": ""}
-        self._tray: Optional[SystemTray] = None
+        self._tray: Any = None
+        self._error: Optional[dict[str, Any]] = None
+        self._window_visible = True
+        self._notifier = UiNotifier(self._push_state)
         self._picking = False
         self._recording_hotkey = False
         self._quit_requested = False
@@ -56,38 +86,66 @@ class AppController:
     def bootstrap_services(self) -> None:
         """Inicia hotkey global, bandeja e aplica always-on-top."""
         cfg = self._engine.get_config()
-        self._hotkeys.set_hotkey(cfg.hotkey)
-        self._hotkeys.start()
+        try:
+            self._hotkeys.set_hotkey(cfg.hotkey)
+            self._hotkeys.start()
+        except Exception:
+            log.exception("Falha ao iniciar hotkeys globais")
         self._apply_always_on_top(cfg.always_on_top)
-        locale = self._settings.get_locale()
-        self._tray = SystemTray(
-            on_show=self._tray_show,
-            on_hide=self._tray_hide,
-            on_quit=self._tray_quit,
-            locale=locale,
-        )
-        self._tray.start()
-        self._engine.set_on_tick(self._notify_ui)
-        self._macro_recorder.set_on_change(self._notify_ui)
-        self._macro_player.set_on_tick(self._notify_ui)
-        self._macro_player.set_on_done(self._notify_ui)
-        self._scheduler.set_on_change(self._notify_ui)
-        self._script.set_on_tick(self._notify_ui)
-        self._script.set_on_done(self._notify_ui)
+        self.start_tray()
+        self._engine.set_click_guard(self._click_guard)
+        signal = self._notifier.signal
+        self._engine.set_on_tick(signal)
+        self._macro_recorder.set_on_change(signal)
+        self._macro_player.set_on_tick(signal)
+        self._macro_player.set_on_done(signal)
+        self._scheduler.set_on_change(signal)
+        self._script.set_on_tick(signal)
+        self._script.set_on_done(signal)
         self._ui_alive = True
+        self._notifier.start()
+
+    def start_tray(self, detached: bool = False) -> None:
+        """
+        Cria o ícone da bandeja (idempotente). Falha aqui não derruba o app:
+        sem bandeja, fechar a janela encerra o programa de verdade.
+        """
+        if self._tray is not None:
+            return
+        try:
+            from app.tray import SystemTray
+
+            tray = SystemTray(
+                on_show=self._tray_show,
+                on_hide=self._tray_hide,
+                on_quit=self._tray_quit,
+                locale=self._settings.get_locale(),
+            )
+            tray.start(detached=detached)
+            self._tray = tray
+        except Exception:
+            log.exception("Bandeja do sistema indisponível")
+            self._tray = None
 
     def shutdown(self) -> None:
         # Impede evaluate_js em WebView2 já descartado (ticks/hotkey em corrida com destroy).
         self._ui_alive = False
+        self._notifier.stop()
         self._clear_ui_callbacks()
         self._scheduler.cancel()
         self._macro_recorder.stop()
         self._macro_player.stop()
         self._script.stop()
         self._engine.stop()
-        self._hotkeys.stop()
+        try:
+            self._hotkeys.stop()
+        except Exception:
+            log.exception("Falha ao parar hotkeys")
         if self._tray is not None:
-            self._tray.stop()
+            try:
+                self._tray.stop()
+            except Exception:
+                log.exception("Falha ao parar a bandeja")
             self._tray = None
         self._close_overlay()
         self._close_info()
@@ -104,15 +162,27 @@ class AppController:
 
     def should_close_to_tray(self) -> bool:
         """True se o fechamento da janela deve apenas ocultar (não encerrar)."""
-        return not self._quit_requested
+        return not self._quit_requested and self._tray is not None
+
+    def _clear_errors(self) -> None:
+        self._error = None
+        self._engine.set_last_error(None)
+        self._macro_player.clear_error()
+        self._script.clear_error()
+        self._scheduler.clear_error()
+
+    def _fail(self, code: str, message: str = "", **params: Any) -> None:
+        self._error = ClickrError(code, message, **params).to_dict()
 
     # --- Bridge JS API -------------------------------------------------
 
+    @api
     def start(self) -> dict[str, Any]:
         self._stop_tier3_runners(keep_schedule=True)
         self._engine.start()
         return self.get_state()
 
+    @api
     def stop(self) -> dict[str, Any]:
         self._engine.stop()
         self._macro_player.stop()
@@ -123,21 +193,21 @@ class AppController:
         state = self._engine.get_state().to_dict()
         state["picking"] = self._picking
         state["recording_hotkey"] = self._recording_hotkey
-        state["profiles"] = self._profiles.list_profiles()
-        macro_err = self._macro_player.last_error()
+        macro_playing = self._macro_player.is_playing()
+        macro_recording = self._macro_recorder.is_recording()
         script_status = self._script.status()
         sched = self._scheduler.status()
-        # Propaga erros de tier3 se o motor não tiver erro próprio
-        if not state.get("last_error"):
-            if macro_err:
-                state["last_error"] = macro_err
-            elif script_status.get("last_error"):
-                state["last_error"] = script_status["last_error"]
-            elif sched.get("last_error"):
-                state["last_error"] = sched["last_error"]
+        # Um único erro por vez, na ordem: ação da UI, motor, macro, script, agenda.
+        state["last_error"] = (
+            self._error
+            or normalize_error(state.get("last_error"))
+            or self._macro_player.last_error()
+            or script_status.get("last_error")
+            or sched.get("last_error")
+        )
         state["macro"] = {
-            "recording": self._macro_recorder.is_recording(),
-            "playing": self._macro_player.is_playing(),
+            "recording": macro_recording,
+            "playing": macro_playing,
             "event_count": self._macro_recorder.event_count(),
         }
         state["schedule"] = {
@@ -148,19 +218,16 @@ class AppController:
             "running": script_status["running"],
             "line": script_status["line"],
         }
-        # Flags agregadas para UI (ativo se motor, macro ou script)
-        if (
-            self._macro_player.is_playing()
-            or self._script.is_running()
-            or self._macro_recorder.is_recording()
-        ):
-            state["running"] = (
-                state["running"]
-                or self._macro_player.is_playing()
-                or self._script.is_running()
-            )
+        state["engine_running"] = bool(state["running"])
+        state["running"] = bool(state["running"] or macro_playing or script_status["running"])
         return state
 
+    def _state_with_profiles(self) -> dict[str, Any]:
+        state = self.get_state()
+        state["profiles"] = self._profiles.list_profiles()
+        return state
+
+    @api
     def set_config(self, config: Optional[dict[str, Any]] = None, **kwargs: Any) -> dict[str, Any]:
         """
         Atualiza configuração parcial.
@@ -198,178 +265,196 @@ class AppController:
             merged_wf.update(data["window_filter"])
             data["window_filter"] = merged_wf
 
-        self._engine.set_last_error(None)
-        updated = self._engine.update_config(data)
-        self._sync_side_effects(updated, data)
+        self._apply_config(data)
         return self.get_state()
 
+    @api
     def set_compact_mode(self, enabled: bool) -> dict[str, Any]:
-        return self.set_config({"compact_mode": bool(enabled)})
+        self._apply_config({"compact_mode": bool(enabled)})
+        return self.get_state()
 
+    @api
     def pick_location(self) -> dict[str, Any]:
-        """Abre overlay fullscreen para capturar XY (não bloqueia a bridge)."""
+        """Abre overlay cobrindo a tela virtual para capturar XY (não bloqueia a bridge)."""
         if self._picking:
             return self.get_state()
         overlay_path = (UI_DIR / "overlay.html").resolve()
         if not overlay_path.is_file():
-            raise FileNotFoundError(f"Overlay não encontrado: {overlay_path}")
+            raise ClickrError("overlayMissing", f"Overlay não encontrado: {overlay_path}")
 
         self._close_overlay()
         self._picking = True
-        vx, vy, vw, vh = sendinput.get_virtual_screen_rect()
-        # Uma janela cobrindo a tela virtual (todos os monitores), não fullscreen de 1 tela.
-        self._overlay = webview.create_window(
-            title=self._ui_string("overlay.windowTitle", "Clickr — capturar ponto"),
-            url=overlay_path.as_uri(),
-            js_api=self,
-            x=vx,
-            y=vy,
-            width=vw,
-            height=vh,
-            fullscreen=False,
-            on_top=True,
-            frameless=True,
-            easy_drag=False,
-            resizable=False,
-            background_color="#000000",
-        )
-        self._notify_ui()
+        try:
+            vx, vy, vw, vh = sendinput.get_virtual_screen_rect()
+            # Uma janela transparente cobrindo a tela virtual (todos os monitores):
+            # o usuário enxerga o que está por baixo enquanto escolhe o ponto.
+            overlay = webview.create_window(
+                title=self._ui_string("overlay.windowTitle", "Clickr — capturar ponto"),
+                url=overlay_path.as_uri(),
+                js_api=self,
+                x=vx,
+                y=vy,
+                width=vw,
+                height=vh,
+                fullscreen=False,
+                on_top=True,
+                frameless=True,
+                easy_drag=False,
+                resizable=False,
+                transparent=True,
+                # Só aparece se o backend do SO ignorar a transparência.
+                background_color="#000000",
+            )
+            self._overlay = overlay
+            # Fechamento por qualquer via (Alt+F4, SO) não pode travar o estado.
+            try:
+                overlay.events.closed += self._on_overlay_closed
+            except Exception:
+                log.exception("Não foi possível observar o fechamento do overlay")
+        except Exception:
+            self._picking = False
+            self._overlay = None
+            raise
+        self._notifier.signal()
         return self.get_state()
 
+    @api
     def confirm_pick(self, x: int = 0, y: int = 0) -> dict[str, Any]:
         """Callback do overlay: usa posição real do cursor e fecha a captura."""
         cx, cy = sendinput.get_cursor_pos()
         self._picking = False
         self._close_overlay()
-        self._engine.update_config(
+        self._apply_config(
             {
                 "position_mode": "fixed",
                 "fixed_x": int(cx),
                 "fixed_y": int(cy),
             }
         )
-        self._notify_ui()
+        self._notifier.signal()
         return self.get_state()
 
+    @api
     def cancel_pick(self) -> dict[str, Any]:
         self._picking = False
         self._close_overlay()
-        self._notify_ui()
+        self._notifier.signal()
         return self.get_state()
 
-    def add_sequence_point(self, x: Optional[int] = None, y: Optional[int] = None, delay_ms: int = 0) -> dict[str, Any]:
+    @api
+    def add_sequence_point(
+        self, x: Optional[int] = None, y: Optional[int] = None, delay_ms: int = 0
+    ) -> dict[str, Any]:
         """Adiciona um passo à sequência (XY atuais do cursor se omitidos)."""
         if x is None or y is None:
             cx, cy = sendinput.get_cursor_pos()
             x = cx if x is None else int(x)
             y = cy if y is None else int(y)
-        cfg = self._engine.get_config()
-        steps = [s.to_dict() for s in cfg.sequence]
+        steps = self._sequence_steps()
         steps.append({"x": int(x), "y": int(y), "delay_ms": max(0, int(delay_ms or 0))})
-        self._engine.update_config({"sequence": steps})
+        self._apply_config({"sequence": steps})
         return self.get_state()
 
+    @api
     def remove_sequence_point(self, index: int) -> dict[str, Any]:
-        cfg = self._engine.get_config()
-        steps = [s.to_dict() for s in cfg.sequence]
-        idx = int(index)
-        if idx < 0 or idx >= len(steps):
-            raise IndexError("Índice de sequência inválido")
-        steps.pop(idx)
-        self._engine.update_config({"sequence": steps})
+        steps = self._sequence_steps()
+        steps.pop(self._sequence_index(index, len(steps)))
+        self._apply_config({"sequence": steps})
         return self.get_state()
 
+    @api
     def clear_sequence(self) -> dict[str, Any]:
-        self._engine.update_config({"sequence": []})
+        self._apply_config({"sequence": []})
         return self.get_state()
 
+    @api
     def record_hotkey(self) -> dict[str, Any]:
         """Inicia gravação da próxima tecla como hotkey de start/stop."""
         if self._recording_hotkey:
             return self.get_state()
         self._recording_hotkey = True
-        self._engine.set_last_error(None)
-        self._hotkeys.begin_capture(self._on_hotkey_captured)
-        self._notify_ui()
+        try:
+            self._hotkeys.begin_capture(self._on_hotkey_captured)
+        except Exception:
+            self._recording_hotkey = False
+            raise
+        self._notifier.signal()
         return self.get_state()
 
+    @api
     def cancel_record_hotkey(self) -> dict[str, Any]:
         self._hotkeys.cancel_capture()
         self._recording_hotkey = False
-        self._notify_ui()
+        self._notifier.signal()
         return self.get_state()
 
     # --- Macro ---------------------------------------------------------
 
+    @api
     def macro_record_start(self) -> dict[str, Any]:
         if self._macro_recorder.is_recording():
             return self.get_state()
         self._stop_tier3_runners(keep_schedule=True)
         self._engine.stop()
-        self._engine.set_last_error(None)
-        ok = self._macro_recorder.start()
-        if not ok:
-            self._engine.set_last_error("Não foi possível iniciar a gravação da macro.")
+        if not self._macro_recorder.start():
+            self._fail("macro.recordFailed", "Não foi possível iniciar a gravação da macro.")
         return self.get_state()
 
+    @api
     def macro_record_stop(self) -> dict[str, Any]:
-        events = self._macro_recorder.stop()
-        state = self.get_state()
-        state["macro"]["event_count"] = len(events)
-        return state
+        self._macro_recorder.stop()
+        return self.get_state()
 
+    @api
     def macro_play(self) -> dict[str, Any]:
         if self._macro_player.is_playing():
             return self.get_state()
         events = self._macro_recorder.get_events()
         self._engine.stop()
         self._script.stop()
-        self._engine.set_last_error(None)
-        ok = self._macro_player.play(events)
-        if not ok:
-            err = self._macro_player.last_error() or "Falha ao reproduzir macro."
-            self._engine.set_last_error(err)
+        self._macro_player.play(events)
         return self.get_state()
 
+    @api
     def macro_stop(self) -> dict[str, Any]:
         if self._macro_recorder.is_recording():
             self._macro_recorder.stop()
         self._macro_player.stop()
         return self.get_state()
 
+    @api
     def macro_clear(self) -> dict[str, Any]:
         if self._macro_recorder.is_recording() or self._macro_player.is_playing():
-            self._engine.set_last_error("Pare a macro antes de limpar.")
+            self._fail("macro.busy", "Pare a macro antes de limpar.")
             return self.get_state()
         self._macro_recorder.clear()
         return self.get_state()
 
     # --- Scheduler -----------------------------------------------------
 
+    @api
     def schedule_set(self, when: str) -> dict[str, Any]:
         """Agenda início do motor. when: ISO local 'YYYY-MM-DDTHH:MM' ou com segundos."""
         raw = (when or "").strip()
         if not raw:
-            self._engine.set_last_error("Informe data e hora para agendar.")
-            return self.get_state()
+            raise ClickrError("schedule.empty", "Informe data e hora para agendar.")
         try:
             dt = datetime.fromisoformat(raw)
         except ValueError:
-            self._engine.set_last_error("Data/hora inválida. Use AAAA-MM-DDTHH:MM.")
-            return self.get_state()
-        try:
-            self._scheduler.schedule(dt, self._on_schedule_fire)
-            self._engine.set_last_error(None)
-        except ValueError as exc:
-            self._engine.set_last_error(str(exc))
+            raise ClickrError(
+                "schedule.invalid", "Data/hora inválida. Use AAAA-MM-DDTHH:MM."
+            ) from None
+        self._scheduler.schedule(dt, self._on_schedule_fire)
         return self.get_state()
 
+    @api
     def schedule_cancel(self) -> dict[str, Any]:
         self._scheduler.cancel()
         return self.get_state()
 
     # --- Script --------------------------------------------------------
 
+    @api
     def script_run(self, source: str = "") -> dict[str, Any]:
         if self._script.is_running():
             return self.get_state()
@@ -377,91 +462,82 @@ class AppController:
         self._macro_player.stop()
         if self._macro_recorder.is_recording():
             self._macro_recorder.stop()
-        self._engine.set_last_error(None)
-        ok = self._script.run(source or "")
-        if not ok:
-            err = self._script.last_error() or "Falha ao executar script."
-            self._engine.set_last_error(err)
+        self._script.run(source or "")
         return self.get_state()
 
+    @api
     def script_stop(self) -> dict[str, Any]:
         self._script.stop()
         return self.get_state()
 
-    def list_profiles(self) -> list[str]:
-        return self._profiles.list_profiles()
+    # --- Perfis --------------------------------------------------------
 
+    def list_profiles(self) -> list[str]:
+        try:
+            return self._profiles.list_profiles()
+        except OSError:
+            log.exception("Falha ao listar perfis")
+            return []
+
+    @api
     def save_profile(self, name: str) -> dict[str, Any]:
         cfg = self._engine.get_config().to_dict()
         saved = self._profiles.save(name, cfg)
-        state = self.get_state()
+        state = self._state_with_profiles()
         state["saved_profile"] = saved
         return state
 
+    @api
     def load_profile(self, name: str) -> dict[str, Any]:
         data = self._profiles.load(name)
-        self._engine.set_last_error(None)
-        updated = self._engine.update_config(data)
-        self._sync_side_effects(updated, data)
-        return self.get_state()
+        self._apply_config(data)
+        return self._state_with_profiles()
 
+    @api
     def export_profile(self, name: str = "") -> dict[str, Any]:
         """Abre diálogo Salvar e exporta perfil (salvo ou config atual) em JSON."""
         label = (name or "").strip() or "clickr-perfil"
-        try:
-            safe_name = ProfilesRepo._validate_name(label)
-        except ValueError as exc:
-            self._engine.set_last_error(str(exc))
-            return self.get_state()
-
-        result = webview.create_file_dialog(
+        safe_name = ProfilesRepo.validate_new_name(label)
+        result = self._file_dialog(
             webview.SAVE_DIALOG,
             save_filename=f"{safe_name}.json",
-            file_types=("Arquivos JSON (*.json)",),
+            file_types=("JSON (*.json)",),
         )
         if not result:
             return self.get_state()
         dest = Path(result[0] if isinstance(result, (list, tuple)) else result)
-        try:
-            cfg = self._engine.get_config().to_dict()
-            if self._profiles.exists(safe_name):
-                self._profiles.export_to(safe_name, dest)
-            else:
-                self._profiles.export_config(safe_name, cfg, dest)
-            self._engine.set_last_error(None)
-            state = self.get_state()
-            state["exported_path"] = str(dest)
-            return state
-        except (OSError, ValueError, FileNotFoundError) as exc:
-            self._engine.set_last_error(str(exc))
-            return self.get_state()
+        if self._profiles.exists(safe_name):
+            self._profiles.export_to(safe_name, dest)
+        else:
+            self._profiles.export_config(safe_name, self._engine.get_config().to_dict(), dest)
+        state = self.get_state()
+        state["exported_path"] = str(dest)
+        return state
 
+    @api
     def import_profile(self, name: str = "") -> dict[str, Any]:
         """Abre diálogo Abrir e importa JSON para a pasta de perfis."""
-        result = webview.create_file_dialog(
+        result = self._file_dialog(
             webview.OPEN_DIALOG,
             allow_multiple=False,
-            file_types=("Arquivos JSON (*.json)",),
+            file_types=("JSON (*.json)",),
         )
         if not result:
             return self.get_state()
         src = Path(result[0] if isinstance(result, (list, tuple)) else result)
         override = (name or "").strip() or None
-        try:
-            saved = self._profiles.import_from(src, name=override)
-            data = self._profiles.load(saved)
-            self._engine.set_last_error(None)
-            updated = self._engine.update_config(data)
-            self._sync_side_effects(updated, data)
-            state = self.get_state()
-            state["imported_profile"] = saved
-            return state
-        except (OSError, ValueError, FileNotFoundError, TypeError) as exc:
-            self._engine.set_last_error(str(exc))
-            return self.get_state()
+        saved = self._profiles.import_from(src, name=override)
+        self._apply_config(self._profiles.load(saved))
+        state = self._state_with_profiles()
+        state["imported_profile"] = saved
+        return state
 
+    @api
     def set_always_on_top(self, enabled: bool) -> dict[str, Any]:
-        return self.set_config({"always_on_top": bool(enabled)})
+        self._apply_config({"always_on_top": bool(enabled)})
+        return self.get_state()
+
+    # --- Janela --------------------------------------------------------
 
     def show_window(self) -> None:
         self._tray_show()
@@ -469,7 +545,11 @@ class AppController:
     def hide_window(self, notify: bool = False) -> None:
         """Oculta a janela. Se notify=True, avisa que o app segue na bandeja."""
         if notify and self._tray is not None:
-            self._tray.notify_still_running()
+            try:
+                self._tray.notify_still_running()
+            except Exception:
+                # Nem todo SO suporta notificação pela bandeja (ex.: macOS).
+                log.info("Notificação da bandeja indisponível neste sistema")
         self._tray_hide()
 
     def get_settings(self) -> dict[str, Any]:
@@ -478,18 +558,22 @@ class AppController:
         return {
             "locale": data.get("locale"),
             "supported_locales": list(SUPPORTED_LOCALES),
-            "version": app_version(),
+            "version": self._version(),
+            "profiles": self.list_profiles(),
         }
 
     def set_locale(self, code: str) -> dict[str, Any]:
         """Persiste locale, atualiza menu da bandeja e devolve settings."""
         saved = self._settings.set_locale(str(code or "").strip())
         if self._tray is not None and saved.get("locale"):
-            self._tray.set_locale(str(saved["locale"]))
+            try:
+                self._tray.set_locale(str(saved["locale"]))
+            except Exception:
+                log.exception("Falha ao atualizar idioma da bandeja")
         return {
             "locale": saved.get("locale"),
             "supported_locales": list(SUPPORTED_LOCALES),
-            "version": app_version(),
+            "version": self._version(),
         }
 
     def window_minimize(self) -> None:
@@ -499,7 +583,10 @@ class AppController:
         self._window.minimize()
 
     def window_close(self) -> None:
-        """Fecha para a bandeja e notifica o usuário."""
+        """Fecha para a bandeja e notifica o usuário (ou encerra, se não há bandeja)."""
+        if self._tray is None:
+            self._tray_quit()
+            return
         self.hide_window(notify=True)
 
     def show_info_popup(self, title: str, body_html: str) -> dict[str, Any]:
@@ -550,6 +637,57 @@ class AppController:
 
     # --- Interno -------------------------------------------------------
 
+    @staticmethod
+    def _version() -> str:
+        try:
+            return app_version()
+        except (OSError, ValueError):
+            log.exception("VERSION ilegível")
+            return ""
+
+    def _file_dialog(self, dialog_type: Any, **kwargs: Any) -> Any:
+        window = self._window
+        if window is not None and hasattr(window, "create_file_dialog"):
+            return window.create_file_dialog(dialog_type, **kwargs)
+        return webview.create_file_dialog(dialog_type, **kwargs)
+
+    def _sequence_steps(self) -> list[dict[str, Any]]:
+        return [s.to_dict() for s in self._engine.get_config().sequence]
+
+    @staticmethod
+    def _sequence_index(index: Any, length: int) -> int:
+        try:
+            idx = int(index)
+        except (TypeError, ValueError):
+            idx = -1
+        if idx < 0 or idx >= length:
+            raise ClickrError("sequence.badIndex", "Índice de sequência inválido")
+        return idx
+
+    def _apply_config(self, data: dict[str, Any]) -> ClickConfig:
+        """
+        Valida efeitos colaterais (hotkey) antes de gravar a config, para que
+        motor e serviço de hotkeys nunca fiquem divergentes.
+        """
+        data = dict(data)
+        if data.get("hotkey") is not None:
+            try:
+                data["hotkey"] = self._hotkeys.set_hotkey(str(data["hotkey"]))
+            except ValueError:
+                bad = data.pop("hotkey")
+                self._fail("hotkey.unsupported", f"Hotkey não suportada: {bad}", key=str(bad))
+        else:
+            data.pop("hotkey", None)
+        try:
+            updated = self._engine.update_config(data)
+        except (TypeError, ValueError) as exc:
+            if isinstance(exc, ClickrError):
+                raise
+            raise ClickrError("config.invalid", f"Configuração inválida: {exc}") from exc
+        if "always_on_top" in data:
+            self._apply_always_on_top(bool(updated.always_on_top))
+        return updated
+
     def _stop_tier3_runners(self, keep_schedule: bool = False) -> None:
         if self._macro_recorder.is_recording():
             self._macro_recorder.stop()
@@ -561,15 +699,7 @@ class AppController:
     def _on_schedule_fire(self) -> None:
         self._stop_tier3_runners(keep_schedule=True)
         self._engine.start()
-        self._notify_ui()
-
-    def _sync_side_effects(self, config: ClickConfig, changed: dict[str, Any]) -> None:
-        if "hotkey" in changed and changed["hotkey"] is not None:
-            name = self._hotkeys.set_hotkey(str(changed["hotkey"]))
-            if name != config.hotkey:
-                self._engine.update_config({"hotkey": name})
-        if "always_on_top" in changed:
-            self._apply_always_on_top(bool(config.always_on_top))
+        self._notifier.signal()
 
     def _apply_always_on_top(self, enabled: bool) -> None:
         window = self._window
@@ -578,44 +708,66 @@ class AppController:
         try:
             window.on_top = bool(enabled)
         except Exception as exc:
-            self._engine.set_last_error(f"Falha ao aplicar always-on-top: {exc}")
+            log.exception("Falha ao aplicar always-on-top")
+            self._fail("alwaysOnTop", f"Falha ao aplicar always-on-top: {exc}")
 
     def _on_hotkey_captured(self, name: str) -> None:
         self._recording_hotkey = False
-        try:
-            resolved = self._hotkeys.set_hotkey(name)
-            self._engine.update_config({"hotkey": resolved})
-            self._engine.set_last_error(None)
-        except ValueError as exc:
-            self._engine.set_last_error(str(exc))
-        self._notify_ui()
+        self._clear_errors()
+        self._apply_config({"hotkey": name})
+        self._notifier.signal()
 
     def _toggle_from_hotkey(self) -> None:
         if self._picking or self._recording_hotkey:
             return
         if self._macro_recorder.is_recording():
             return
-        if self._macro_player.is_playing():
-            self._macro_player.stop()
-            self._notify_ui()
-            return
-        if self._script.is_running():
-            self._script.stop()
-            self._notify_ui()
-            return
-        self._engine.toggle()
-        self._notify_ui()
+        try:
+            if self._macro_player.is_playing():
+                self._macro_player.stop()
+            elif self._script.is_running():
+                self._script.stop()
+            else:
+                self._engine.toggle()
+        except Exception:
+            log.exception("Falha ao alternar pelo atalho")
+        self._notifier.signal()
 
-    def _notify_ui(self) -> None:
+    def _click_guard(self, x: int, y: int) -> bool:
+        """True quando o clique cairia sobre uma janela do próprio Clickr."""
+        native = point_in_own_window(x, y)
+        if native is not None:
+            return native
+        window = self._window
+        if window is None or not self._window_visible:
+            return False
+        try:
+            wx, wy = int(window.x), int(window.y)
+            ww, wh = int(window.width), int(window.height)
+        except Exception:
+            return False
+        return wx <= x < wx + ww and wy <= y < wy + wh
+
+    def _push_state(self) -> None:
+        """Envia o estado atual para a UI (chamado só pela thread do UiNotifier)."""
         if not self._ui_alive:
             return
         window = self._window
         if window is None:
             return
         try:
-            window.evaluate_js("window.__clickrApplyState && window.__clickrApplyState()")
+            payload = json.dumps(self.get_state())
+            window.evaluate_js(f"window.__clickrApplyState && window.__clickrApplyState({payload})")
         except Exception:
+            # Janela em destruição ou webview ocupado: o próximo sinal reenvia.
             pass
+
+    def _on_overlay_closed(self) -> None:
+        if self._overlay is None and not self._picking:
+            return
+        self._overlay = None
+        self._picking = False
+        self._notifier.signal()
 
     def _close_overlay(self) -> None:
         overlay = self._overlay
@@ -625,7 +777,7 @@ class AppController:
         try:
             overlay.destroy()
         except Exception:
-            pass
+            log.info("Overlay já estava fechado")
 
     def _close_info(self) -> None:
         info = self._info
@@ -635,7 +787,7 @@ class AppController:
         try:
             info.destroy()
         except Exception:
-            pass
+            log.info("Janela de info já estava fechada")
 
     def _tray_show(self) -> None:
         window = self._window
@@ -643,8 +795,13 @@ class AppController:
             return
         try:
             window.show()
+            self._window_visible = True
+            try:
+                window.restore()
+            except Exception:
+                pass
         except Exception:
-            pass
+            log.exception("Falha ao mostrar a janela")
 
     def _tray_hide(self) -> None:
         window = self._window
@@ -652,8 +809,9 @@ class AppController:
             return
         try:
             window.hide()
+            self._window_visible = False
         except Exception:
-            pass
+            log.exception("Falha ao ocultar a janela")
 
     def _tray_quit(self) -> None:
         self._quit_requested = True
@@ -663,10 +821,7 @@ class AppController:
             try:
                 window.destroy()
             except Exception:
-                pass
-
-    def default_config(self) -> ClickConfig:
-        return self._engine.get_config()
+                log.info("Janela principal já estava destruída")
 
     def _ui_string(self, dotted_key: str, default: str = "") -> str:
         """Lê chave pontilhada do catálogo do locale ativo; fallback pt-BR."""

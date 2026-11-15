@@ -6,6 +6,8 @@ import ctypes
 from ctypes import wintypes
 from typing import Literal, Optional
 
+from core.keys import name_to_vk
+
 ButtonName = Literal["left", "right", "middle", "x1", "x2"]
 
 # user32 metrics
@@ -24,6 +26,9 @@ MOUSEEVENTF_MIDDLEDOWN = 0x0020
 MOUSEEVENTF_MIDDLEUP = 0x0040
 MOUSEEVENTF_XDOWN = 0x0080
 MOUSEEVENTF_XUP = 0x0100
+MOUSEEVENTF_WHEEL = 0x0800
+MOUSEEVENTF_HWHEEL = 0x1000
+WHEEL_DELTA = 120
 MOUSEEVENTF_ABSOLUTE = 0x8000
 MOUSEEVENTF_VIRTUALDESK = 0x4000
 
@@ -35,6 +40,9 @@ INPUT_KEYBOARD = 1
 
 KEYEVENTF_EXTENDEDKEY = 0x0001
 KEYEVENTF_KEYUP = 0x0002
+KEYEVENTF_UNICODE = 0x0004
+KEYEVENTF_SCANCODE = 0x0008
+MAPVK_VK_TO_VSC = 0
 
 # (down_flags, up_flags, mouseData)
 _BUTTON_FLAGS: dict[ButtonName, tuple[int, int, int]] = {
@@ -159,8 +167,8 @@ def get_virtual_screen_rect() -> tuple[int, int, int, int]:
 def _to_absolute(x: int, y: int) -> tuple[int, int]:
     """Converte pixels da tela virtual para coordenadas absolutas SendInput (0–65535)."""
     vx, vy, vw, vh = get_virtual_screen_rect()
-    abs_x = int((x - vx) * 65535 / (vw - 1))
-    abs_y = int((y - vy) * 65535 / (vh - 1))
+    abs_x = int(round((x - vx) * 65535 / (vw - 1)))
+    abs_y = int(round((y - vy) * 65535 / (vh - 1)))
     return abs_x, abs_y
 
 
@@ -187,18 +195,26 @@ def click(button: ButtonName) -> None:
     _send([_mouse_input(down, mouse_data=data), _mouse_input(up, mouse_data=data)])
 
 
-def click_at(button: ButtonName, x: int, y: int) -> None:
-    """Move para (x, y) na tela virtual e clica (ponto fixo / multi-monitor)."""
+_MOVE_FLAGS = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK
+
+
+def click_at(button: ButtonName, x: int, y: int, restore: bool = False, count: int = 1) -> None:
+    """
+    Move para (x, y) na tela virtual e clica (ponto fixo / multi-monitor).
+
+    restore=True devolve o cursor à posição original no mesmo lote SendInput.
+    """
     abs_x, abs_y = _to_absolute(x, y)
-    move_flags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK
     down, up, data = _resolve_button(button)
-    _send(
-        [
-            _mouse_input(move_flags, dx=abs_x, dy=abs_y),
-            _mouse_input(down, mouse_data=data),
-            _mouse_input(up, mouse_data=data),
-        ]
-    )
+    batch = [_mouse_input(_MOVE_FLAGS, dx=abs_x, dy=abs_y)]
+    for _ in range(max(1, int(count))):
+        batch.append(_mouse_input(down, mouse_data=data))
+        batch.append(_mouse_input(up, mouse_data=data))
+    if restore:
+        ox, oy = get_cursor_pos()
+        back_x, back_y = _to_absolute(ox, oy)
+        batch.append(_mouse_input(_MOVE_FLAGS, dx=back_x, dy=back_y))
+    _send(batch)
 
 
 def double_click(button: ButtonName) -> None:
@@ -206,72 +222,72 @@ def double_click(button: ButtonName) -> None:
     click(button)
 
 
-def double_click_at(button: ButtonName, x: int, y: int) -> None:
-    click_at(button, x, y)
-    click_at(button, x, y)
+def double_click_at(button: ButtonName, x: int, y: int, restore: bool = False) -> None:
+    click_at(button, x, y, restore=restore, count=2)
+
+
+def scroll(dy: int, dx: int = 0) -> None:
+    """Rola a roda do mouse: dy > 0 para cima, dx > 0 para a direita (em "cliques")."""
+    batch = []
+    if dy:
+        batch.append(_mouse_input(MOUSEEVENTF_WHEEL, mouse_data=(int(dy) * WHEEL_DELTA) & 0xFFFFFFFF))
+    if dx:
+        batch.append(_mouse_input(MOUSEEVENTF_HWHEEL, mouse_data=(int(dx) * WHEEL_DELTA) & 0xFFFFFFFF))
+    if batch:
+        _send(batch)
 
 
 # --- Teclado ------------------------------------------------------------
 
-_VK_SPECIAL: dict[str, int] = {
-    "SPACE": 0x20,
-    "ENTER": 0x0D,
-    "RETURN": 0x0D,
-    "TAB": 0x09,
-    "ESC": 0x1B,
-    "ESCAPE": 0x1B,
-    "BACKSPACE": 0x08,
-    "DELETE": 0x2E,
-    "INSERT": 0x2D,
-    "HOME": 0x24,
-    "END": 0x23,
-    "PAGEUP": 0x21,
-    "PAGE UP": 0x21,
-    "PAGEDOWN": 0x22,
-    "PAGE DOWN": 0x22,
-    "UP": 0x26,
-    "DOWN": 0x28,
-    "LEFT": 0x25,
-    "RIGHT": 0x27,
-    "SHIFT": 0x10,
-    "CTRL": 0x11,
-    "CONTROL": 0x11,
-    "ALT": 0x12,
-    "WIN": 0x5B,
-    "LWIN": 0x5B,
-    "RWIN": 0x5C,
-}
+_MapVirtualKeyW = _user32.MapVirtualKeyW
+_MapVirtualKeyW.argtypes = (wintypes.UINT, wintypes.UINT)
+_MapVirtualKeyW.restype = wintypes.UINT
 
-
-def name_to_vk(name: str) -> int:
-    """Converte nome de tecla (ex: A, F6, SPACE) para virtual-key Win32."""
-    key_name = (name or "").strip().upper()
-    if not key_name:
-        raise ValueError("Nome de tecla vazio")
-    if key_name.startswith("F") and key_name[1:].isdigit():
-        n = int(key_name[1:])
-        if 1 <= n <= 24:
-            return 0x70 + (n - 1)
-    if key_name in _VK_SPECIAL:
-        return _VK_SPECIAL[key_name]
-    if len(key_name) == 1:
-        ch = key_name
-        if "A" <= ch <= "Z" or "0" <= ch <= "9":
-            return ord(ch)
-    raise ValueError(f"Tecla não suportada: {name}")
+# Teclas que exigem KEYEVENTF_EXTENDEDKEY (bloco de navegação, lado direito, etc.)
+_EXTENDED_VKS = frozenset(
+    {
+        0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,  # PgUp/PgDn/End/Home/setas
+        0x2C, 0x2D, 0x2E,  # PrintScreen/Insert/Delete
+        0x5B, 0x5C, 0x5D,  # Win esquerdo/direito, Menu
+        0x6F,  # divisão do numpad
+        0x90,  # NumLock
+        0xA3, 0xA5,  # Ctrl direito, Alt direito
+    }
+)
 
 
 def _key_input(vk: int, flags: int = 0) -> INPUT:
+    vk = int(vk) & 0xFFFF
+    if vk in _EXTENDED_VKS:
+        flags |= KEYEVENTF_EXTENDEDKEY
     inp = INPUT()
     inp.type = INPUT_KEYBOARD
     inp.union.ki = KEYBDINPUT(
-        wVk=vk & 0xFFFF,
-        wScan=0,
+        wVk=vk,
+        wScan=int(_MapVirtualKeyW(vk, MAPVK_VK_TO_VSC)) & 0xFFFF,
         dwFlags=flags,
         time=0,
         dwExtraInfo=0,
     )
     return inp
+
+
+def _unicode_input(unit: int, flags: int = 0) -> INPUT:
+    inp = INPUT()
+    inp.type = INPUT_KEYBOARD
+    inp.union.ki = KEYBDINPUT(
+        wVk=0,
+        wScan=int(unit) & 0xFFFF,
+        dwFlags=KEYEVENTF_UNICODE | flags,
+        time=0,
+        dwExtraInfo=0,
+    )
+    return inp
+
+
+def _utf16_units(text: str) -> list[int]:
+    data = text.encode("utf-16-le")
+    return [int.from_bytes(data[i : i + 2], "little") for i in range(0, len(data), 2)]
 
 
 def key_down(vk: int) -> None:
@@ -296,6 +312,21 @@ def key_down_name(name: str) -> None:
 
 def key_up_name(name: str) -> None:
     key_up(name_to_vk(name))
+
+
+def key_down_char(char: str) -> None:
+    """Pressiona um caractere arbitrário (Unicode), independente de layout."""
+    _send([_unicode_input(u) for u in _utf16_units(char)])
+
+
+def key_up_char(char: str) -> None:
+    _send([_unicode_input(u, KEYEVENTF_KEYUP) for u in _utf16_units(char)])
+
+
+def type_text(text: str) -> None:
+    """Digita texto Unicode (cada unidade UTF-16 como down + up)."""
+    for unit in _utf16_units(text or ""):
+        _send([_unicode_input(unit), _unicode_input(unit, KEYEVENTF_KEYUP)])
 
 
 def button_from_pynput(button: object) -> Optional[ButtonName]:
