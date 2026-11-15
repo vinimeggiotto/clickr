@@ -8,7 +8,7 @@ Manter o Clickr acessível em segundo plano, controlável pela bandeja, e opcion
 
 | Item | Ação |
 |------|------|
-| Iniciar / Parar | Rótulo muda conforme o estado. Parado: inicia o motor com a configuração atual. Com algo em execução (motor, macro, script ou gravação): para tudo |
+| Iniciar / Parar | Rótulo fixo; o estado aparece no ícone (ponto verde). Parado: inicia o motor com a configuração atual. Com algo em execução (motor, macro, script ou gravação): para tudo |
 | Mostrar (padrão) | Exibe e restaura a janela principal |
 | Ocultar | Oculta a janela principal |
 | Sair | Encerra motor, hotkeys, tray e destrói a janela |

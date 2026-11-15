@@ -214,3 +214,23 @@ def test_blocked_reason_is_reported(null_input):
     assert engine.get_state().blocked is None
     engine.stop()
     assert engine.get_state().blocked is None
+
+
+def test_stop_does_not_clobber_a_run_started_meanwhile(null_input):
+    """stop() concorrente com start() não pode deixar um loop órfão."""
+    import threading
+
+    engine = ClickEngine()
+    engine.update_config({"interval_ms": 2})
+    for _ in range(40):
+        engine.start()
+        stopper = threading.Thread(target=engine.stop)
+        stopper.start()
+        engine.start()
+        stopper.join()
+        # Qualquer que seja a ordem, um stop() final precisa parar tudo.
+        engine.stop()
+        assert not engine.is_running()
+        before = len(null_input.recorded())
+        time.sleep(0.02)
+        assert len(null_input.recorded()) == before, "loop órfão continuou clicando"

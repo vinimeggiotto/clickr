@@ -242,10 +242,7 @@ class Scheduler:
             if callback is not None:
                 payload = dict(item)
                 payload["at"] = item["at"].isoformat(timespec="seconds")
-                try:
-                    callback(payload)
-                except TypeError:
-                    callback()  # compatibilidade: callback sem argumentos
+                callback(payload)
         except Exception as exc:
             with self._lock:
                 self._last_error = error_from_exception(exc)

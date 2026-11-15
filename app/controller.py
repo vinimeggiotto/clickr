@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import json
+import sys
 import threading
 import time
 from datetime import datetime
@@ -107,6 +108,54 @@ class AppController:
             window.events.moved += self._on_window_moved
         except Exception:
             log.info("Evento de movimento da janela indisponível")
+        try:
+            # Reaplica quando a janela já existe de fato (a primeira tentativa
+            # pode acontecer antes de o formulário nativo estar pronto).
+            window.events.shown += lambda *_a: self._apply_always_on_top(
+                bool(self._settings.get("always_on_top"))
+            )
+        except Exception:
+            log.info("Evento de exibição da janela indisponível")
+
+    @staticmethod
+    def _legacy_win_scale() -> float:
+        """
+        Fator de escala que o pywebview < 6 aplica no Windows às coordenadas
+        passadas a create_window (ele devolve posições em pixels físicos, mas
+        multiplica x/y pela escala do monitor ao criar a janela). 1.0 nos demais.
+        """
+        if sys.platform != "win32":
+            return 1.0
+        try:
+            from importlib.metadata import version
+
+            if int(version("pywebview").split(".")[0]) >= 6:
+                return 1.0
+            import ctypes
+
+            scale = ctypes.WinDLL("shcore").GetScaleFactorForDevice(0) / 100.0
+            return scale if scale > 0 else 1.0
+        except Exception:
+            return 1.0
+
+    def to_create_coords(self, x: int, y: int) -> tuple[int, int]:
+        """Converte uma posição de tela para o que create_window espera receber."""
+        scale = self._legacy_win_scale()
+        return int(round(x / scale)), int(round(y / scale))
+
+    def _transparent_overlay_supported(self) -> bool:
+        """No Windows com pywebview < 6 a transparência usa chave de cor e
+        tingiria o overlay; lá ele continua opaco como na 1.0."""
+        return not (sys.platform == "win32" and self._pywebview_major() < 6)
+
+    @staticmethod
+    def _pywebview_major() -> int:
+        try:
+            from importlib.metadata import version
+
+            return int(version("pywebview").split(".")[0])
+        except Exception:
+            return 6
 
     def initial_window_pos(self) -> Optional[tuple[int, int]]:
         """Última posição da janela, se ainda cair dentro da área de tela atual."""
@@ -460,7 +509,7 @@ class AppController:
                 frameless=True,
                 easy_drag=False,
                 resizable=False,
-                transparent=True,
+                transparent=self._transparent_overlay_supported(),
                 # Só aparece se o backend do SO ignorar a transparência.
                 background_color="#000000",
             )
@@ -1002,8 +1051,7 @@ class AppController:
         main = self._window
         if main is not None:
             try:
-                x = int(main.x) + int(main.width) + 16
-                y = int(main.y)
+                x, y = self.to_create_coords(int(main.x) + int(main.width) + 16, int(main.y))
             except Exception:
                 pass
 

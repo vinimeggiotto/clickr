@@ -11,6 +11,16 @@ from hotkeys.combo import Combo
 from hotkeys.keynames import describe_key
 
 
+# Símbolo produzido com Shift → tecla base (layout US), para que SHIFT+1 seja
+# reconhecido onde o SO entrega o caractere "!" em vez da tecla física.
+_UNSHIFT = dict(zip('!@#$%^&*()_+{}|:"<>?~', "1234567890-=[]\\;',./`"))
+
+# X11 gera pares release+press durante a auto-repetição; uma soltura só vale
+# se nenhum novo press da mesma tecla chegar dentro desta janela.
+_RELEASE_DEBOUNCE_S = 0.03
+_DEBOUNCE_RELEASE = sys.platform not in ("win32", "darwin")
+
+
 def key_vk(key: object, listener: Any = None) -> Optional[int]:
     """Código VK canônico de uma tecla pynput (None se não identificável)."""
     info = describe_key(key)
@@ -28,7 +38,14 @@ def key_vk(key: object, listener: Any = None) -> Optional[int]:
     try:
         return name_to_vk(info["name"])
     except ValueError:
-        return None
+        pass
+    base = _UNSHIFT.get(str(info.get("char") or ""))
+    if base is not None:
+        try:
+            return name_to_vk(base)
+        except ValueError:
+            return None
+    return None
 
 
 class PynputHotkeyBackend:
@@ -46,6 +63,7 @@ class PynputHotkeyBackend:
         self._listener: Any = None
         self._mods: set = set()
         self._down: set = set()
+        self._pending_release: dict = {}
         self._paused = False
 
     def start(self) -> None:
@@ -97,6 +115,9 @@ class PynputHotkeyBackend:
             if family is not None:
                 self._mods.add(family)
                 return
+            pending = self._pending_release.pop(vk, None)
+            if pending is not None:
+                pending.cancel()  # era auto-repetição: a tecla nunca foi solta
             if vk in self._down:
                 return  # auto-repetição
             self._down.add(vk)
@@ -119,5 +140,18 @@ class PynputHotkeyBackend:
             family = modifier_family(vk)
             if family is not None:
                 self._mods.discard(family)
+            elif _DEBOUNCE_RELEASE:
+                old = self._pending_release.pop(vk, None)
+                if old is not None:
+                    old.cancel()
+                timer = threading.Timer(_RELEASE_DEBOUNCE_S, self._confirm_release, args=(vk,))
+                timer.daemon = True
+                self._pending_release[vk] = timer
+                timer.start()
             else:
+                self._down.discard(vk)
+
+    def _confirm_release(self, vk: int) -> None:
+        with self._lock:
+            if self._pending_release.pop(vk, None) is not None:
                 self._down.discard(vk)

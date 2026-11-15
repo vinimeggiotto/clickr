@@ -79,18 +79,18 @@ class SystemTray:
             pass
 
     def set_running(self, running: bool) -> None:
-        """Troca o ícone (ponto verde quando ativo) e o rótulo Iniciar/Parar."""
+        """Troca o ícone (ponto verde quando ativo)."""
         self._running = bool(running)
         icon = self._icon
         if icon is None:
             return
+        # No macOS o ícone só pode ser alterado na thread principal; lá o
+        # estado fica visível apenas na janela.
+        if sys.platform == "darwin":
+            return
         image = self._image_active if self._running else self._image_idle
         if image is not None:
             icon.icon = image
-        try:
-            icon.update_menu()
-        except Exception:
-            pass
 
     def notify(self, message: str, title: str = "Clickr") -> None:
         """Balloon/toast do Windows via ícone da bandeja."""
@@ -112,11 +112,10 @@ class SystemTray:
         items = []
         if self._on_toggle is not None:
             items.append(
+                # Rótulo fixo: o menu não é recriado a cada mudança de estado
+                # (isso teria de acontecer fora da thread da bandeja).
                 pystray.MenuItem(
-                    lambda _item: self._labels.get("stop", "Parar")
-                    if self._running
-                    else self._labels.get("start", "Iniciar"),
-                    self._handle_toggle,
+                    self._labels.get("toggle", "Iniciar / Parar"), self._handle_toggle
                 )
             )
             items.append(pystray.Menu.SEPARATOR)
@@ -197,7 +196,7 @@ class SystemTray:
         if not isinstance(tray, dict):
             return {}
         out: dict[str, str] = {}
-        for key in ("show", "hide", "quit", "start", "stop", "notifyTitle", "notifyBody"):
+        for key in ("show", "hide", "quit", "toggle", "notifyTitle", "notifyBody"):
             val = tray.get(key)
             if isinstance(val, str):
                 out[key] = val

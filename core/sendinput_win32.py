@@ -167,8 +167,9 @@ def get_virtual_screen_rect() -> tuple[int, int, int, int]:
 def _to_absolute(x: int, y: int) -> tuple[int, int]:
     """Converte pixels da tela virtual para coordenadas absolutas SendInput (0–65535)."""
     vx, vy, vw, vh = get_virtual_screen_rect()
-    abs_x = int(round((x - vx) * 65535 / (vw - 1)))
-    abs_y = int(round((y - vy) * 65535 / (vh - 1)))
+    # Mira o centro do pixel na escala 0..65535 (sem erro de 1 px nas bordas).
+    abs_x = ((int(x) - vx) * 65536 + 32768) // vw
+    abs_y = ((int(y) - vy) * 65536 + 32768) // vh
     return abs_x, abs_y
 
 
@@ -325,8 +326,17 @@ def key_up_char(char: str) -> None:
 
 def type_text(text: str) -> None:
     """Digita texto Unicode (cada unidade UTF-16 como down + up)."""
-    for unit in _utf16_units(text or ""):
-        _send([_unicode_input(unit), _unicode_input(unit, KEYEVENTF_KEYUP)])
+    for char in text or "":
+        # Quebra de linha e tabulação vão como teclas reais: muitos programas
+        # ignoram esses caracteres quando chegam como texto Unicode.
+        if char in ("\n", "\r"):
+            key_press(0x0D)
+            continue
+        if char == "\t":
+            key_press(0x09)
+            continue
+        for unit in _utf16_units(char):
+            _send([_unicode_input(unit), _unicode_input(unit, KEYEVENTF_KEYUP)])
 
 
 def button_from_pynput(button: object) -> Optional[ButtonName]:

@@ -16,9 +16,9 @@ Expor ícone na bandeja (Windows / macOS / Linux via pystray) com menu Iniciar/P
 
 - `start(detached=False)` carrega o ícone, gera a variante "ativa" (ponto verde no canto) e cria `pystray.Icon`. No macOS, ou com `detached=True`, usa `run_detached()` (thread principal); nos demais SOs roda `icon.run` em thread daemon.
 - Ícone ausente ou corrompido não impede a bandeja: um ícone substituto é desenhado.
-- Menu: se `on_toggle` foi informado, o primeiro item é Iniciar/Parar com rótulo dinâmico (`tray.start` / `tray.stop` conforme `set_running`), seguido de separador; depois Mostrar (item padrão), Ocultar, separador e Sair.
-- Rótulos vêm de `tray.show` / `hide` / `quit` / `start` / `stop` / `notifyTitle` / `notifyBody`; chave ausente cai no catálogo `pt-BR`.
-- `set_running(running)` troca o ícone (normal/ativo) e atualiza o menu.
+- Menu: se `on_toggle` foi informado, o primeiro item é “Iniciar / Parar” com rótulo fixo (`tray.toggle`): o menu não é recriado a cada mudança de estado, porque isso teria de ocorrer fora da thread da bandeja, seguido de separador; depois Mostrar (item padrão), Ocultar, separador e Sair.
+- Rótulos vêm de `tray.show` / `hide` / `quit` / `toggle` / `notifyTitle` / `notifyBody`; chave ausente cai no catálogo `pt-BR`.
+- `set_running(running)` troca o ícone (normal/ativo). No macOS não faz nada: o ícone só pode ser alterado na thread principal.
 - `set_locale(code)` reconstrói o menu e chama `icon.update_menu()`.
 - `notify_still_running()` usa título/corpo traduzidos do locale ativo; `notify` não faz nada se o backend não suporta notificação (`HAS_NOTIFICATION`).
 - Itens do menu delegam aos callbacks injetados pelo `AppController`.
@@ -31,6 +31,6 @@ Expor ícone na bandeja (Windows / macOS / Linux via pystray) com menu Iniciar/P
 | `start(detached=False)` | bool | inicia o ícone |
 | `stop()` | — | encerra o ícone |
 | `set_locale(code)` | BCP-47 | atualiza menu; `ValueError` se inválido |
-| `set_running(running)` | bool | ícone ativo + rótulo Iniciar/Parar |
+| `set_running(running)` | bool | ícone ativo (exceto macOS) |
 | `notify(message, title="Clickr")` | strings | toast/balloon |
 | `notify_still_running()` | — | toast padrão traduzido |

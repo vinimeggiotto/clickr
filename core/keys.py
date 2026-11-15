@@ -117,6 +117,10 @@ def name_to_vk(name: str) -> int:
         return _VK_NAMED[key_name]
     if len(key_name) == 1 and ("A" <= key_name <= "Z" or "0" <= key_name <= "9"):
         return ord(key_name)
+    # Teclas sem nome na tabela (ex.: "/" do ABNT2, teclas de mídia) são
+    # capturadas como VK<n> e precisam ser aceitas de volta.
+    if key_name.startswith("VK") and key_name[2:].isdigit() and 1 <= int(key_name[2:]) <= 254:
+        return int(key_name[2:])
     raise ValueError(f"Tecla não suportada: {name}")
 
 

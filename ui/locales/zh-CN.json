@@ -322,8 +322,7 @@
     "quit": "退出",
     "notifyTitle": "仍在运行",
     "notifyBody": "Clickr 仍在托盘中运行。请在图标上使用“退出”以真正结束。",
-    "start": "开始",
-    "stop": "停止"
+    "toggle": "开始 / 停止"
   },
   "overlay": {
     "title": "捕获坐标",

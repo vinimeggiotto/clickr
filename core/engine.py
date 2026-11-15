@@ -193,9 +193,11 @@ class ClickEngine:
         ):
             thread.join(timeout=2.0)
         with self._lock:
-            self._release_hold_if_needed()
-            self._finish_locked()
-            self._thread = None
+            # Se outra thread já iniciou uma nova execução, não a marca como parada.
+            if self._thread is thread:
+                self._release_hold_if_needed()
+                self._finish_locked()
+                self._thread = None
         self._emit()
         return True
 
@@ -433,8 +435,9 @@ class ClickEngine:
                 self._run_loop_inner()
         finally:
             with self._lock:
-                self._release_hold_if_needed()
-                self._finish_locked()
+                if self._thread is threading.current_thread():
+                    self._release_hold_if_needed()
+                    self._finish_locked()
             # Sempre avisa a UI no fim (limite atingido, erro ou stop).
             self._emit()
 

@@ -6,7 +6,7 @@ Capturar coordenadas de tela (XY) para o ponto fixo ou para a sequência, via ov
 
 ## Comportamento
 
-1. UI chama `pick_location(target, delay_ms)` → abre `ui/overlay.html` em janela frameless, on-top e **transparente**, com a geometria da **tela virtual** (x, y, width, height), cobrindo todos os monitores. O usuário enxerga o que está por baixo enquanto escolhe.
+1. UI chama `pick_location(target, delay_ms)` → abre `ui/overlay.html` em janela frameless, on-top e **transparente**, com a geometria da **tela virtual** (x, y, width, height), cobrindo todos os monitores. O usuário enxerga o que está por baixo enquanto escolhe. Exceção: no Windows com pywebview anterior à 6 a janela continua opaca (como na 1.0.x), porque lá a transparência é feita por chave de cor e tingiria o overlay.
 2. Clique no overlay confirma (`confirm_pick`): Python lê a posição real do cursor e:
    - `target = "fixed"` (padrão): grava `fixed_x` / `fixed_y`, com `position_mode = fixed`;
    - `target = "sequence"`: acrescenta `{x, y, delay_ms}` ao fim da sequência (com o delay informado na chamada).

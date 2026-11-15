@@ -322,8 +322,7 @@
     "quit": "Salir",
     "notifyTitle": "Sigue en ejecución",
     "notifyBody": "Clickr sigue en la bandeja. Usa Salir en el icono para cerrar de verdad.",
-    "start": "Iniciar",
-    "stop": "Detener"
+    "toggle": "Iniciar / Detener"
   },
   "overlay": {
     "title": "Capturar punto",

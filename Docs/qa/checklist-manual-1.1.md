@@ -36,7 +36,7 @@ gerado). O log fica em `{pasta de dados}/clickr.log`.
 - [ ] Segurar a tecla no modo Alternar não fica ligando/desligando (sem auto-repetição).
 
 ### Captura de ponto e multi-monitor
-- [ ] Overlay de captura é translúcido: dá para ver a tela por baixo. Se aparecer opaco, registrar a versão do pywebview/WebView2.
+- [ ] Overlay de captura: com pywebview 6 ou mais novo é translúcido (dá para ver a tela por baixo); com pywebview 5 continua opaco, como na 1.0.x. Registrar a versão do pywebview usada e qualquer tingimento de cor.
 - [ ] Com dois monitores (inclusive um à esquerda do principal, coordenadas negativas) e escalas de DPI diferentes, o ponto capturado é clicado no lugar certo.
 - [ ] Fechar o overlay com Alt+F4: o botão "Capturar ponto" volta ao normal e os atalhos seguem funcionando.
 - [ ] "Capturar" na sequência adiciona o ponto direto na lista.
@@ -52,9 +52,11 @@ gerado). O log fica em `{pasta de dados}/clickr.log`.
 
 ### Janela, bandeja e ciclo de vida
 - [ ] Fechar no X: vai para a bandeja; o aviso aparece só na primeira vez.
-- [ ] Menu da bandeja: Iniciar/Parar funciona e o ícone ganha o ponto verde enquanto ativo.
+- [ ] Menu da bandeja: “Iniciar / Parar” funciona e o ícone ganha o ponto verde enquanto ativo.
 - [ ] Abrir o Clickr uma segunda vez: não abre outra janela; a primeira aparece.
-- [ ] Mover a janela, sair pela bandeja e reabrir: a posição e a última configuração voltam.
+- [ ] Mover a janela, sair pela bandeja e reabrir: a posição e a última configuração voltam. Repetir com escala de tela em 125% e 150%: a janela reabre no mesmo lugar, sem “andar” a cada abertura.
+- [ ] Atalho com tecla sem nome na tabela (ex.: “/” do teclado ABNT2) pode ser gravado e funciona.
+- [ ] Script `type "a\nb"` produz quebra de linha no Bloco de Notas.
 - [ ] "Iniciar com o sistema": cria o valor `Clickr` em `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`; após logon o app sobe na bandeja. Desligar remove o valor.
 - [ ] "Avisar quando houver versão nova" ligado e sem internet: nenhum erro; com internet e versão mais nova publicada, o selo aparece no rodapé e abre a página de releases.
 - [ ] Filtro de janela → "Usar janela atual": preenche processo e título após 3 s.
@@ -65,11 +67,12 @@ gerado). O log fica em `{pasta de dados}/clickr.log`.
 - [ ] Com Acessibilidade e Monitoramento de Entrada concedidos: cliques, teclas e atalhos funcionam.
 - [ ] Ícone na barra de menus aparece (o pystray é iniciado na thread principal); Mostrar/Ocultar/Sair funcionam.
 - [ ] Fechar a janela não gera erro mesmo sem suporte a notificação.
+- [ ] Sair com Cmd+Q durante um Hold: o botão/tecla é solto.
 - [ ] Captura de ponto com mais de um display.
 - [ ] "Iniciar com o sistema" cria `~/Library/LaunchAgents/com.clickr.app.plist`.
 
 ## Linux (X11)
-- [ ] Cliques, teclas e atalhos em sessão X11.
+- [ ] Cliques, teclas e atalhos em sessão X11; segurar a tecla do atalho não liga/desliga repetidamente (auto-repetição), inclusive no modo Segurar.
 - [ ] Bandeja com AppIndicator/GTK disponível; sem bandeja, fechar a janela encerra o app.
 - [ ] Filtro de janela com `xprop` instalado; sem ele, o erro é exibido e o motor para.
 - [ ] "Iniciar com o sistema" cria `~/.config/autostart/clickr.desktop`.

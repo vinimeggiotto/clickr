@@ -322,8 +322,7 @@
     "quit": "Quit",
     "notifyTitle": "Still running",
     "notifyBody": "Clickr is still running in the tray. Use Quit on the icon to exit for real.",
-    "start": "Start",
-    "stop": "Stop"
+    "toggle": "Start / Stop"
   },
   "overlay": {
     "title": "Capture point",

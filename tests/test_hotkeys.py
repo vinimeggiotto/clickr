@@ -72,6 +72,7 @@ def test_toggle_hotkey_starts_and_stops_engine(app, null_input):
     time.sleep(0.1)
     assert app.get_state()["engine_running"]
     _release(listener, _key("f6"))
+    time.sleep(0.08)  # acima da janela que distingue soltura real de auto-repetição
     _press(listener, _key("f6"))
     assert _wait(lambda: not app.get_state()["engine_running"])
 
@@ -204,3 +205,38 @@ def test_sanitize_keeps_user_keys():
     ]
     out = sanitize_events(events, {0x79})
     assert len(out) == 3 and out[0]["key"] == "SHIFT"
+
+
+def test_x11_auto_repeat_does_not_retrigger(app, null_input):
+    """Auto-repetição do X11 chega como pares release+press colados."""
+    import fakes
+
+    null_input.set_cursor_pos_for_test(9000, 9000)
+    listener = _kb(fakes)[0]
+    _press(listener, _key("f6"))
+    assert _wait(lambda: app.get_state()["engine_running"])
+    for _ in range(5):
+        _release(listener, _key("f6"))
+        _press(listener, _key("f6"))
+        time.sleep(0.01)
+    time.sleep(0.1)
+    assert app.get_state()["engine_running"], "a repetição desligou o motor"
+    assert app._hotkeys.is_pressed("toggle")
+    _release(listener, _key("f6"))
+    time.sleep(0.1)
+    assert not app._hotkeys.is_pressed("toggle")
+    app.stop()
+
+
+def test_shifted_symbol_resolves_to_base_key(app):
+    from hotkeys.backend_pynput import key_vk
+
+    assert key_vk(_char("!")) == ord("1")
+    assert key_vk(_char("?")) == 0xBF
+
+
+def test_unnamed_key_roundtrip():
+    from hotkeys.combo import make_combo
+
+    combo = make_combo({"CTRL"}, 0xC1)
+    assert str(parse_combo(str(combo))) == "CTRL+VK193"

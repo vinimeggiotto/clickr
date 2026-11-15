@@ -27,6 +27,8 @@ def create_app(start_minimized: bool = False) -> tuple[webview.Window, AppContro
         raise FileNotFoundError(f"UI não encontrada: {index}")
 
     position = controller.initial_window_pos()
+    if position:
+        position = controller.to_create_coords(*position)
     window = webview.create_window(
         title="Clickr",
         url=index.as_uri(),
@@ -86,4 +88,10 @@ def run(start_minimized: bool = False) -> None:
     try:
         webview.start(on_start, debug=False)
     finally:
+        # Garante a limpeza mesmo quando o SO encerra o loop sem os eventos
+        # de fechamento (ex.: Cmd+Q no macOS). shutdown() é idempotente.
+        try:
+            controller.shutdown()
+        except Exception:
+            log.exception("Falha no encerramento")
         instance.release()

@@ -322,8 +322,7 @@
     "quit": "Sair",
     "notifyTitle": "Ainda está rodando",
     "notifyBody": "O Clickr continua em execução na bandeja. Use Sair no ícone para encerrar de verdade.",
-    "start": "Iniciar",
-    "stop": "Parar"
+    "toggle": "Iniciar / Parar"
   },
   "overlay": {
     "title": "Capturar ponto",

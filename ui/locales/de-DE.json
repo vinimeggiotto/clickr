@@ -322,8 +322,7 @@
     "quit": "Beenden",
     "notifyTitle": "Läuft noch",
     "notifyBody": "Clickr läuft weiter im Tray. Nutzen Sie Beenden am Symbol zum echten Beenden.",
-    "start": "Starten",
-    "stop": "Stoppen"
+    "toggle": "Start / Stopp"
   },
   "overlay": {
     "title": "Punkt erfassen",
