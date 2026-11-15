@@ -51,7 +51,8 @@
     "advanced": "Adv",
     "macro": "Macro",
     "script": "Script",
-    "schedule": "Agenda"
+    "schedule": "Agenda",
+    "keys": "Atalhos"
   },
   "click": {
     "interval": "Intervalo",
@@ -149,7 +150,8 @@
   "footer": {
     "hotkeyTitle": "Clique para gravar nova tecla",
     "hotkeyHint": "iniciar / parar",
-    "hotkeyRecording": "pressione uma tecla…"
+    "hotkeyRecording": "pressione a combinação…",
+    "hotkeyHintHold": "segure para clicar"
   },
   "status": {
     "stopped": "parado",
@@ -171,7 +173,10 @@
       "invalid": "Configuração inválida."
     },
     "hotkey": {
-      "unsupported": "Tecla de atalho não suportada: {key}"
+      "unsupported": "Tecla de atalho não suportada: {key}",
+      "conflict": "{key} já está em uso por outro atalho.",
+      "unknownAction": "Ação de atalho desconhecida.",
+      "toggleRequired": "O atalho de iniciar / parar não pode ficar vazio."
     },
     "sequence": {
       "badIndex": "Passo da sequência inválido."
@@ -460,5 +465,19 @@
         ]
       }
     }
+  },
+  "keys": {
+    "toggle": "Iniciar / parar",
+    "stopAll": "Parar tudo",
+    "pickPoint": "Capturar ponto no cursor",
+    "macroRecord": "Gravar / parar macro",
+    "clear": "Remover atalho",
+    "none": "definir",
+    "hint": "Clique em um atalho e pressione a combinação (ex.: Ctrl+Alt+F6). Esc cancela.",
+    "activation": "Atalho de iniciar / parar",
+    "modeToggle": "ALTERNAR",
+    "modeHold": "SEGURAR",
+    "modeToggleHint": "Uma pressão inicia, outra para.",
+    "modeHoldHint": "Clica somente enquanto o atalho estiver pressionado."
   }
 }

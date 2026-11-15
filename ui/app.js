@@ -109,7 +109,49 @@
     applyCompactMode(appSettings.compact_mode);
     if (!isFocused(alwaysOnTop)) alwaysOnTop.checked = appSettings.always_on_top !== false;
     if (!isFocused(compactMode)) compactMode.checked = !!appSettings.compact_mode;
-    hotkeyBtn.textContent = (appSettings.hotkeys && appSettings.hotkeys.toggle) || "—";
+    renderHotkeys();
+    setPrefSegment("activation", appSettings.activation);
+    const hold = appSettings.activation === "hold";
+    const activationHint = document.getElementById("activationHint");
+    if (activationHint) {
+      activationHint.textContent = t(hold ? "keys.modeHoldHint" : "keys.modeToggleHint");
+    }
+  }
+
+  let recordingAction = "";
+
+  function renderHotkeys() {
+    const hotkeys = appSettings.hotkeys || {};
+    hotkeyBtn.textContent = hotkeys.toggle || "—";
+    hotkeyBtn.classList.toggle("recording", recordingAction === "toggle");
+    document.querySelectorAll(".hk-key").forEach((btn) => {
+      const action = btn.dataset.hk;
+      const combo = hotkeys[action] || "";
+      const recording = recordingAction === action;
+      btn.textContent = recording ? "…" : combo || t("keys.none");
+      btn.classList.toggle("unset", !combo && !recording);
+      btn.classList.toggle("recording", recording);
+    });
+    document.querySelectorAll(".hk-clear").forEach((btn) => {
+      btn.hidden = !hotkeys[btn.dataset.hkClear];
+    });
+    const hold = appSettings.activation === "hold";
+    hotkeyHint.textContent = recordingAction
+      ? t("footer.hotkeyRecording")
+      : t(hold ? "footer.hotkeyHintHold" : "footer.hotkeyHint");
+  }
+
+  function setPrefSegment(pref, value) {
+    const el = document.querySelector(`.segmented[data-pref="${pref}"]`);
+    if (!el) return;
+    el.querySelectorAll(".seg").forEach((seg) => {
+      seg.classList.toggle("active", seg.dataset.val === value);
+    });
+  }
+
+  function toggleHotkeyCapture(action) {
+    if (recordingAction) return call("cancel_record_hotkey");
+    return call("record_hotkey", action);
   }
 
   function syncCps() {
@@ -289,9 +331,7 @@
     stateError = formatError(state.last_error);
     renderError();
 
-    const recording = !!state.recording_hotkey;
-    hotkeyBtn.classList.toggle("recording", recording);
-    hotkeyHint.textContent = recording ? t("footer.hotkeyRecording") : t("footer.hotkeyHint");
+    recordingAction = state.recording_hotkey ? state.recording_hotkey_action || "toggle" : "";
     pickBtn.disabled = !!state.picking;
     pickBtn.textContent = state.picking ? t("point.picking") : t("point.pick");
 
@@ -622,9 +662,24 @@
 
   clearSeqBtn.addEventListener("click", () => call("clear_sequence"));
 
-  hotkeyBtn.addEventListener("click", async () => {
-    const recording = hotkeyBtn.classList.contains("recording");
-    await call(recording ? "cancel_record_hotkey" : "record_hotkey");
+  hotkeyBtn.addEventListener("click", () => toggleHotkeyCapture("toggle"));
+
+  document.querySelectorAll(".hk-key").forEach((btn) => {
+    btn.addEventListener("click", () => toggleHotkeyCapture(btn.dataset.hk));
+  });
+
+  document.querySelectorAll(".hk-clear").forEach((btn) => {
+    btn.addEventListener("click", () => call("clear_hotkey", btn.dataset.hkClear));
+  });
+
+  document.querySelectorAll(".segmented[data-pref]").forEach((group) => {
+    group.addEventListener("click", (e) => {
+      const btn = e.target.closest(".seg");
+      if (!btn) return;
+      const values = {};
+      values[group.dataset.pref] = btn.dataset.val;
+      call("set_preferences", values);
+    });
   });
 
   saveProfileBtn.addEventListener("click", async () => {
@@ -748,13 +803,14 @@
     });
   });
 
-  document.querySelectorAll(".segmented").forEach((group) => {
+  document.querySelectorAll(".segmented[data-group]").forEach((group) => {
     group.addEventListener("click", (e) => {
       const btn = e.target.closest(".seg");
       if (!btn) return;
       group.querySelectorAll(".seg").forEach((s) => s.classList.remove("active"));
       btn.classList.add("active");
       const key = group.dataset.group;
+      if (!key) return; // grupos sem data-group têm tratamento próprio
       const val = btn.dataset.val;
       const payload = {};
       payload[key] = val;

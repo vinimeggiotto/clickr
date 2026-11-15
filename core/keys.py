@@ -137,3 +137,16 @@ def vk_to_name(vk: int) -> Optional[str]:
 
 def is_modifier_vk(vk: int) -> bool:
     return int(vk) in MODIFIER_VKS
+
+
+_MOD_FAMILY = {
+    0x10: "SHIFT", 0xA0: "SHIFT", 0xA1: "SHIFT",
+    0x11: "CTRL", 0xA2: "CTRL", 0xA3: "CTRL",
+    0x12: "ALT", 0xA4: "ALT", 0xA5: "ALT",
+    0x5B: "WIN", 0x5C: "WIN",
+}
+
+
+def modifier_family(vk: int) -> Optional[str]:
+    """CTRL / ALT / SHIFT / WIN para qualquer variante (esq./dir.) do modificador."""
+    return _MOD_FAMILY.get(int(vk))

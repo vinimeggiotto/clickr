@@ -51,7 +51,8 @@
     "advanced": "Adv",
     "macro": "Macro",
     "script": "Script",
-    "schedule": "Agenda"
+    "schedule": "Agenda",
+    "keys": "Atajos"
   },
   "click": {
     "interval": "Intervalo",
@@ -149,7 +150,8 @@
   "footer": {
     "hotkeyTitle": "Clic para grabar una nueva tecla",
     "hotkeyHint": "iniciar / parar",
-    "hotkeyRecording": "pulsa una tecla…"
+    "hotkeyRecording": "pulsa la combinación…",
+    "hotkeyHintHold": "mantén para hacer clic"
   },
   "status": {
     "stopped": "parado",
@@ -171,7 +173,10 @@
       "invalid": "Configuración no válida."
     },
     "hotkey": {
-      "unsupported": "Atajo no compatible: {key}"
+      "unsupported": "Atajo no compatible: {key}",
+      "conflict": "{key} ya está en uso por otro atajo.",
+      "unknownAction": "Acción de atajo desconocida.",
+      "toggleRequired": "El atajo de iniciar / detener no puede quedar vacío."
     },
     "sequence": {
       "badIndex": "Paso de secuencia no válido."
@@ -451,5 +456,19 @@
         ]
       }
     }
+  },
+  "keys": {
+    "toggle": "Iniciar / detener",
+    "stopAll": "Detener todo",
+    "pickPoint": "Capturar punto en el cursor",
+    "macroRecord": "Grabar / detener macro",
+    "clear": "Quitar atajo",
+    "none": "definir",
+    "hint": "Haz clic en un atajo y pulsa la combinación (p. ej. Ctrl+Alt+F6). Esc cancela.",
+    "activation": "Atajo de iniciar / detener",
+    "modeToggle": "ALTERNAR",
+    "modeHold": "MANTENER",
+    "modeToggleHint": "Una pulsación inicia, otra detiene.",
+    "modeHoldHint": "Solo hace clic mientras el atajo esté pulsado."
   }
 }

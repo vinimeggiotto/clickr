@@ -51,7 +51,8 @@
     "advanced": "Adv",
     "macro": "Makro",
     "script": "Skript",
-    "schedule": "Plan"
+    "schedule": "Plan",
+    "keys": "Tasten"
   },
   "click": {
     "interval": "Intervall",
@@ -149,7 +150,8 @@
   "footer": {
     "hotkeyTitle": "Klicken, um neue Taste aufzunehmen",
     "hotkeyHint": "starten / stoppen",
-    "hotkeyRecording": "Taste drücken…"
+    "hotkeyRecording": "Kombination drücken…",
+    "hotkeyHintHold": "zum Klicken halten"
   },
   "status": {
     "stopped": "gestoppt",
@@ -171,7 +173,10 @@
       "invalid": "Ungültige Konfiguration."
     },
     "hotkey": {
-      "unsupported": "Nicht unterstützte Tastenkombination: {key}"
+      "unsupported": "Nicht unterstützte Tastenkombination: {key}",
+      "conflict": "{key} wird bereits von einem anderen Tastenkürzel verwendet.",
+      "unknownAction": "Unbekannte Tastenkürzel-Aktion.",
+      "toggleRequired": "Die Start-/Stopp-Taste darf nicht leer sein."
     },
     "sequence": {
       "badIndex": "Ungültiger Sequenzschritt."
@@ -451,5 +456,19 @@
         ]
       }
     }
+  },
+  "keys": {
+    "toggle": "Start / Stopp",
+    "stopAll": "Alles stoppen",
+    "pickPoint": "Punkt am Cursor erfassen",
+    "macroRecord": "Makro aufnehmen / stoppen",
+    "clear": "Tastenkürzel entfernen",
+    "none": "festlegen",
+    "hint": "Tastenkürzel anklicken und Kombination drücken (z. B. Strg+Alt+F6). Esc bricht ab.",
+    "activation": "Start-/Stopp-Taste",
+    "modeToggle": "UMSCHALTEN",
+    "modeHold": "HALTEN",
+    "modeToggleHint": "Einmal drücken startet, erneut drücken stoppt.",
+    "modeHoldHint": "Klickt nur, solange die Taste gehalten wird."
   }
 }

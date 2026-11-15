@@ -51,7 +51,8 @@
     "advanced": "高级",
     "macro": "宏",
     "script": "脚本",
-    "schedule": "计划"
+    "schedule": "计划",
+    "keys": "快捷键"
   },
   "click": {
     "interval": "间隔",
@@ -149,7 +150,8 @@
   "footer": {
     "hotkeyTitle": "点击以录制新快捷键",
     "hotkeyHint": "开始 / 停止",
-    "hotkeyRecording": "请按下一个键…"
+    "hotkeyRecording": "请按下组合键…",
+    "hotkeyHintHold": "按住以点击"
   },
   "status": {
     "stopped": "已停止",
@@ -171,7 +173,10 @@
       "invalid": "配置无效。"
     },
     "hotkey": {
-      "unsupported": "不支持的快捷键：{key}"
+      "unsupported": "不支持的快捷键：{key}",
+      "conflict": "{key} 已被其他快捷键使用。",
+      "unknownAction": "未知的快捷键操作。",
+      "toggleRequired": "开始 / 停止快捷键不能为空。"
     },
     "sequence": {
       "badIndex": "序列步骤无效。"
@@ -460,5 +465,19 @@
         ]
       }
     }
+  },
+  "keys": {
+    "toggle": "开始 / 停止",
+    "stopAll": "全部停止",
+    "pickPoint": "在光标处捕获坐标",
+    "macroRecord": "录制 / 停止宏",
+    "clear": "移除快捷键",
+    "none": "设置",
+    "hint": "点击某个快捷键并按下组合键（如 Ctrl+Alt+F6）。按 Esc 取消。",
+    "activation": "开始 / 停止快捷键",
+    "modeToggle": "切换",
+    "modeHold": "按住",
+    "modeToggleHint": "按一次开始，再按一次停止。",
+    "modeHoldHint": "仅在按住快捷键时点击。"
   }
 }

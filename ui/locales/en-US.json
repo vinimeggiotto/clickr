@@ -51,7 +51,8 @@
     "advanced": "Adv",
     "macro": "Macro",
     "script": "Script",
-    "schedule": "Schedule"
+    "schedule": "Schedule",
+    "keys": "Keys"
   },
   "click": {
     "interval": "Interval",
@@ -149,7 +150,8 @@
   "footer": {
     "hotkeyTitle": "Click to record a new key",
     "hotkeyHint": "start / stop",
-    "hotkeyRecording": "press a key…"
+    "hotkeyRecording": "press the combination…",
+    "hotkeyHintHold": "hold to click"
   },
   "status": {
     "stopped": "stopped",
@@ -171,7 +173,10 @@
       "invalid": "Invalid configuration."
     },
     "hotkey": {
-      "unsupported": "Unsupported hotkey: {key}"
+      "unsupported": "Unsupported hotkey: {key}",
+      "conflict": "{key} is already used by another shortcut.",
+      "unknownAction": "Unknown shortcut action.",
+      "toggleRequired": "The start / stop shortcut cannot be empty."
     },
     "sequence": {
       "badIndex": "Invalid sequence step."
@@ -460,5 +465,19 @@
         ]
       }
     }
+  },
+  "keys": {
+    "toggle": "Start / stop",
+    "stopAll": "Stop everything",
+    "pickPoint": "Capture point at cursor",
+    "macroRecord": "Record / stop macro",
+    "clear": "Remove shortcut",
+    "none": "set",
+    "hint": "Click a shortcut and press the combination (e.g. Ctrl+Alt+F6). Esc cancels.",
+    "activation": "Start / stop shortcut",
+    "modeToggle": "TOGGLE",
+    "modeHold": "HOLD",
+    "modeToggleHint": "One press starts, another stops.",
+    "modeHoldHint": "Clicks only while the shortcut is held down."
   }
 }

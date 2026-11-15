@@ -84,6 +84,7 @@
         <button type="button" class="tab" data-tab="run" role="tab" aria-selected="false" data-i18n="tabs.run">Run</button>
         <button type="button" class="tab" data-tab="point" role="tab" aria-selected="false" data-i18n="tabs.point">Point</button>
         <button type="button" class="tab" data-tab="profiles" role="tab" aria-selected="false" data-i18n="tabs.profiles">Perfis</button>
+        <button type="button" class="tab" data-tab="keys" role="tab" aria-selected="false" data-i18n="tabs.keys">Atalhos</button>
         <button type="button" class="tab" data-tab="manual" role="tab" aria-selected="false" data-i18n="tabs.manual">Manual</button>
         <button type="button" class="tab tab-adv" data-tab="advanced" role="tab" aria-selected="false" data-i18n="tabs.advanced">Adv</button>
         <button type="button" class="tab tab-adv" data-tab="macro" role="tab" aria-selected="false" data-i18n="tabs.macro">Macro</button>
@@ -267,6 +268,39 @@
           </div>
           <label class="field-label" for="profileList" data-i18n="profiles.savedLabel">Perfis salvos</label>
           <select id="profileList" class="profile-select" size="2" data-i18n-aria="profiles.listAria" aria-label="Lista de perfis"></select>
+        </section>
+
+        <section class="panel" id="panel-keys" role="tabpanel" hidden>
+          <div class="hk-list" id="hotkeyList">
+            <div class="hk-row" data-action="toggle">
+              <span class="hk-label" data-i18n="keys.toggle">Iniciar / parar</span>
+              <button type="button" class="keycap hk-key" data-hk="toggle" data-i18n-title="footer.hotkeyTitle" title="Clique para gravar nova tecla">F6</button>
+            </div>
+            <div class="hk-row" data-action="stop_all">
+              <span class="hk-label" data-i18n="keys.stopAll">Parar tudo</span>
+              <button type="button" class="keycap hk-key" data-hk="stop_all" data-i18n-title="footer.hotkeyTitle" title="Clique para gravar nova tecla">—</button>
+              <button type="button" class="hk-clear" data-hk-clear="stop_all" data-i18n-aria="keys.clear" data-i18n-title="keys.clear" aria-label="Remover atalho" title="Remover atalho">&times;</button>
+            </div>
+            <div class="hk-row" data-action="pick_point">
+              <span class="hk-label" data-i18n="keys.pickPoint">Capturar ponto no cursor</span>
+              <button type="button" class="keycap hk-key" data-hk="pick_point" data-i18n-title="footer.hotkeyTitle" title="Clique para gravar nova tecla">—</button>
+              <button type="button" class="hk-clear" data-hk-clear="pick_point" data-i18n-aria="keys.clear" data-i18n-title="keys.clear" aria-label="Remover atalho" title="Remover atalho">&times;</button>
+            </div>
+            <div class="hk-row" data-action="macro_record">
+              <span class="hk-label" data-i18n="keys.macroRecord">Gravar / parar macro</span>
+              <button type="button" class="keycap hk-key" data-hk="macro_record" data-i18n-title="footer.hotkeyTitle" title="Clique para gravar nova tecla">—</button>
+              <button type="button" class="hk-clear" data-hk-clear="macro_record" data-i18n-aria="keys.clear" data-i18n-title="keys.clear" aria-label="Remover atalho" title="Remover atalho">&times;</button>
+            </div>
+          </div>
+          <div class="fixed-hint" id="hotkeyPanelHint" data-i18n="keys.hint">Clique em um atalho e pressione a combinação (ex.: Ctrl+Alt+F6). Esc cancela.</div>
+          <div class="field">
+            <span class="field-label" data-i18n="keys.activation">Atalho de iniciar / parar</span>
+            <div class="segmented" data-pref="activation" role="group" data-i18n-aria="keys.activation" aria-label="Atalho de iniciar / parar">
+              <button type="button" class="seg active" data-val="toggle" data-i18n="keys.modeToggle">ALTERNAR</button>
+              <button type="button" class="seg" data-val="hold" data-i18n="keys.modeHold">SEGURAR</button>
+            </div>
+          </div>
+          <div class="fixed-hint" id="activationHint" data-i18n="keys.modeToggleHint">Uma pressão inicia, outra para.</div>
         </section>
 
         <section class="panel" id="panel-manual" role="tabpanel" hidden>

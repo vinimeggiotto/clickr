@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import functools
 import json
+import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Optional
@@ -13,7 +15,7 @@ import webview
 from app.log import get_logger
 from app.notifier import UiNotifier
 from app.paths import app_version, locales_dir, ui_dir
-from app.settings import SUPPORTED_LOCALES, AppSettings
+from app.settings import ACTIVATION_MODES, HOTKEY_ACTIONS, SUPPORTED_LOCALES, AppSettings
 from core import sendinput
 from core.engine import ClickEngine
 from core.errors import ClickrError, error_from_exception, normalize_error
@@ -63,14 +65,10 @@ class AppController:
         self._profiles = ProfilesRepo()
         self._settings = AppSettings()
         self._restore_last_config()
-        try:
-            self._hotkeys = HotkeyService(
-                on_toggle=self._toggle_from_hotkey,
-                hotkey=self._settings.get("hotkeys")["toggle"] or "F6",
-            )
-        except ValueError:
-            log.warning("Atalho salvo inválido; voltando para F6")
-            self._hotkeys = HotkeyService(on_toggle=self._toggle_from_hotkey, hotkey="F6")
+        self._hotkeys = HotkeyService(
+            on_action=self._on_hotkey_action,
+            bindings=self._settings.get("hotkeys"),
+        )
         self._macro_recorder = MacroRecorder()
         self._macro_player = MacroPlayer()
         self._scheduler = Scheduler()
@@ -85,6 +83,8 @@ class AppController:
         self._notifier = UiNotifier(self._push_state)
         self._picking = False
         self._recording_hotkey = False
+        self._recording_hotkey_action = ""
+        self._hold_watch: Any = None
         self._quit_requested = False
         self._ui_alive = False
 
@@ -136,6 +136,7 @@ class AppController:
         self._apply_always_on_top(bool(self._settings.get("always_on_top")))
         self.start_tray()
         self._engine.set_click_guard(self._click_guard)
+        self._macro_recorder.set_ignore_point(self._click_guard)
         signal = self._notifier.signal
         self._engine.set_on_tick(signal)
         self._macro_recorder.set_on_change(signal)
@@ -236,6 +237,7 @@ class AppController:
         state = self._engine.get_state().to_dict()
         state["picking"] = self._picking
         state["recording_hotkey"] = self._recording_hotkey
+        state["recording_hotkey_action"] = self._recording_hotkey_action
         macro_playing = self._macro_player.is_playing()
         macro_recording = self._macro_recorder.is_recording()
         script_status = self._script.status()
@@ -442,15 +444,20 @@ class AppController:
         return self.get_state()
 
     @api
-    def record_hotkey(self) -> dict[str, Any]:
-        """Inicia gravação da próxima tecla como hotkey de start/stop."""
+    def record_hotkey(self, action: str = "toggle") -> dict[str, Any]:
+        """Inicia a captura do próximo combo de teclas para a ação informada."""
         if self._recording_hotkey:
             return self.get_state()
+        action = str(action or "toggle")
+        if action not in HOTKEY_ACTIONS:
+            raise ClickrError("hotkey.unknownAction", f"Ação de atalho desconhecida: {action}")
         self._recording_hotkey = True
+        self._recording_hotkey_action = action
         try:
-            self._hotkeys.begin_capture(self._on_hotkey_captured)
+            self._hotkeys.begin_capture(lambda text: self._on_hotkey_captured(action, text))
         except Exception:
             self._recording_hotkey = False
+            self._recording_hotkey_action = ""
             raise
         self._notifier.signal()
         return self.get_state()
@@ -459,7 +466,19 @@ class AppController:
     def cancel_record_hotkey(self) -> dict[str, Any]:
         self._hotkeys.cancel_capture()
         self._recording_hotkey = False
+        self._recording_hotkey_action = ""
         self._notifier.signal()
+        return self.get_state()
+
+    @api
+    def set_hotkey(self, action: str = "toggle", combo: str = "") -> dict[str, Any]:
+        """Define o atalho de uma ação por texto (ex.: 'CTRL+ALT+F6'); vazio remove."""
+        self._set_hotkey(str(action or "toggle"), str(combo or ""))
+        return self.get_state()
+
+    @api
+    def clear_hotkey(self, action: str) -> dict[str, Any]:
+        self._set_hotkey(str(action or ""), "")
         return self.get_state()
 
     # --- Macro ---------------------------------------------------------
@@ -476,7 +495,9 @@ class AppController:
 
     @api
     def macro_record_stop(self) -> dict[str, Any]:
-        self._macro_recorder.stop()
+        # Se a gravação começou pelo atalho, a soltura dessas teclas é descartada.
+        combo = self._hotkeys.combo("macro_record")
+        self._macro_recorder.stop(strip_tokens=combo.tokens() if combo is not None else None)
         return self.get_state()
 
     @api
@@ -794,17 +815,13 @@ class AppController:
         """Valida e grava preferências do aplicativo, aplicando seus efeitos."""
         changes: dict[str, Any] = {}
         if values.get("hotkey") is not None:
+            # Chave legada (perfis v1 / UI antiga): atalho de iniciar/parar.
             try:
-                name = self._hotkeys.set_hotkey(str(values["hotkey"]))
-                hotkeys = self._settings.get("hotkeys")
-                hotkeys["toggle"] = name
-                changes["hotkeys"] = hotkeys
-            except ValueError:
-                self._fail(
-                    "hotkey.unsupported",
-                    f"Hotkey não suportada: {values['hotkey']}",
-                    key=str(values["hotkey"]),
-                )
+                self._set_hotkey("toggle", str(values["hotkey"]))
+            except ClickrError as exc:
+                self._error = exc.to_dict()
+        if values.get("activation") is not None and values["activation"] not in ACTIVATION_MODES:
+            values = {k: v for k, v in values.items() if k != "activation"}
         for key in ("always_on_top", "compact_mode", "launch_at_login", "check_updates"):
             if key in values and values[key] is not None:
                 changes[key] = bool(values[key])
@@ -845,27 +862,108 @@ class AppController:
             log.exception("Falha ao aplicar always-on-top")
             self._fail("alwaysOnTop", f"Falha ao aplicar always-on-top: {exc}")
 
-    def _on_hotkey_captured(self, name: str) -> None:
+    def _set_hotkey(self, action: str, combo: str) -> str:
+        """Valida, aplica no serviço e persiste o atalho de uma ação."""
+        if action == "toggle" and not combo.strip():
+            raise ClickrError(
+                "hotkey.toggleRequired", "O atalho de iniciar/parar não pode ficar vazio."
+            )
+        name = self._hotkeys.set_binding(action, combo)
+        self._settings.update({"hotkeys": self._hotkeys.bindings()})
+        return name
+
+    def _on_hotkey_captured(self, action: str, text: str) -> None:
         self._recording_hotkey = False
+        self._recording_hotkey_action = ""
         self._clear_errors()
-        self._apply_prefs({"hotkey": name})
+        if text:  # vazio = cancelado com ESC
+            try:
+                self._set_hotkey(action, text)
+            except ClickrError as exc:
+                self._error = exc.to_dict()
         self._notifier.signal()
 
-    def _toggle_from_hotkey(self) -> None:
-        if self._picking or self._recording_hotkey:
-            return
-        if self._macro_recorder.is_recording():
+    def _on_hotkey_action(self, action: str) -> None:
+        """Chamado pela thread de despacho do HotkeyService."""
+        if self._recording_hotkey:
             return
         try:
-            if self._macro_player.is_playing():
-                self._macro_player.stop()
-            elif self._script.is_running():
-                self._script.stop()
-            else:
-                self._engine.toggle()
+            if action == "stop_all":
+                self._stop_everything()
+            elif self._picking:
+                return
+            elif action == "toggle":
+                self._toggle_from_hotkey()
+            elif action == "pick_point":
+                self._pick_point_at_cursor()
+            elif action == "macro_record":
+                self._toggle_macro_record_from_hotkey()
         except Exception:
-            log.exception("Falha ao alternar pelo atalho")
+            log.exception("Falha ao executar atalho %s", action)
         self._notifier.signal()
+
+    def _stop_everything(self) -> None:
+        """Parada de emergência: motor, macro (gravação e reprodução), script e captura."""
+        if self._picking:
+            self._picking = False
+            self._close_overlay()
+        if self._macro_recorder.is_recording():
+            self._macro_recorder.stop()
+        self._macro_player.stop()
+        self._script.stop()
+        self._engine.stop()
+
+    def _toggle_from_hotkey(self) -> None:
+        if self._macro_recorder.is_recording():
+            return
+        if self._macro_player.is_playing():
+            self._macro_player.stop()
+            return
+        if self._script.is_running():
+            self._script.stop()
+            return
+        if self._settings.get("activation") == "hold":
+            self._start_while_held()
+            return
+        self._engine.toggle()
+
+    def _start_while_held(self) -> None:
+        """Modo "segurar": o motor roda enquanto a tecla do atalho estiver pressionada."""
+        if self._engine.is_running():
+            # Tecla já solta e pressionada de novo antes do motor parar: encerra.
+            self._engine.stop()
+            return
+        self._engine.start()
+
+        def watch() -> None:
+            # Dá tempo ao SO de refletir o estado da tecla recém-pressionada.
+            time.sleep(0.03)
+            while self._engine.is_running() and self._hotkeys.is_pressed("toggle"):
+                time.sleep(0.01)
+            self._engine.stop()
+            self._notifier.signal()
+
+        self._hold_watch = threading.Thread(target=watch, name="HoldToClick", daemon=True)
+        self._hold_watch.start()
+
+    def _pick_point_at_cursor(self) -> None:
+        """Atalho de captura: a posição atual do cursor vira o ponto fixo."""
+        x, y = sendinput.get_cursor_pos()
+        self._clear_errors()
+        self._apply_config({"position_mode": "fixed", "fixed_x": int(x), "fixed_y": int(y)})
+
+    def _toggle_macro_record_from_hotkey(self) -> None:
+        combo = self._hotkeys.combo("macro_record")
+        tokens = combo.tokens() if combo is not None else None
+        if self._macro_recorder.is_recording():
+            # As teclas do próprio atalho não entram na macro.
+            self._macro_recorder.stop(strip_tokens=tokens)
+            return
+        self._clear_errors()
+        self._stop_tier3_runners(keep_schedule=True)
+        self._engine.stop()
+        if not self._macro_recorder.start():
+            self._fail("macro.recordFailed", "Não foi possível iniciar a gravação da macro.")
 
     def _click_guard(self, x: int, y: int) -> bool:
         """True quando o clique cairia sobre uma janela do próprio Clickr."""
