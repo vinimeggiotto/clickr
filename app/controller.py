@@ -17,7 +17,7 @@ from app.settings import SUPPORTED_LOCALES, AppSettings
 from core import sendinput
 from core.engine import ClickEngine
 from core.errors import ClickrError, error_from_exception, normalize_error
-from core.types import ClickConfig
+from core.types import LEGACY_APP_KEYS, PROFILE_VERSION, V1_CONFIG_KEYS, ClickConfig
 from hotkeys.service import HotkeyService
 from macros.player import MacroPlayer
 from macros.recorder import MacroRecorder
@@ -60,9 +60,17 @@ class AppController:
 
     def __init__(self) -> None:
         self._engine = ClickEngine()
-        self._hotkeys = HotkeyService(on_toggle=self._toggle_from_hotkey, hotkey="F6")
         self._profiles = ProfilesRepo()
         self._settings = AppSettings()
+        self._restore_last_config()
+        try:
+            self._hotkeys = HotkeyService(
+                on_toggle=self._toggle_from_hotkey,
+                hotkey=self._settings.get("hotkeys")["toggle"] or "F6",
+            )
+        except ValueError:
+            log.warning("Atalho salvo inválido; voltando para F6")
+            self._hotkeys = HotkeyService(on_toggle=self._toggle_from_hotkey, hotkey="F6")
         self._macro_recorder = MacroRecorder()
         self._macro_player = MacroPlayer()
         self._scheduler = Scheduler()
@@ -82,16 +90,50 @@ class AppController:
 
     def attach_window(self, window: Any) -> None:
         self._window = window
+        try:
+            window.events.moved += self._on_window_moved
+        except Exception:
+            log.info("Evento de movimento da janela indisponível")
+
+    def initial_window_pos(self) -> Optional[tuple[int, int]]:
+        """Última posição da janela, se ainda cair dentro da área de tela atual."""
+        pos = self._settings.get("window_pos")
+        if not pos:
+            return None
+        try:
+            vx, vy, vw, vh = sendinput.get_virtual_screen_rect()
+        except Exception:
+            return None
+        x, y = int(pos[0]), int(pos[1])
+        # Exige que um pedaço útil da barra de título fique visível.
+        if vx - 200 <= x <= vx + vw - 120 and vy <= y <= vy + vh - 80:
+            return x, y
+        return None
+
+    def _on_window_moved(self, x: Any = None, y: Any = None) -> None:
+        try:
+            if x is None or y is None:
+                x, y = self._window.x, self._window.y
+            self._settings.update({"window_pos": [int(x), int(y)]}, defer=True)
+        except Exception:
+            pass
+
+    def _restore_last_config(self) -> None:
+        last = self._settings.get("last_config")
+        if not last:
+            return
+        try:
+            self._engine.update_config(last)
+        except (TypeError, ValueError):
+            log.warning("Última configuração salva é inválida; usando padrões")
 
     def bootstrap_services(self) -> None:
         """Inicia hotkey global, bandeja e aplica always-on-top."""
-        cfg = self._engine.get_config()
         try:
-            self._hotkeys.set_hotkey(cfg.hotkey)
             self._hotkeys.start()
         except Exception:
             log.exception("Falha ao iniciar hotkeys globais")
-        self._apply_always_on_top(cfg.always_on_top)
+        self._apply_always_on_top(bool(self._settings.get("always_on_top")))
         self.start_tray()
         self._engine.set_click_guard(self._click_guard)
         signal = self._notifier.signal
@@ -149,6 +191,7 @@ class AppController:
             self._tray = None
         self._close_overlay()
         self._close_info()
+        self._settings.flush()
         self._window = None
 
     def _clear_ui_callbacks(self) -> None:
@@ -218,9 +261,25 @@ class AppController:
             "running": script_status["running"],
             "line": script_status["line"],
         }
+        state["settings"] = self._public_settings()
         state["engine_running"] = bool(state["running"])
         state["running"] = bool(state["running"] or macro_playing or script_status["running"])
         return state
+
+    def _public_settings(self) -> dict[str, Any]:
+        data = self._settings.load()
+        return {
+            key: data[key]
+            for key in (
+                "hotkeys",
+                "activation",
+                "always_on_top",
+                "compact_mode",
+                "time_units",
+                "launch_at_login",
+                "check_updates",
+            )
+        }
 
     def _state_with_profiles(self) -> dict[str, Any]:
         state = self.get_state()
@@ -270,8 +329,23 @@ class AppController:
 
     @api
     def set_compact_mode(self, enabled: bool) -> dict[str, Any]:
-        self._apply_config({"compact_mode": bool(enabled)})
+        self._apply_prefs({"compact_mode": bool(enabled)})
         return self.get_state()
+
+    @api
+    def set_preferences(self, values: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+        """Atualiza preferências do aplicativo (não fazem parte dos perfis)."""
+        self._apply_prefs(dict(values or {}))
+        return self.get_state()
+
+    def save_script(self, source: str = "") -> dict[str, Any]:
+        """Guarda o texto do editor de script para a próxima sessão."""
+        self._settings.update({"last_script": str(source or "")}, defer=True)
+        return {"ok": True}
+
+    def set_manual_seen(self, seen: bool = True) -> dict[str, Any]:
+        self._settings.update({"manual_seen": bool(seen)})
+        return {"ok": True}
 
     @api
     def pick_location(self) -> dict[str, Any]:
@@ -462,6 +536,7 @@ class AppController:
         self._macro_player.stop()
         if self._macro_recorder.is_recording():
             self._macro_recorder.stop()
+        self._settings.update({"last_script": str(source or "")}, defer=True)
         self._script.run(source or "")
         return self.get_state()
 
@@ -489,9 +564,25 @@ class AppController:
 
     @api
     def load_profile(self, name: str) -> dict[str, Any]:
-        data = self._profiles.load(name)
-        self._apply_config(data)
+        self._load_profile_document(self._profiles.load_document(name))
         return self._state_with_profiles()
+
+    def _load_profile_document(self, document: dict[str, Any]) -> None:
+        """
+        Aplica um perfil. Perfis da versão 1 também carregavam atalho, "sempre no
+        topo" e modo compacto: esse comportamento é mantido para eles. Perfis v2
+        guardam só a configuração de clique e não alteram preferências do app.
+        """
+        config = dict(document["config"])
+        if int(document.get("version", 1) or 1) >= PROFILE_VERSION:
+            self._apply_config(config, allow_prefs=False, replace=True)
+            return
+        # v1: mesma mescla sobre a config atual que a 1.0.x fazia; campos que
+        # não existiam naquela versão voltam ao padrão (= comportamento antigo).
+        defaults = ClickConfig().to_dict()
+        merged = {k: v for k, v in defaults.items() if k not in V1_CONFIG_KEYS}
+        merged.update(config)
+        self._apply_config(merged, allow_prefs=True)
 
     @api
     def export_profile(self, name: str = "") -> dict[str, Any]:
@@ -527,14 +618,14 @@ class AppController:
         src = Path(result[0] if isinstance(result, (list, tuple)) else result)
         override = (name or "").strip() or None
         saved = self._profiles.import_from(src, name=override)
-        self._apply_config(self._profiles.load(saved))
+        self._load_profile_document(self._profiles.load_document(saved))
         state = self._state_with_profiles()
         state["imported_profile"] = saved
         return state
 
     @api
     def set_always_on_top(self, enabled: bool) -> dict[str, Any]:
-        self._apply_config({"always_on_top": bool(enabled)})
+        self._apply_prefs({"always_on_top": bool(enabled)})
         return self.get_state()
 
     # --- Janela --------------------------------------------------------
@@ -544,23 +635,32 @@ class AppController:
 
     def hide_window(self, notify: bool = False) -> None:
         """Oculta a janela. Se notify=True, avisa que o app segue na bandeja."""
-        if notify and self._tray is not None:
+        # O aviso "continua na bandeja" aparece só na primeira vez.
+        if notify and self._tray is not None and not self._settings.get("tray_hint_shown"):
             try:
                 self._tray.notify_still_running()
             except Exception:
                 # Nem todo SO suporta notificação pela bandeja (ex.: macOS).
                 log.info("Notificação da bandeja indisponível neste sistema")
+            self._settings.update({"tray_hint_shown": True})
         self._tray_hide()
 
     def get_settings(self) -> dict[str, Any]:
         """Preferências do app (locale) + versão do arquivo VERSION."""
         data = self._settings.load()
-        return {
-            "locale": data.get("locale"),
-            "supported_locales": list(SUPPORTED_LOCALES),
-            "version": self._version(),
-            "profiles": self.list_profiles(),
-        }
+        out = self._public_settings()
+        out.update(
+            {
+                "locale": data.get("locale"),
+                "supported_locales": list(SUPPORTED_LOCALES),
+                "version": self._version(),
+                "profiles": self.list_profiles(),
+                "manual_seen": bool(data.get("manual_seen")),
+                "tray_hint_shown": bool(data.get("tray_hint_shown")),
+                "last_script": data.get("last_script") or "",
+            }
+        )
+        return out
 
     def set_locale(self, code: str) -> dict[str, Any]:
         """Persiste locale, atualiza menu da bandeja e devolve settings."""
@@ -664,29 +764,63 @@ class AppController:
             raise ClickrError("sequence.badIndex", "Índice de sequência inválido")
         return idx
 
-    def _apply_config(self, data: dict[str, Any]) -> ClickConfig:
+    def _apply_config(
+        self, data: dict[str, Any], allow_prefs: bool = True, replace: bool = False
+    ) -> ClickConfig:
         """
-        Valida efeitos colaterais (hotkey) antes de gravar a config, para que
-        motor e serviço de hotkeys nunca fiquem divergentes.
+        Aplica config de clique no motor e a guarda como "última configuração".
+
+        Chaves de preferência do app (hotkey, always_on_top, compact_mode) que
+        venham junto são encaminhadas a _apply_prefs quando allow_prefs=True
+        (UI e perfis v1) ou descartadas (perfis v2). replace=True parte dos
+        padrões em vez da config atual (carga de perfil).
         """
         data = dict(data)
-        if data.get("hotkey") is not None:
-            try:
-                data["hotkey"] = self._hotkeys.set_hotkey(str(data["hotkey"]))
-            except ValueError:
-                bad = data.pop("hotkey")
-                self._fail("hotkey.unsupported", f"Hotkey não suportada: {bad}", key=str(bad))
-        else:
-            data.pop("hotkey", None)
+        prefs = {key: data.pop(key) for key in LEGACY_APP_KEYS if key in data}
         try:
+            if replace:
+                data = ClickConfig.from_dict(data).to_dict()
             updated = self._engine.update_config(data)
         except (TypeError, ValueError) as exc:
             if isinstance(exc, ClickrError):
                 raise
             raise ClickrError("config.invalid", f"Configuração inválida: {exc}") from exc
-        if "always_on_top" in data:
-            self._apply_always_on_top(bool(updated.always_on_top))
+        self._settings.update({"last_config": updated.to_dict()}, defer=True)
+        if allow_prefs and prefs:
+            self._apply_prefs(prefs)
         return updated
+
+    def _apply_prefs(self, values: dict[str, Any]) -> None:
+        """Valida e grava preferências do aplicativo, aplicando seus efeitos."""
+        changes: dict[str, Any] = {}
+        if values.get("hotkey") is not None:
+            try:
+                name = self._hotkeys.set_hotkey(str(values["hotkey"]))
+                hotkeys = self._settings.get("hotkeys")
+                hotkeys["toggle"] = name
+                changes["hotkeys"] = hotkeys
+            except ValueError:
+                self._fail(
+                    "hotkey.unsupported",
+                    f"Hotkey não suportada: {values['hotkey']}",
+                    key=str(values["hotkey"]),
+                )
+        for key in ("always_on_top", "compact_mode", "launch_at_login", "check_updates"):
+            if key in values and values[key] is not None:
+                changes[key] = bool(values[key])
+        for key in ("time_units", "activation"):
+            if key in values and values[key] is not None:
+                if key == "time_units" and isinstance(values[key], dict):
+                    merged = self._settings.get("time_units")
+                    merged.update(values[key])
+                    changes[key] = merged
+                else:
+                    changes[key] = values[key]
+        if not changes:
+            return
+        self._settings.update(changes)
+        if "always_on_top" in changes:
+            self._apply_always_on_top(bool(self._settings.get("always_on_top")))
 
     def _stop_tier3_runners(self, keep_schedule: bool = False) -> None:
         if self._macro_recorder.is_recording():
@@ -714,7 +848,7 @@ class AppController:
     def _on_hotkey_captured(self, name: str) -> None:
         self._recording_hotkey = False
         self._clear_errors()
-        self._apply_config({"hotkey": name})
+        self._apply_prefs({"hotkey": name})
         self._notifier.signal()
 
     def _toggle_from_hotkey(self) -> None:

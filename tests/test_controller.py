@@ -48,11 +48,10 @@ def test_does_not_click_on_own_window(app, null_input):
 
 
 def test_invalid_hotkey_keeps_previous(app):
-    before = app.get_state()
     state = app.set_config({"hotkey": "NAO_EXISTE", "interval_ms": 44})
     assert state["last_error"]["code"] == "hotkey.unsupported"
     assert state["config"]["interval_ms"] == 44
-    assert json.dumps(before["config"].get("hotkey")) == json.dumps(state["config"].get("hotkey"))
+    assert state["settings"]["hotkeys"]["toggle"] == "F6"
 
 
 def test_state_is_pushed_to_ui(app):
@@ -77,3 +76,68 @@ def test_legacy_profile_loads_through_controller(app, tmp_path, fixtures_dir):
     assert cfg["click_type"] == "double" and cfg["burst_count"] == 3
     assert len(cfg["sequence"]) == 2
     assert cfg["window_filter"]["process"] == "notepad.exe"
+    # Perfil v1 continua trocando atalho e preferências, como na 1.0.1.
+    assert state["settings"]["hotkeys"]["toggle"] == "F8"
+    assert state["settings"]["always_on_top"] is False
+    assert state["settings"]["compact_mode"] is True
+    assert app.test_window.on_top is False
+    # ...e o arquivo legado não foi reescrito.
+    assert "version" not in json.loads((profiles / "antigo.json").read_text(encoding="utf-8"))
+
+
+def test_legacy_raw_profile_merges_like_1_0(app, tmp_path, fixtures_dir):
+    profiles = tmp_path / "Clickr" / "profiles"
+    profiles.mkdir(parents=True, exist_ok=True)
+    shutil.copy(fixtures_dir / "profile_v1_raw.json", profiles / "cru.json")
+    app.set_config({"jitter_ms": 7})
+    state = app.load_profile("cru")
+    assert state["last_error"] is None
+    assert state["config"]["interval_ms"] == 33 and state["config"]["click_type"] == "hold"
+    assert state["config"]["jitter_ms"] == 7  # chave ausente no arquivo: mantém a atual
+    assert state["settings"]["hotkeys"]["toggle"] == "F9"
+
+
+def test_v2_profile_does_not_touch_app_preferences(app, tmp_path):
+    app.set_config({"interval_ms": 21, "button": "middle"})
+    assert app.save_profile("novo")["saved_profile"] == "novo"
+    doc = json.loads((tmp_path / "Clickr" / "profiles" / "novo.json").read_text(encoding="utf-8"))
+    assert doc["version"] == 2
+    assert not {"hotkey", "always_on_top", "compact_mode"} & set(doc["config"])
+    # Mesmo que alguém edite o arquivo à mão, v2 não altera preferências.
+    doc["config"]["hotkey"] = "F10"
+    doc["config"]["always_on_top"] = False
+    (tmp_path / "Clickr" / "profiles" / "novo.json").write_text(json.dumps(doc), encoding="utf-8")
+    app.set_config({"interval_ms": 99})
+    state = app.load_profile("novo")
+    assert state["config"]["interval_ms"] == 21 and state["config"]["button"] == "middle"
+    assert state["settings"]["hotkeys"]["toggle"] == "F6"
+    assert state["settings"]["always_on_top"] is True
+
+
+def test_session_is_restored_on_next_start(app, tmp_path):
+    app.set_config({"interval_ms": 123, "position_mode": "fixed", "fixed_x": 5, "fixed_y": 6})
+    app.add_sequence_point(1, 2, 30)
+    app.set_preferences({"compact_mode": True})
+    app.save_script("click 1 2")
+    app.shutdown()
+    saved = json.loads((tmp_path / "Clickr" / "settings.json").read_text(encoding="utf-8"))
+    assert saved["last_config"]["interval_ms"] == 123
+    assert saved["last_script"] == "click 1 2"
+
+    from app.controller import AppController
+
+    again = AppController()
+    try:
+        state = again.get_state()
+        assert state["config"]["interval_ms"] == 123
+        assert state["config"]["sequence"] == [{"x": 1, "y": 2, "delay_ms": 30}]
+        assert state["settings"]["compact_mode"] is True
+        assert again.get_settings()["last_script"] == "click 1 2"
+    finally:
+        again.shutdown()
+
+
+def test_tray_hint_and_manual_flags_persist(app):
+    assert app.get_settings()["manual_seen"] is False
+    app.set_manual_seen(True)
+    assert app.get_settings()["manual_seen"] is True

@@ -13,6 +13,19 @@ _VALID_BUTTONS = frozenset({"left", "right", "middle", "x1", "x2"})
 _VALID_CLICK_TYPES = frozenset({"single", "double", "hold"})
 _VALID_POSITION_MODES = frozenset({"cursor", "fixed"})
 
+# Chaves que perfis da versão 1 guardavam junto com a config de clique e que
+# hoje são preferências do aplicativo.
+LEGACY_APP_KEYS = ("hotkey", "always_on_top", "compact_mode")
+PROFILE_VERSION = 2
+# Campos de clique que já existiam na versão 1 do formato de perfil.
+V1_CONFIG_KEYS = frozenset(
+    {
+        "interval_ms", "jitter_ms", "button", "click_type", "position_mode",
+        "fixed_x", "fixed_y", "hold", "start_delay_ms", "max_clicks",
+        "max_duration_ms", "burst_count", "burst_pause_ms", "sequence", "window_filter",
+    }
+)
+
 
 @dataclass
 class WindowFilterConfig:
@@ -64,7 +77,13 @@ class SequenceStep:
 
 @dataclass
 class ClickConfig:
-    """Contrato de configuração (núcleo + Tier 1 + Tier 2)."""
+    """
+    Contrato de configuração de clique (o que um perfil guarda).
+
+    Preferências do aplicativo (atalhos, sempre no topo, modo compacto) ficam em
+    AppSettings. Perfis antigos que ainda trazem essas chaves são aceitos:
+    from_dict ignora chaves que não pertencem a este contrato.
+    """
 
     interval_ms: int = 80
     jitter_ms: int = 0
@@ -81,9 +100,6 @@ class ClickConfig:
     burst_pause_ms: Optional[int] = None
     sequence: list[SequenceStep] = field(default_factory=list)
     window_filter: WindowFilterConfig = field(default_factory=WindowFilterConfig)
-    hotkey: str = "F6"
-    always_on_top: bool = True
-    compact_mode: bool = False
 
     def clamped_interval_ms(self) -> int:
         return max(1, int(self.interval_ms))
@@ -114,16 +130,17 @@ class ClickConfig:
             "burst_pause_ms": self.burst_pause_ms,
             "sequence": [s.to_dict() for s in self.sequence],
             "window_filter": self.window_filter.to_dict(),
-            "hotkey": self.hotkey,
-            "always_on_top": bool(self.always_on_top),
-            "compact_mode": bool(self.compact_mode),
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ClickConfig:
         base = cls().to_dict()
         known = set(base.keys())
-        merged = {k: v for k, v in data.items() if k in known}
+        # None em campo obrigatório equivale a "ausente" (usa o padrão).
+        optional = {"max_clicks", "max_duration_ms", "burst_count", "burst_pause_ms", "sequence"}
+        merged = {
+            k: v for k, v in data.items() if k in known and (v is not None or k in optional)
+        }
 
         if "max_clicks" in merged:
             merged["max_clicks"] = cls._optional_positive_int(merged["max_clicks"])
@@ -139,12 +156,6 @@ class ClickConfig:
             merged["interval_ms"] = max(1, int(merged["interval_ms"]))
         if "jitter_ms" in merged and merged["jitter_ms"] is not None:
             merged["jitter_ms"] = max(0, int(merged["jitter_ms"]))
-        if "hotkey" in merged and merged["hotkey"] is not None:
-            merged["hotkey"] = str(merged["hotkey"]).upper()
-        if "always_on_top" in merged:
-            merged["always_on_top"] = bool(merged["always_on_top"])
-        if "compact_mode" in merged:
-            merged["compact_mode"] = bool(merged["compact_mode"])
         if "hold" in merged:
             merged["hold"] = bool(merged["hold"])
         if "button" in merged and merged["button"] is not None:

@@ -10,6 +10,7 @@ from typing import Any, Optional
 from app.fsutil import atomic_write_json
 from app.paths import user_data_dir
 from core.errors import ClickrError
+from core.types import PROFILE_VERSION
 
 # Primeiro caractere: letra ou dígito (qualquer idioma). Depois: letras, dígitos,
 # espaço, _ . - (máx. 64). Todo nome aceito pela 1.0.1 continua aceito.
@@ -27,6 +28,11 @@ class ProfilesRepo:
     Salva, carrega, lista, renomeia, exclui, importa e exporta perfis.
 
     Diretório: {user_data_dir()}/profiles/{nome}.json
+
+    Formatos aceitos na leitura:
+    - v2 (atual): {"name", "version": 2, "config": {...}} — só config de clique.
+    - v1 (1.0.x): {"name", "config": {...}} ou o dict de config "cru"; pode
+      trazer hotkey/always_on_top/compact_mode. Nunca é reescrito ao carregar.
     """
 
     def __init__(self, root: Path | None = None) -> None:
@@ -47,10 +53,11 @@ class ProfilesRepo:
         names = [path.stem for path in self._root.glob("*.json")]
         return sorted(names, key=str.casefold)
 
-    def save(self, name: str, config: dict[str, Any]) -> str:
+    def save(self, name: str, config: dict[str, Any], version: int = PROFILE_VERSION) -> str:
+        """Grava no formato atual: {"name", "version", "config"}."""
         safe = self.validate_new_name(name)
-        payload = {"name": safe, "config": config}
-        atomic_write_json(self._path_for(safe), payload)
+        document = {"name": safe, "version": int(version), "config": config}
+        atomic_write_json(self._path_for(safe), self._export_payload(document))
         return safe
 
     def load(self, name: str) -> dict[str, Any]:
@@ -112,7 +119,8 @@ class ProfilesRepo:
     def export_config(self, name: str, config: dict[str, Any], dest: Path) -> Path:
         """Exporta a configuração atual (não precisa estar salva) para JSON."""
         safe = self._validate_name(name)
-        atomic_write_json(Path(dest), {"name": safe, "config": config})
+        document = {"name": safe, "version": PROFILE_VERSION, "config": config}
+        atomic_write_json(Path(dest), self._export_payload(document))
         return Path(dest)
 
     def import_from(self, src: Path, name: Optional[str] = None) -> str:

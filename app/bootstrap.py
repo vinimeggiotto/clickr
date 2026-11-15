@@ -26,10 +26,13 @@ def create_app() -> tuple[webview.Window, AppController]:
     if not index.is_file():
         raise FileNotFoundError(f"UI não encontrada: {index}")
 
+    position = controller.initial_window_pos()
     window = webview.create_window(
         title="Clickr",
         url=index.as_uri(),
         js_api=controller,
+        x=position[0] if position else None,
+        y=position[1] if position else None,
         width=WINDOW_WIDTH,
         height=WINDOW_HEIGHT,
         resizable=False,

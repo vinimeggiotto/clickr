@@ -87,10 +87,30 @@
     burst_pause_ms: null,
     sequence: [],
     window_filter: { enabled: false, process: "", title_contains: "" },
-    hotkey: "F6",
+  };
+
+  // Preferências do aplicativo (não fazem parte dos perfis).
+  const appSettings = {
+    hotkeys: { toggle: "F6", stop_all: "", pick_point: "", macro_record: "" },
+    activation: "toggle",
     always_on_top: true,
     compact_mode: false,
+    time_units: { start_delay: "ms", max_duration: "ms", burst_pause: "ms" },
+    launch_at_login: false,
+    check_updates: false,
   };
+  let scriptSaveTimer = null;
+
+  function applySettings(settings) {
+    if (!settings || typeof settings !== "object") return;
+    Object.keys(appSettings).forEach((key) => {
+      if (settings[key] !== undefined && settings[key] !== null) appSettings[key] = settings[key];
+    });
+    applyCompactMode(appSettings.compact_mode);
+    if (!isFocused(alwaysOnTop)) alwaysOnTop.checked = appSettings.always_on_top !== false;
+    if (!isFocused(compactMode)) compactMode.checked = !!appSettings.compact_mode;
+    hotkeyBtn.textContent = (appSettings.hotkeys && appSettings.hotkeys.toggle) || "—";
+  }
 
   function syncCps() {
     const ms = Math.max(1, parseInt(intervalMs.value || "1", 10));
@@ -300,6 +320,7 @@
     if (Array.isArray(state.profiles)) {
       refreshProfileList(state.profiles);
     }
+    applySettings(state.settings);
 
     if (state.config) {
       applying = true;
@@ -325,11 +346,7 @@
           process: wf.process || "",
           title_contains: wf.title_contains || "",
         },
-        hotkey: cfg.hotkey || "F6",
-        always_on_top: cfg.always_on_top !== false,
-        compact_mode: !!cfg.compact_mode,
       });
-      applyCompactMode(localConfig.compact_mode);
 
       if (!isFocused(intervalMs, intervalSlider)) {
         intervalMs.value = String(cfg.interval_ms);
@@ -351,8 +368,6 @@
       }
       if (!isFocused(fixedX)) fixedX.value = String(localConfig.fixed_x);
       if (!isFocused(fixedY)) fixedY.value = String(localConfig.fixed_y);
-      if (!isFocused(alwaysOnTop)) alwaysOnTop.checked = localConfig.always_on_top;
-      if (!isFocused(compactMode)) compactMode.checked = localConfig.compact_mode;
       if (!isFocused(wfEnabled)) wfEnabled.checked = localConfig.window_filter.enabled;
       if (!isFocused(wfProcess)) wfProcess.value = localConfig.window_filter.process;
       if (!isFocused(wfTitle)) wfTitle.value = localConfig.window_filter.title_contains;
@@ -365,7 +380,6 @@
           localConfig.burst_pause_ms == null ? "" : String(localConfig.burst_pause_ms);
       }
 
-      hotkeyBtn.textContent = localConfig.hotkey;
       setSegmentActive("button", cfg.button);
       setSegmentActive(
         "click_type",
@@ -556,12 +570,12 @@
   });
 
   alwaysOnTop.addEventListener("change", () => {
-    pushConfig({ always_on_top: alwaysOnTop.checked });
+    call("set_preferences", { always_on_top: alwaysOnTop.checked });
   });
 
   compactMode.addEventListener("change", () => {
     applyCompactMode(compactMode.checked);
-    call("set_compact_mode", compactMode.checked);
+    call("set_preferences", { compact_mode: compactMode.checked });
   });
 
   fixedX.addEventListener("change", () => {
@@ -658,6 +672,16 @@
   macroPlayBtn.addEventListener("click", () => call("macro_play"));
   macroStopBtn.addEventListener("click", () => call("macro_stop"));
   macroClearBtn.addEventListener("click", () => call("macro_clear"));
+
+  // O texto do script é guardado para a próxima sessão (com pequeno atraso).
+  scriptSource.addEventListener("input", () => {
+    if (scriptSaveTimer) clearTimeout(scriptSaveTimer);
+    scriptSaveTimer = setTimeout(() => {
+      scriptSaveTimer = null;
+      const bridge = api();
+      if (bridge && bridge.save_script) bridge.save_script(scriptSource.value || "");
+    }, 800);
+  });
 
   scriptRunBtn.addEventListener("click", () => call("script_run", scriptSource.value || ""));
   scriptStopBtn.addEventListener("click", () => call("script_stop"));
@@ -863,6 +887,10 @@
         return state;
       },
       start: async () => requireOk(await call("start")),
+      markSeen: () => {
+        const bridge = api();
+        if (bridge && bridge.set_manual_seen) bridge.set_manual_seen(true);
+      },
     });
   }
 
@@ -884,6 +912,13 @@
       }
       if (settings && Array.isArray(settings.profiles)) {
         refreshProfileList(settings.profiles);
+      }
+      applySettings(settings);
+      if (settings && typeof settings.last_script === "string" && settings.last_script) {
+        scriptSource.value = settings.last_script;
+      }
+      if (window.ClickrManual && window.ClickrManual.setSeen) {
+        window.ClickrManual.setSeen(!!(settings && settings.manual_seen));
       }
 
       const elapsedSplash = Date.now() - splashStarted;
