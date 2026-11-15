@@ -157,3 +157,47 @@ def test_legacy_profile_resets_new_fields(app, tmp_path, fixtures_dir):
     cfg = app.load_profile("antigo")["config"]
     assert cfg["restore_cursor"] is False and cfg["position_jitter_px"] == 0
     assert cfg["action"] == "mouse"
+
+
+def test_sequence_edit_and_move(app):
+    app.add_sequence_point(1, 1, 10)
+    app.add_sequence_point(2, 2, 20)
+    app.add_sequence_point(3, 3, 30)
+    state = app.update_sequence_point(1, {"delay_ms": 250, "x": 22})
+    assert state["config"]["sequence"][1] == {"x": 22, "y": 2, "delay_ms": 250}
+    state = app.move_sequence_point(2, 0)
+    assert [s["x"] for s in state["config"]["sequence"]] == [3, 1, 22]
+    assert app.move_sequence_point(9, 0)["last_error"]["code"] == "sequence.badIndex"
+    assert app.update_sequence_point(0, {"delay_ms": "abc"})["last_error"]["code"] == "config.invalid"
+
+
+def test_pick_into_sequence(app, null_input):
+    app.pick_location("sequence", 120)
+    null_input.set_cursor_pos_for_test(40, 50)
+    state = app.confirm_pick()
+    assert state["config"]["sequence"] == [{"x": 40, "y": 50, "delay_ms": 120}]
+    assert state["config"]["position_mode"] == "cursor"  # ponto fixo não foi alterado
+
+
+def test_capture_foreground_window(app, monkeypatch):
+    monkeypatch.setattr(
+        app._engine.window_filter, "foreground_info", lambda: ("notepad.exe", "Sem título")
+    )
+    state = app.capture_foreground_window(0.5)
+    assert state["window_capture"]["active"] is True
+    time.sleep(0.8)
+    state = app.get_state()
+    assert state["window_capture"]["active"] is False
+    assert state["config"]["window_filter"] == {
+        "enabled": True, "process": "notepad.exe", "title_contains": "Sem título",
+    }
+
+
+def test_capture_foreground_window_failure_is_reported(app, monkeypatch):
+    def boom():
+        raise OSError("xprop ausente")
+
+    monkeypatch.setattr(app._engine.window_filter, "foreground_info", boom)
+    app.capture_foreground_window(0.5)
+    time.sleep(0.8)
+    assert app.get_state()["last_error"]["code"] == "filter.unavailable"

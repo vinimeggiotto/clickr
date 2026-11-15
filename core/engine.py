@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import random
 import sys
+from collections import deque
 import threading
 import time
 from typing import Callable, Optional
@@ -74,6 +75,12 @@ class ClickEngine:
         self._window_filter = WindowFilter()
         self._sequence = SequenceRunner()
         self._due: Optional[float] = None
+        self._phase = "idle"
+        self._countdown_until: Optional[float] = None
+        self._run_started: Optional[float] = None  # perf_counter do fim do delay
+        self._elapsed_final_ms = 0
+        self._stamps: deque = deque(maxlen=4096)  # (perf_counter, cliques)
+        self._blocked: Optional[str] = None
 
     def set_on_tick(self, callback: Optional[Callable[[], None]]) -> None:
         """Callback leve chamado a cada mudança de estado (deve só sinalizar)."""
@@ -106,12 +113,31 @@ class ClickEngine:
 
     def get_state(self) -> RuntimeState:
         with self._lock:
+            now = time.perf_counter()
+            if self._phase == "running" and self._run_started is not None:
+                elapsed_ms = int((now - self._run_started) * 1000)
+            else:
+                elapsed_ms = self._elapsed_final_ms
+            cps = 0.0
+            if self._phase == "running":
+                while self._stamps and now - self._stamps[0][0] > 1.0:
+                    self._stamps.popleft()
+                cps = float(sum(n for _, n in self._stamps))
+            seq_index: Optional[int] = None
+            if self._config.has_sequence() and self._config.action != "key":
+                seq_index = self._sequence.current_index()
             return RuntimeState(
                 running=self._running,
                 click_count=self._click_count,
                 started_at=self._started_at,
                 last_error=self._last_error,
                 config=ClickConfig.from_dict(self._config.to_dict()),
+                phase=self._phase if self._running else "idle",
+                starts_at=self._countdown_until if self._phase == "countdown" else None,
+                elapsed_ms=elapsed_ms,
+                actual_cps=cps,
+                sequence_index=seq_index,
+                blocked=self._blocked if self._phase == "running" else None,
             )
 
     def is_running(self) -> bool:
@@ -134,6 +160,16 @@ class ClickEngine:
             self._hold_button = None
             self._hold_keys = ()
             self._due = None
+            self._phase = "countdown" if self._config.clamped_start_delay_ms() > 0 else "running"
+            self._countdown_until = (
+                self._started_at + self._config.clamped_start_delay_ms() / 1000.0
+                if self._phase == "countdown"
+                else None
+            )
+            self._run_started = time.perf_counter()
+            self._elapsed_final_ms = 0
+            self._stamps.clear()
+            self._blocked = None
             self._window_filter.configure(self._config.window_filter)
             self._sequence.reset(self._config.sequence)
             self._thread = threading.Thread(
@@ -158,7 +194,7 @@ class ClickEngine:
             thread.join(timeout=2.0)
         with self._lock:
             self._release_hold_if_needed()
-            self._running = False
+            self._finish_locked()
             self._thread = None
         self._emit()
         return True
@@ -171,6 +207,14 @@ class ClickEngine:
         return True
 
     # --- Interno -------------------------------------------------------
+
+    def _finish_locked(self) -> None:
+        """Marca o motor como parado e congela o tempo decorrido."""
+        if self._phase == "running" and self._run_started is not None:
+            self._elapsed_final_ms = int((time.perf_counter() - self._run_started) * 1000)
+        self._phase = "idle"
+        self._countdown_until = None
+        self._running = False
 
     def _emit(self) -> None:
         callback = self._on_tick
@@ -351,16 +395,21 @@ class ClickEngine:
         Ação pulada: (0, None) e não avança a sequência.
         """
         if not self._window_filter.allows():
+            self._blocked = "filter"
             return 0, None
 
         if config.action == "key":
             if self._key_guard_blocks():
+                self._blocked = "own_window"
                 return 0, None
+            self._blocked = None
             return self._perform_key_action(config), None
 
         use_fixed, x, y, step_delay = self._resolve_target(config)
         if self._guard_blocks(use_fixed, x, y):
+            self._blocked = "own_window"
             return 0, None
+        self._blocked = None
         added = self._perform_action(config, use_fixed, x, y)
         if added and config.has_sequence() and not self._is_hold(config):
             self._sequence.advance()
@@ -371,6 +420,7 @@ class ClickEngine:
         with self._lock:
             if added:
                 self._click_count += added
+                self._stamps.append((time.perf_counter(), added))
             done = self._limits_reached(config, loop_start)
             if done:
                 self._running = False
@@ -384,7 +434,7 @@ class ClickEngine:
         finally:
             with self._lock:
                 self._release_hold_if_needed()
-                self._running = False
+                self._finish_locked()
             # Sempre avisa a UI no fim (limite atingido, erro ou stop).
             self._emit()
 
@@ -399,6 +449,11 @@ class ClickEngine:
 
         loop_start = time.perf_counter()
         self._due = None
+        with self._lock:
+            self._phase = "running"
+            self._countdown_until = None
+            self._run_started = loop_start
+        self._emit()
         while not self._stop_event.is_set():
             config = self._snapshot_config()
             with self._lock:

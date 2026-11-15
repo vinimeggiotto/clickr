@@ -13,7 +13,8 @@
   },
   "brand": {
     "clicks": "clicks",
-    "cpsSuffix": "clicks/sec"
+    "cpsSuffix": "clicks/sec",
+    "cpsReal": "/s actual"
   },
   "splash": {
     "loading": "loading"
@@ -78,13 +79,14 @@
     "maxClicks": "Click limit",
     "maxDuration": "Max duration",
     "alwaysOnTop": "Always on top",
-    "compactMode": "Compact mode"
+    "compactMode": "Compact mode",
+    "unitAria": "Time unit"
   },
   "point": {
     "pick": "Capture point",
     "picking": "Capturing…",
     "sequence": "Sequence",
-    "addPoint": "+ point",
+    "addPoint": "+ X/Y",
     "clear": "clear",
     "seqDelay": "Step delay",
     "seqListAria": "Sequence point list",
@@ -95,7 +97,13 @@
     "fixedPoint": "Point: <strong>{x}, {y}</strong>",
     "fixedHintCursor": "Enable FIXED POINT or capture a coordinate.",
     "jitter": "Position variation ±",
-    "restoreCursor": "Return the cursor after the click"
+    "restoreCursor": "Return the cursor after the click",
+    "pickToList": "capture",
+    "pickToListTitle": "Capture a point on screen and add it to the list",
+    "addPointTitle": "Add the X/Y above to the list",
+    "seqDelayAria": "Delay after step {n} (ms)",
+    "seqUp": "Move up",
+    "seqDown": "Move down"
   },
   "advanced": {
     "windowFilter": "Window filter",
@@ -107,7 +115,10 @@
     "placeholderProcess": "notepad.exe",
     "placeholderTitle": "Untitled",
     "placeholderOff": "off",
-    "placeholderDash": "—"
+    "placeholderDash": "—",
+    "useCurrentWindow": "Use current window",
+    "useCurrentWindowWait": "Switch window… {n}",
+    "useCurrentWindowHint": "Click, then switch to the target window: it is read after 3 seconds."
   },
   "profiles": {
     "name": "Profile name",
@@ -146,7 +157,8 @@
     "dsl": "DSL",
     "run": "Run",
     "stop": "Stop",
-    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend"
+    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend",
+    "runningLine": "Running line {n}"
   },
   "schedule": {
     "startAt": "Start at",
@@ -166,7 +178,10 @@
     "active": "active",
     "recording": "recording",
     "macro": "macro",
-    "script": "script"
+    "script": "script",
+    "countdown": "waiting",
+    "blockedOwn": "target is over Clickr",
+    "blockedFilter": "outside filter window"
   },
   "errors": {
     "bridgeUnavailable": "pywebview bridge unavailable",
@@ -225,6 +240,11 @@
     },
     "key": {
       "unsupported": "Unsupported key: {key}"
+    },
+    "filter": {
+      "ownWindow": "The focused window was Clickr itself. Switch to the target window before the countdown ends.",
+      "unavailable": "Could not read the focused window on this system.",
+      "noWindow": "No focused window was found."
     }
   },
   "tray": {

@@ -13,7 +13,8 @@
   },
   "brand": {
     "clicks": "Klicks",
-    "cpsSuffix": "Klicks/Sek"
+    "cpsSuffix": "Klicks/Sek",
+    "cpsReal": "/s real"
   },
   "splash": {
     "loading": "lädt"
@@ -78,24 +79,31 @@
     "maxClicks": "Klicklimit",
     "maxDuration": "Max. Dauer",
     "alwaysOnTop": "Immer im Vordergrund",
-    "compactMode": "Kompaktmodus"
+    "compactMode": "Kompaktmodus",
+    "unitAria": "Zeiteinheit"
   },
   "point": {
     "pick": "Punkt erfassen",
     "picking": "Erfassen…",
     "sequence": "Sequenz",
-    "addPoint": "+ Punkt",
+    "addPoint": "+ X/Y",
     "clear": "leeren",
     "seqDelay": "Schrittverzögerung",
     "seqListAria": "Sequenzpunktliste",
-    "seqEmpty": "Leere Liste: nutzt Cursor oder Fixpunkt.",
+    "seqEmpty": "Leere Liste: Cursor oder fester Punkt wird verwendet.",
     "seqCount": "{n} Punkt(e) — die Engine durchläuft die Liste.",
     "seqRemove": "Entfernen",
     "seqDelayMeta": "Verzögerung {ms} ms",
     "fixedPoint": "Punkt: <strong>{x}, {y}</strong>",
     "fixedHintCursor": "FIXPUNKT aktivieren oder Koordinate erfassen.",
     "jitter": "Positionsabweichung ±",
-    "restoreCursor": "Cursor nach dem Klick zurücksetzen"
+    "restoreCursor": "Cursor nach dem Klick zurücksetzen",
+    "pickToList": "erfassen",
+    "pickToListTitle": "Punkt auf dem Bildschirm erfassen und zur Liste hinzufügen",
+    "addPointTitle": "Obiges X/Y zur Liste hinzufügen",
+    "seqDelayAria": "Verzögerung nach Schritt {n} (ms)",
+    "seqUp": "Nach oben",
+    "seqDown": "Nach unten"
   },
   "advanced": {
     "windowFilter": "Fensterfilter",
@@ -107,7 +115,10 @@
     "placeholderProcess": "notepad.exe",
     "placeholderTitle": "Ohne Titel",
     "placeholderOff": "aus",
-    "placeholderDash": "—"
+    "placeholderDash": "—",
+    "useCurrentWindow": "Aktuelles Fenster verwenden",
+    "useCurrentWindowWait": "Fenster wechseln… {n}",
+    "useCurrentWindowHint": "Klicken und zum Zielfenster wechseln: es wird nach 3 Sekunden gelesen."
   },
   "profiles": {
     "name": "Profilname",
@@ -146,7 +157,8 @@
     "dsl": "DSL",
     "run": "Ausführen",
     "stop": "Stopp",
-    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend"
+    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend",
+    "runningLine": "Zeile {n} wird ausgeführt"
   },
   "schedule": {
     "startAt": "Start um",
@@ -166,7 +178,10 @@
     "active": "aktiv",
     "recording": "Aufnahme",
     "macro": "Makro",
-    "script": "Skript"
+    "script": "Skript",
+    "countdown": "wartet",
+    "blockedOwn": "Ziel liegt über Clickr",
+    "blockedFilter": "außerhalb des Filterfensters"
   },
   "errors": {
     "bridgeUnavailable": "pywebview-Bridge nicht verfügbar",
@@ -225,6 +240,11 @@
     },
     "key": {
       "unsupported": "Nicht unterstützte Taste: {key}"
+    },
+    "filter": {
+      "ownWindow": "Das fokussierte Fenster war Clickr selbst. Vor Ablauf des Countdowns zum Zielfenster wechseln.",
+      "unavailable": "Das fokussierte Fenster konnte auf diesem System nicht gelesen werden.",
+      "noWindow": "Kein fokussiertes Fenster gefunden."
     }
   },
   "tray": {

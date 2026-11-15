@@ -258,10 +258,23 @@ class RuntimeState:
     running: bool = False
     click_count: int = 0
     started_at: Optional[float] = None
-    last_error: Optional[str] = None
+    last_error: Optional[Any] = None
     config: ClickConfig = field(default_factory=ClickConfig)
     picking: bool = False
     recording_hotkey: bool = False
+    # idle | countdown (aguardando o delay inicial) | running
+    phase: str = "idle"
+    # Epoch em que o delay inicial termina (só em countdown).
+    starts_at: Optional[float] = None
+    # Tempo de execução após o delay inicial (congelado ao parar).
+    elapsed_ms: int = 0
+    # Ações contabilizadas no último segundo (taxa real).
+    actual_cps: float = 0.0
+    # Passo da sequência que será usado no próximo clique (None sem sequência).
+    sequence_index: Optional[int] = None
+    # Por que a última ação foi pulada: "filter" (janela em foco não casa com o
+    # filtro), "own_window" (o alvo é a janela do próprio Clickr) ou None.
+    blocked: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -272,4 +285,10 @@ class RuntimeState:
             "config": self.config.to_dict(),
             "picking": self.picking,
             "recording_hotkey": self.recording_hotkey,
+            "phase": self.phase,
+            "starts_at": self.starts_at,
+            "elapsed_ms": int(self.elapsed_ms),
+            "actual_cps": round(float(self.actual_cps), 1),
+            "sequence_index": self.sequence_index,
+            "blocked": self.blocked,
         }

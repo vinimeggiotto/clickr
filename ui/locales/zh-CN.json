@@ -13,7 +13,8 @@
   },
   "brand": {
     "clicks": "点击",
-    "cpsSuffix": "点击/秒"
+    "cpsSuffix": "点击/秒",
+    "cpsReal": "/秒 实际"
   },
   "splash": {
     "loading": "加载中"
@@ -78,13 +79,14 @@
     "maxClicks": "点击上限",
     "maxDuration": "最长时长",
     "alwaysOnTop": "始终置顶",
-    "compactMode": "紧凑模式"
+    "compactMode": "紧凑模式",
+    "unitAria": "时间单位"
   },
   "point": {
     "pick": "捕获坐标",
     "picking": "捕获中…",
     "sequence": "序列",
-    "addPoint": "+ 点",
+    "addPoint": "+ X/Y",
     "clear": "清空",
     "seqDelay": "步骤延迟",
     "seqListAria": "序列点列表",
@@ -95,7 +97,13 @@
     "fixedPoint": "点：<strong>{x}, {y}</strong>",
     "fixedHintCursor": "启用固定点或捕获坐标。",
     "jitter": "位置随机偏移 ±",
-    "restoreCursor": "点击后将光标移回原位"
+    "restoreCursor": "点击后将光标移回原位",
+    "pickToList": "捕获",
+    "pickToListTitle": "在屏幕上捕获一个点并添加到列表",
+    "addPointTitle": "将上方的 X/Y 添加到列表",
+    "seqDelayAria": "第 {n} 步之后的延迟（毫秒）",
+    "seqUp": "上移",
+    "seqDown": "下移"
   },
   "advanced": {
     "windowFilter": "窗口过滤",
@@ -107,7 +115,10 @@
     "placeholderProcess": "notepad.exe",
     "placeholderTitle": "无标题",
     "placeholderOff": "关",
-    "placeholderDash": "—"
+    "placeholderDash": "—",
+    "useCurrentWindow": "使用当前窗口",
+    "useCurrentWindowWait": "请切换窗口… {n}",
+    "useCurrentWindowHint": "点击后切换到目标窗口：3 秒后读取。"
   },
   "profiles": {
     "name": "配置名称",
@@ -146,7 +157,8 @@
     "dsl": "DSL",
     "run": "执行",
     "stop": "停止",
-    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend"
+    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend",
+    "runningLine": "正在执行第 {n} 行"
   },
   "schedule": {
     "startAt": "开始于",
@@ -166,7 +178,10 @@
     "active": "运行中",
     "recording": "录制中",
     "macro": "宏",
-    "script": "脚本"
+    "script": "脚本",
+    "countdown": "等待中",
+    "blockedOwn": "目标在 Clickr 窗口上",
+    "blockedFilter": "不在筛选窗口内"
   },
   "errors": {
     "bridgeUnavailable": "pywebview 桥接不可用",
@@ -225,6 +240,11 @@
     },
     "key": {
       "unsupported": "不支持的按键：{key}"
+    },
+    "filter": {
+      "ownWindow": "当前焦点窗口是 Clickr 本身。请在倒计时结束前切换到目标窗口。",
+      "unavailable": "无法在此系统上读取焦点窗口。",
+      "noWindow": "未找到焦点窗口。"
     }
   },
   "tray": {

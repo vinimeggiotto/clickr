@@ -166,3 +166,51 @@ def test_key_guard_blocks(null_input):
     time.sleep(0.05)
     engine.stop()
     assert null_input.recorded() == []
+
+
+def test_countdown_then_running_state(null_input):
+    engine = ClickEngine()
+    engine.update_config({"interval_ms": 10, "start_delay_ms": 200})
+    engine.start()
+    time.sleep(0.05)
+    st = engine.get_state()
+    assert st.phase == "countdown" and st.starts_at is not None and st.click_count == 0
+    assert 0 < st.starts_at - time.time() < 0.25
+    time.sleep(0.4)
+    st = engine.get_state()
+    assert st.phase == "running" and st.starts_at is None
+    assert 100 <= st.elapsed_ms <= 400
+    engine.stop()
+    final = engine.get_state()
+    assert final.phase == "idle" and final.elapsed_ms >= 100
+    time.sleep(0.05)
+    assert engine.get_state().elapsed_ms == final.elapsed_ms  # congelado
+
+
+def test_actual_cps_and_sequence_index(null_input):
+    engine = ClickEngine()
+    engine.update_config(
+        {"interval_ms": 20, "sequence": [{"x": 1, "y": 1, "delay_ms": 20}, {"x": 2, "y": 2, "delay_ms": 20}]}
+    )
+    assert engine.get_state().sequence_index == 0
+    engine.start()
+    time.sleep(1.3)
+    st = engine.get_state()
+    assert 35 <= st.actual_cps <= 55, st.actual_cps
+    assert st.sequence_index in (0, 1)
+    engine.stop()
+    assert engine.get_state().actual_cps == 0.0
+
+
+def test_blocked_reason_is_reported(null_input):
+    engine = ClickEngine()
+    engine.set_click_guard(lambda x, y: True)
+    engine.update_config({"interval_ms": 5})
+    engine.start()
+    time.sleep(0.06)
+    assert engine.get_state().blocked == "own_window"
+    engine.set_click_guard(None)
+    time.sleep(0.06)
+    assert engine.get_state().blocked is None
+    engine.stop()
+    assert engine.get_state().blocked is None

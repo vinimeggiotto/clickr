@@ -69,10 +69,16 @@
       <button class="pulse-btn" id="mainBtn" type="button" aria-pressed="false" data-i18n-aria="stage.mainAria" aria-label="Iniciar ou parar">
         <span class="ring"></span>
         <span id="icon">&#9654;</span>
+        <span id="countdown" class="countdown" hidden></span>
       </button>
       <div class="readout">
         <span id="counter">000000</span>
         <span class="readout-label" data-i18n="brand.clicks">clicks</span>
+      </div>
+      <div class="live-stats" id="liveStats" aria-live="off">
+        <span id="liveElapsed">00:00</span>
+        <span class="sep" aria-hidden="true">&middot;</span>
+        <span id="liveCps">0.0</span> <span data-i18n="brand.cpsReal">/s real</span>
       </div>
       <div class="pulse-strip" id="strip"></div>
     </div>
@@ -151,8 +157,13 @@
             <div class="field">
               <label for="startDelay" data-i18n="run.startDelay">Delay início</label>
               <div class="lcd-input compact">
-                <input type="number" id="startDelay" value="0" min="0" max="60000" step="100">
-                <span>ms</span>
+                <input type="number" id="startDelay" value="0" min="0" step="any">
+                <select class="unit-select" data-unit="start_delay" data-i18n-aria="run.unitAria" aria-label="Unidade de tempo">
+                  <option value="ms">ms</option>
+                  <option value="s">s</option>
+                  <option value="min">min</option>
+                  <option value="h">h</option>
+                </select>
               </div>
             </div>
             <div class="field">
@@ -172,8 +183,13 @@
             <div class="field">
               <label for="maxDuration" data-i18n="run.maxDuration">Duração máx.</label>
               <div class="lcd-input compact">
-                <input type="number" id="maxDuration" value="" min="1" max="86400000" placeholder="∞">
-                <span>ms</span>
+                <input type="number" id="maxDuration" value="" min="0" step="any" placeholder="∞">
+                <select class="unit-select" data-unit="max_duration" data-i18n-aria="run.unitAria" aria-label="Unidade de tempo">
+                  <option value="ms">ms</option>
+                  <option value="s">s</option>
+                  <option value="min">min</option>
+                  <option value="h">h</option>
+                </select>
               </div>
             </div>
           </div>
@@ -223,17 +239,16 @@
             <div class="seq-head">
               <span class="field-label" data-i18n="point.sequence">Sequência</span>
               <div class="seq-actions">
-                <button type="button" class="action-btn ghost tiny" id="addSeqBtn" data-i18n="point.addPoint">+ ponto</button>
+                <button type="button" class="action-btn ghost tiny" id="pickSeqBtn" data-i18n="point.pickToList" data-i18n-title="point.pickToListTitle" title="Capturar um ponto na tela e adicionar à lista">capturar</button>
+                <button type="button" class="action-btn ghost tiny" id="addSeqBtn" data-i18n="point.addPoint" data-i18n-title="point.addPointTitle" title="Adicionar o X/Y acima à lista">+ X/Y</button>
                 <button type="button" class="action-btn ghost tiny" id="clearSeqBtn" data-i18n="point.clear">limpar</button>
               </div>
             </div>
-            <div class="field-grid xy-grid seq-add-row">
-              <div class="field">
-                <label for="seqDelay" data-i18n="point.seqDelay">Delay passo</label>
-                <div class="lcd-input compact">
-                  <input type="number" id="seqDelay" value="80" min="0" max="60000" step="10">
-                  <span>ms</span>
-                </div>
+            <div class="seq-add-row">
+              <label for="seqDelay" class="field-label" data-i18n="point.seqDelay">Delay passo</label>
+              <div class="lcd-input compact">
+                <input type="number" id="seqDelay" value="80" min="0" max="60000" step="10">
+                <span>ms</span>
               </div>
             </div>
             <ul class="seq-list" id="seqList" data-i18n-aria="point.seqListAria" aria-label="Lista de pontos da sequência"></ul>
@@ -247,6 +262,8 @@
             <input type="checkbox" id="wfEnabled">
             <span class="toggle-ui" aria-hidden="true"></span>
           </label>
+          <button type="button" class="action-btn ghost" id="wfCaptureBtn" data-i18n="advanced.useCurrentWindow">Usar janela atual</button>
+          <div class="fixed-hint" id="wfCaptureHint" data-i18n="advanced.useCurrentWindowHint">Clique e troque para a janela desejada: ela é lida após 3 segundos.</div>
           <div class="field">
             <label for="wfProcess" data-i18n="advanced.process">Processo</label>
             <div class="lcd-input compact">
@@ -270,8 +287,13 @@
             <div class="field">
               <label for="burstPause" data-i18n="advanced.burstPause">Pausa burst</label>
               <div class="lcd-input compact">
-                <input type="number" id="burstPause" value="" min="0" max="600000" data-i18n-placeholder="advanced.placeholderDash" placeholder="—">
-                <span>ms</span>
+                <input type="number" id="burstPause" value="" min="0" step="any" data-i18n-placeholder="advanced.placeholderDash" placeholder="—">
+                <select class="unit-select" data-unit="burst_pause" data-i18n-aria="run.unitAria" aria-label="Unidade de tempo">
+                  <option value="ms">ms</option>
+                  <option value="s">s</option>
+                  <option value="min">min</option>
+                  <option value="h">h</option>
+                </select>
               </div>
             </div>
           </div>
@@ -376,6 +398,7 @@
         <section class="panel panel-adv" id="panel-script" role="tabpanel" hidden>
           <label class="field-label" for="scriptSource" data-i18n="script.dsl">DSL</label>
           <textarea id="scriptSource" class="script-area" spellcheck="false" rows="4" data-i18n-placeholder="script.placeholder" placeholder="move 100 200&#10;click left&#10;wait 100&#10;key SPACE&#10;loop 3&#10;  click&#10;  wait 50&#10;end"></textarea>
+          <div class="fixed-hint" id="scriptHint"></div>
           <div class="action-row">
             <button type="button" class="action-btn" id="scriptRunBtn" data-i18n="script.run">Executar</button>
             <button type="button" class="action-btn ghost" id="scriptStopBtn" data-i18n="script.stop">Parar</button>

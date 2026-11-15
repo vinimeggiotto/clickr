@@ -49,6 +49,12 @@
   const scheduleHint = document.getElementById("scheduleHint");
   const scheduleSetBtn = document.getElementById("scheduleSetBtn");
   const scheduleCancelBtn = document.getElementById("scheduleCancelBtn");
+  const countdownEl = document.getElementById("countdown");
+  const liveElapsed = document.getElementById("liveElapsed");
+  const liveCps = document.getElementById("liveCps");
+  const pickSeqBtn = document.getElementById("pickSeqBtn");
+  const wfCaptureBtn = document.getElementById("wfCaptureBtn");
+  const scriptHint = document.getElementById("scriptHint");
   const keyRow = document.getElementById("keyRow");
   const keyName = document.getElementById("keyName");
   const keyCaptureBtn = document.getElementById("keyCaptureBtn");
@@ -121,6 +127,7 @@
     if (!isFocused(alwaysOnTop)) alwaysOnTop.checked = appSettings.always_on_top !== false;
     if (!isFocused(compactMode)) compactMode.checked = !!appSettings.compact_mode;
     renderHotkeys();
+    Object.keys(unitFields).forEach(renderUnitField);
     setPrefSegment("activation", appSettings.activation);
     const hold = appSettings.activation === "hold";
     const activationHint = document.getElementById("activationHint");
@@ -265,6 +272,88 @@
     }
   }
 
+  // --- Unidades de tempo ------------------------------------------------
+  // O backend trabalha sempre em ms; a unidade é só apresentação.
+  const UNIT_MS = { ms: 1, s: 1000, min: 60000, h: 3600000 };
+  const unitFields = {
+    start_delay: { input: startDelay, key: "start_delay_ms", empty: 0 },
+    max_duration: { input: maxDuration, key: "max_duration_ms", empty: null },
+    burst_pause: { input: burstPause, key: "burst_pause_ms", empty: null },
+  };
+
+  function unitOf(field) {
+    const unit = appSettings.time_units && appSettings.time_units[field];
+    return UNIT_MS[unit] ? unit : "ms";
+  }
+
+  function msToUnitText(ms, unit) {
+    if (ms == null) return "";
+    const value = ms / UNIT_MS[unit];
+    return String(Math.round(value * 1000) / 1000);
+  }
+
+  /** Texto do campo → ms (inteiro). `undefined` se inválido. */
+  function unitTextToMs(text, unit, emptyValue) {
+    const raw = String(text || "").trim().replace(",", ".");
+    if (raw === "") return emptyValue;
+    const value = parseFloat(raw);
+    if (!Number.isFinite(value) || value < 0) return undefined;
+    return Math.round(value * UNIT_MS[unit]);
+  }
+
+  function renderUnitField(field) {
+    const { input, key } = unitFields[field];
+    const unit = unitOf(field);
+    const select = document.querySelector(`.unit-select[data-unit="${field}"]`);
+    if (select && !isFocused(select)) select.value = unit;
+    if (!isFocused(input)) {
+      const ms = localConfig[key];
+      input.value = ms == null ? "" : msToUnitText(ms, unit);
+    }
+  }
+
+  function commitUnitField(field) {
+    const { input, key, empty } = unitFields[field];
+    let ms = unitTextToMs(input.value, unitOf(field), empty);
+    if (ms === undefined) {
+      renderUnitField(field);
+      return;
+    }
+    // Duração máxima 0 equivale a "sem limite".
+    if (field === "max_duration" && ms === 0) ms = null;
+    const payload = {};
+    payload[key] = ms;
+    pushConfig(payload);
+  }
+
+  function formatClock(ms) {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const sec = total % 60;
+    const pad = (n) => String(n).padStart(2, "0");
+    return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+  }
+
+  // --- Estatísticas ao vivo ---------------------------------------------
+  const live = { phase: "idle", startsAt: null, elapsedMs: 0, receivedAt: 0, cps: 0 };
+
+  function renderLive() {
+    const now = Date.now();
+    const counting = live.phase === "countdown" && live.startsAt != null;
+    device.classList.toggle("counting", counting);
+    countdownEl.hidden = !counting;
+    if (counting) {
+      const left = Math.max(0, live.startsAt * 1000 - now);
+      countdownEl.textContent = left >= 10000 ? String(Math.ceil(left / 1000)) : (left / 1000).toFixed(1);
+    }
+    const elapsed =
+      live.phase === "running" ? live.elapsedMs + (now - live.receivedAt) : live.elapsedMs;
+    liveElapsed.textContent = formatClock(elapsed);
+    liveCps.textContent = (live.phase === "running" ? live.cps : 0).toFixed(1);
+  }
+  setInterval(renderLive, 100);
+
   function isFocused(...els) {
     return els.some((el) => document.activeElement === el);
   }
@@ -273,28 +362,88 @@
     const steps = Array.isArray(sequence) ? sequence : [];
     const key = JSON.stringify(steps);
     if (!force && key === lastSequenceKey) return;
+    // Não recria a lista enquanto o usuário edita um delay nela.
+    if (seqList.contains(document.activeElement) && document.activeElement.tagName === "INPUT") {
+      return;
+    }
     lastSequenceKey = key;
     seqList.innerHTML = "";
     steps.forEach((step, index) => {
       const li = document.createElement("li");
       li.className = "seq-item";
-      const info = document.createElement("div");
-      info.innerHTML =
-        `#${index + 1}  ${step.x}, ${step.y}` +
-        `<div class="meta">${t("point.seqDelayMeta", { ms: step.delay_ms || 0 })}</div>`;
-      const rm = document.createElement("button");
-      rm.type = "button";
-      rm.className = "rm";
-      rm.title = t("point.seqRemove");
-      rm.textContent = "×";
-      rm.addEventListener("click", () => call("remove_sequence_point", index));
-      li.appendChild(info);
-      li.appendChild(rm);
+      li.dataset.index = String(index);
+
+      const idx = document.createElement("span");
+      idx.className = "idx";
+      idx.textContent = `#${index + 1}`;
+
+      const xy = document.createElement("span");
+      xy.className = "xy";
+      xy.textContent = `${step.x}, ${step.y}`;
+
+      const delay = document.createElement("label");
+      delay.className = "delay";
+      const delayInput = document.createElement("input");
+      delayInput.type = "number";
+      delayInput.min = "0";
+      delayInput.step = "10";
+      delayInput.value = String(step.delay_ms || 0);
+      delayInput.setAttribute("aria-label", t("point.seqDelayAria", { n: index + 1 }));
+      delayInput.addEventListener("change", () => {
+        const ms = Math.max(0, parseInt(delayInput.value || "0", 10) || 0);
+        delayInput.blur();
+        call("update_sequence_point", index, { delay_ms: ms });
+      });
+      delayInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") delayInput.blur();
+      });
+      delay.appendChild(delayInput);
+      delay.appendChild(document.createTextNode("ms"));
+
+      const ops = document.createElement("span");
+      ops.className = "ops";
+      const mkBtn = (label, title, cls, handler, disabled) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        if (cls) btn.className = cls;
+        btn.textContent = label;
+        btn.title = title;
+        btn.setAttribute("aria-label", title);
+        btn.disabled = !!disabled;
+        btn.addEventListener("click", handler);
+        return btn;
+      };
+      ops.appendChild(
+        mkBtn("↑", t("point.seqUp"), "", () => call("move_sequence_point", index, index - 1), index === 0)
+      );
+      ops.appendChild(
+        mkBtn(
+          "↓",
+          t("point.seqDown"),
+          "",
+          () => call("move_sequence_point", index, index + 1),
+          index === steps.length - 1
+        )
+      );
+      ops.appendChild(
+        mkBtn("×", t("point.seqRemove"), "rm", () => call("remove_sequence_point", index), false)
+      );
+
+      li.appendChild(idx);
+      li.appendChild(xy);
+      li.appendChild(delay);
+      li.appendChild(ops);
       seqList.appendChild(li);
     });
     seqHint.textContent = steps.length
       ? t("point.seqCount", { n: steps.length })
       : t("point.seqEmpty");
+  }
+
+  function highlightSequence(index, active) {
+    seqList.querySelectorAll(".seq-item").forEach((li) => {
+      li.classList.toggle("current", active && li.dataset.index === String(index));
+    });
   }
 
   function applyCompactMode(enabled) {
@@ -341,6 +490,32 @@
 
     stateError = formatError(state.last_error);
     renderError();
+
+    live.phase = state.phase || (engineRunning ? "running" : "idle");
+    live.startsAt = state.starts_at == null ? null : state.starts_at;
+    live.elapsedMs = state.elapsed_ms || 0;
+    live.cps = state.actual_cps || 0;
+    live.receivedAt = Date.now();
+    renderLive();
+    if (live.phase === "countdown") statusLabel.textContent = t("status.countdown");
+    else if (engineRunning && state.blocked === "own_window") {
+      statusLabel.textContent = t("status.blockedOwn");
+    } else if (engineRunning && state.blocked === "filter") {
+      statusLabel.textContent = t("status.blockedFilter");
+    }
+    device.classList.toggle("blocked", engineRunning && !!state.blocked);
+
+    const capture = state.window_capture || {};
+    wfCaptureBtn.classList.toggle("recording", !!capture.active);
+    if (capture.active && capture.ends_at) {
+      const left = Math.max(0, Math.ceil(capture.ends_at - Date.now() / 1000));
+      wfCaptureBtn.textContent = t("advanced.useCurrentWindowWait", { n: left });
+    } else {
+      wfCaptureBtn.textContent = t("advanced.useCurrentWindow");
+    }
+
+    scriptHint.textContent =
+      script.running && script.line ? t("script.runningLine", { n: script.line }) : "";
 
     recordingAction = state.recording_hotkey ? state.recording_hotkey_action || "toggle" : "";
     pickBtn.disabled = !!state.picking;
@@ -417,18 +592,12 @@
         intervalSlider.value = String(Math.min(500, Math.max(10, cfg.interval_ms)));
         syncCps();
       }
-      if (!isFocused(startDelay)) {
-        startDelay.value = String(localConfig.start_delay_ms);
-      }
+      Object.keys(unitFields).forEach(renderUnitField);
       if (!isFocused(jitterMs)) {
         jitterMs.value = String(localConfig.jitter_ms);
       }
       if (!isFocused(maxClicks)) {
         maxClicks.value = localConfig.max_clicks == null ? "" : String(localConfig.max_clicks);
-      }
-      if (!isFocused(maxDuration)) {
-        maxDuration.value =
-          localConfig.max_duration_ms == null ? "" : String(localConfig.max_duration_ms);
       }
       if (!isFocused(fixedX)) fixedX.value = String(localConfig.fixed_x);
       if (!isFocused(fixedY)) fixedY.value = String(localConfig.fixed_y);
@@ -439,10 +608,6 @@
         burstCount.value =
           localConfig.burst_count == null ? "" : String(localConfig.burst_count);
       }
-      if (!isFocused(burstPause)) {
-        burstPause.value =
-          localConfig.burst_pause_ms == null ? "" : String(localConfig.burst_pause_ms);
-      }
 
       setSegmentActive("button", cfg.button);
       setSegmentActive(
@@ -452,6 +617,7 @@
       setSegmentActive("position_mode", cfg.position_mode);
       updateFixedHint();
       renderSequence(localConfig.sequence);
+      highlightSequence(state.sequence_index, engineRunning && localConfig.sequence.length > 0);
       applying = false;
     }
   }
@@ -613,10 +779,19 @@
   intervalSlider.addEventListener("change", () => commitInterval(intervalSlider));
   syncCps();
 
-  startDelay.addEventListener("change", () => {
-    const ms = Math.max(0, parseInt(startDelay.value || "0", 10) || 0);
-    startDelay.value = String(ms);
-    pushConfig({ start_delay_ms: ms });
+  Object.keys(unitFields).forEach((field) => {
+    unitFields[field].input.addEventListener("change", () => commitUnitField(field));
+  });
+
+  document.querySelectorAll(".unit-select").forEach((select) => {
+    select.addEventListener("change", () => {
+      const field = select.dataset.unit;
+      appSettings.time_units = { ...appSettings.time_units, [field]: select.value };
+      renderUnitField(field);
+      const units = {};
+      units[field] = select.value;
+      call("set_preferences", { time_units: units });
+    });
   });
 
   jitterMs.addEventListener("change", () => {
@@ -629,9 +804,6 @@
     pushConfig({ max_clicks: parseOptionalInt(maxClicks) });
   });
 
-  maxDuration.addEventListener("change", () => {
-    pushConfig({ max_duration_ms: parseOptionalInt(maxDuration) });
-  });
 
   alwaysOnTop.addEventListener("change", () => {
     call("set_preferences", { always_on_top: alwaysOnTop.checked });
@@ -692,20 +864,26 @@
     pushConfig({ burst_count: parseOptionalInt(burstCount) });
   });
 
-  burstPause.addEventListener("change", () => {
-    pushConfig({ burst_pause_ms: parseOptionalNonNeg(burstPause) });
-  });
 
   pickBtn.addEventListener("click", () => call("pick_location"));
 
+  function seqDelayValue() {
+    return Math.max(0, parseInt(seqDelay.value || "0", 10) || 0);
+  }
+
+  // "+ X/Y": adiciona as coordenadas dos campos X e Y acima.
   addSeqBtn.addEventListener("click", () => {
-    const delay = Math.max(0, parseInt(seqDelay.value || "0", 10) || 0);
-    // Usa XY do ponto fixo se modo fixed; senão cursor atual (omitido)
-    if (localConfig.position_mode === "fixed") {
-      call("add_sequence_point", localConfig.fixed_x, localConfig.fixed_y, delay);
-    } else {
-      call("add_sequence_point", null, null, delay);
-    }
+    const x = parseInt(fixedX.value || "0", 10) || 0;
+    const y = parseInt(fixedY.value || "0", 10) || 0;
+    call("add_sequence_point", x, y, seqDelayValue());
+  });
+
+  // "capturar": escolhe o ponto na tela e já o coloca na lista.
+  pickSeqBtn.addEventListener("click", () => call("pick_location", "sequence", seqDelayValue()));
+
+  wfCaptureBtn.addEventListener("click", () => {
+    if (wfCaptureBtn.classList.contains("recording")) call("cancel_capture_foreground_window");
+    else call("capture_foreground_window", 3);
   });
 
   clearSeqBtn.addEventListener("click", () => call("clear_sequence"));

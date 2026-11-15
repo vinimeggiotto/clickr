@@ -13,7 +13,8 @@
   },
   "brand": {
     "clicks": "клики",
-    "cpsSuffix": "кликов/сек"
+    "cpsSuffix": "кликов/сек",
+    "cpsReal": "/с факт."
   },
   "splash": {
     "loading": "загрузка"
@@ -78,24 +79,31 @@
     "maxClicks": "Лимит кликов",
     "maxDuration": "Макс. длит.",
     "alwaysOnTop": "Поверх окон",
-    "compactMode": "Компактный режим"
+    "compactMode": "Компактный режим",
+    "unitAria": "Единица времени"
   },
   "point": {
     "pick": "Захватить точку",
     "picking": "Захват…",
     "sequence": "Последовательность",
-    "addPoint": "+ точка",
+    "addPoint": "+ X/Y",
     "clear": "очистить",
     "seqDelay": "Задержка шага",
     "seqListAria": "Список точек последовательности",
-    "seqEmpty": "Список пуст: курсор или фиксированная точка.",
+    "seqEmpty": "Список пуст: используется курсор или фиксированная точка.",
     "seqCount": "{n} точк(и) — движок циклически проходит список.",
     "seqRemove": "Удалить",
     "seqDelayMeta": "задержка {ms} мс",
     "fixedPoint": "Точка: <strong>{x}, {y}</strong>",
     "fixedHintCursor": "Включите ТОЧКА или захватите координату.",
     "jitter": "Разброс позиции ±",
-    "restoreCursor": "Возвращать курсор после клика"
+    "restoreCursor": "Возвращать курсор после клика",
+    "pickToList": "захват",
+    "pickToListTitle": "Захватить точку на экране и добавить в список",
+    "addPointTitle": "Добавить указанные X/Y в список",
+    "seqDelayAria": "Задержка после шага {n} (мс)",
+    "seqUp": "Вверх",
+    "seqDown": "Вниз"
   },
   "advanced": {
     "windowFilter": "Фильтр окна",
@@ -107,7 +115,10 @@
     "placeholderProcess": "notepad.exe",
     "placeholderTitle": "Без названия",
     "placeholderOff": "выкл",
-    "placeholderDash": "—"
+    "placeholderDash": "—",
+    "useCurrentWindow": "Использовать текущее окно",
+    "useCurrentWindowWait": "Переключите окно… {n}",
+    "useCurrentWindowHint": "Нажмите и переключитесь на нужное окно: оно будет считано через 3 секунды."
   },
   "profiles": {
     "name": "Имя профиля",
@@ -146,7 +157,8 @@
     "dsl": "DSL",
     "run": "Запуск",
     "stop": "Стоп",
-    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend"
+    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend",
+    "runningLine": "Выполняется строка {n}"
   },
   "schedule": {
     "startAt": "Старт в",
@@ -166,7 +178,10 @@
     "active": "активен",
     "recording": "запись",
     "macro": "макрос",
-    "script": "скрипт"
+    "script": "скрипт",
+    "countdown": "ожидание",
+    "blockedOwn": "цель над окном Clickr",
+    "blockedFilter": "вне окна фильтра"
   },
   "errors": {
     "bridgeUnavailable": "Мост pywebview недоступен",
@@ -225,6 +240,11 @@
     },
     "key": {
       "unsupported": "Неподдерживаемая клавиша: {key}"
+    },
+    "filter": {
+      "ownWindow": "В фокусе было окно самого Clickr. Переключитесь на нужное окно до конца отсчёта.",
+      "unavailable": "Не удалось прочитать активное окно в этой системе.",
+      "noWindow": "Активное окно не найдено."
     }
   },
   "tray": {

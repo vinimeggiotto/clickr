@@ -13,7 +13,8 @@
   },
   "brand": {
     "clicks": "clics",
-    "cpsSuffix": "clics/seg"
+    "cpsSuffix": "clics/seg",
+    "cpsReal": "/s real"
   },
   "splash": {
     "loading": "cargando"
@@ -78,13 +79,14 @@
     "maxClicks": "Límite clics",
     "maxDuration": "Duración máx.",
     "alwaysOnTop": "Siempre encima",
-    "compactMode": "Modo compacto"
+    "compactMode": "Modo compacto",
+    "unitAria": "Unidad de tiempo"
   },
   "point": {
     "pick": "Capturar punto",
     "picking": "Capturando…",
     "sequence": "Secuencia",
-    "addPoint": "+ punto",
+    "addPoint": "+ X/Y",
     "clear": "limpiar",
     "seqDelay": "Retardo paso",
     "seqListAria": "Lista de puntos de la secuencia",
@@ -95,7 +97,13 @@
     "fixedPoint": "Punto: <strong>{x}, {y}</strong>",
     "fixedHintCursor": "Activa PUNTO FIJO o captura una coordenada.",
     "jitter": "Variación de posición ±",
-    "restoreCursor": "Devolver el cursor tras el clic"
+    "restoreCursor": "Devolver el cursor tras el clic",
+    "pickToList": "capturar",
+    "pickToListTitle": "Capturar un punto en pantalla y añadirlo a la lista",
+    "addPointTitle": "Añadir el X/Y de arriba a la lista",
+    "seqDelayAria": "Retardo tras el paso {n} (ms)",
+    "seqUp": "Subir",
+    "seqDown": "Bajar"
   },
   "advanced": {
     "windowFilter": "Filtro de ventana",
@@ -107,7 +115,10 @@
     "placeholderProcess": "notepad.exe",
     "placeholderTitle": "Sin título",
     "placeholderOff": "off",
-    "placeholderDash": "—"
+    "placeholderDash": "—",
+    "useCurrentWindow": "Usar ventana actual",
+    "useCurrentWindowWait": "Cambia de ventana… {n}",
+    "useCurrentWindowHint": "Haz clic y cambia a la ventana deseada: se lee tras 3 segundos."
   },
   "profiles": {
     "name": "Nombre del perfil",
@@ -146,7 +157,8 @@
     "dsl": "DSL",
     "run": "Ejecutar",
     "stop": "Parar",
-    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend"
+    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend",
+    "runningLine": "Ejecutando línea {n}"
   },
   "schedule": {
     "startAt": "Inicio en",
@@ -166,7 +178,10 @@
     "active": "activo",
     "recording": "grabando",
     "macro": "macro",
-    "script": "script"
+    "script": "script",
+    "countdown": "esperando",
+    "blockedOwn": "objetivo sobre Clickr",
+    "blockedFilter": "fuera de la ventana del filtro"
   },
   "errors": {
     "bridgeUnavailable": "Puente pywebview no disponible",
@@ -225,6 +240,11 @@
     },
     "key": {
       "unsupported": "Tecla no compatible: {key}"
+    },
+    "filter": {
+      "ownWindow": "La ventana en foco era el propio Clickr. Cambia a la ventana deseada antes de que termine la cuenta.",
+      "unavailable": "No se pudo leer la ventana en foco en este sistema.",
+      "noWindow": "No se encontró ninguna ventana en foco."
     }
   },
   "tray": {

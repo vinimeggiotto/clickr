@@ -86,6 +86,10 @@ class AppController:
         self._recording_hotkey = False
         self._recording_hotkey_action = ""
         self._hold_watch: Any = None
+        self._pick_target = "fixed"
+        self._pick_delay_ms = 0
+        self._wf_capture_until: Optional[float] = None
+        self._wf_capture_timer: Optional[threading.Timer] = None
         self._quit_requested = False
         self._ui_alive = False
 
@@ -192,6 +196,7 @@ class AppController:
             except Exception:
                 log.exception("Falha ao parar a bandeja")
             self._tray = None
+        self._cancel_wf_capture()
         self._close_overlay()
         self._close_info()
         self._settings.flush()
@@ -264,6 +269,10 @@ class AppController:
         state["script"] = {
             "running": script_status["running"],
             "line": script_status["line"],
+        }
+        state["window_capture"] = {
+            "active": self._wf_capture_until is not None,
+            "ends_at": self._wf_capture_until,
         }
         state["settings"] = self._public_settings()
         state["engine_running"] = bool(state["running"])
@@ -352,10 +361,20 @@ class AppController:
         return {"ok": True}
 
     @api
-    def pick_location(self) -> dict[str, Any]:
-        """Abre overlay cobrindo a tela virtual para capturar XY (não bloqueia a bridge)."""
+    def pick_location(self, target: str = "fixed", delay_ms: int = 0) -> dict[str, Any]:
+        """
+        Abre overlay cobrindo a tela virtual para capturar XY (não bloqueia a bridge).
+
+        target="fixed" define o ponto fixo; target="sequence" acrescenta o ponto
+        à sequência com o delay informado.
+        """
         if self._picking:
             return self.get_state()
+        self._pick_target = "sequence" if str(target) == "sequence" else "fixed"
+        try:
+            self._pick_delay_ms = max(0, int(delay_ms or 0))
+        except (TypeError, ValueError):
+            self._pick_delay_ms = 0
         overlay_path = (UI_DIR / "overlay.html").resolve()
         if not overlay_path.is_file():
             raise ClickrError("overlayMissing", f"Overlay não encontrado: {overlay_path}")
@@ -402,13 +421,18 @@ class AppController:
         cx, cy = sendinput.get_cursor_pos()
         self._picking = False
         self._close_overlay()
-        self._apply_config(
-            {
-                "position_mode": "fixed",
-                "fixed_x": int(cx),
-                "fixed_y": int(cy),
-            }
-        )
+        if self._pick_target == "sequence":
+            steps = self._sequence_steps()
+            steps.append({"x": int(cx), "y": int(cy), "delay_ms": self._pick_delay_ms})
+            self._apply_config({"sequence": steps})
+        else:
+            self._apply_config(
+                {
+                    "position_mode": "fixed",
+                    "fixed_x": int(cx),
+                    "fixed_y": int(cy),
+                }
+            )
         self._notifier.signal()
         return self.get_state()
 
@@ -438,6 +462,56 @@ class AppController:
         steps = self._sequence_steps()
         steps.pop(self._sequence_index(index, len(steps)))
         self._apply_config({"sequence": steps})
+        return self.get_state()
+
+    @api
+    def update_sequence_point(
+        self, index: int, patch: Optional[dict[str, Any]] = None
+    ) -> dict[str, Any]:
+        """Edita x, y e/ou delay_ms de um passo da sequência."""
+        steps = self._sequence_steps()
+        idx = self._sequence_index(index, len(steps))
+        for key in ("x", "y", "delay_ms"):
+            if patch and patch.get(key) is not None:
+                try:
+                    value = int(patch[key])
+                except (TypeError, ValueError):
+                    raise ClickrError("config.invalid", "Valor inválido para o passo") from None
+                steps[idx][key] = max(0, value) if key == "delay_ms" else value
+        self._apply_config({"sequence": steps})
+        return self.get_state()
+
+    @api
+    def move_sequence_point(self, index: int, to: int) -> dict[str, Any]:
+        """Move um passo da sequência para outra posição da lista."""
+        steps = self._sequence_steps()
+        src = self._sequence_index(index, len(steps))
+        dst = self._sequence_index(to, len(steps))
+        steps.insert(dst, steps.pop(src))
+        self._apply_config({"sequence": steps})
+        return self.get_state()
+
+    @api
+    def capture_foreground_window(self, delay_s: float = 3.0) -> dict[str, Any]:
+        """
+        Após `delay_s` segundos, lê a janela em foco e preenche o filtro de
+        janela (processo e título). Dá tempo de o usuário trocar para o alvo.
+        """
+        try:
+            delay = min(30.0, max(0.5, float(delay_s)))
+        except (TypeError, ValueError):
+            delay = 3.0
+        self._cancel_wf_capture()
+        self._wf_capture_until = time.time() + delay
+        timer = threading.Timer(delay, self._finish_wf_capture)
+        timer.daemon = True
+        self._wf_capture_timer = timer
+        timer.start()
+        return self.get_state()
+
+    @api
+    def cancel_capture_foreground_window(self) -> dict[str, Any]:
+        self._cancel_wf_capture()
         return self.get_state()
 
     @api
@@ -999,6 +1073,46 @@ class AppController:
         self._engine.stop()
         if not self._macro_recorder.start():
             self._fail("macro.recordFailed", "Não foi possível iniciar a gravação da macro.")
+
+    def _cancel_wf_capture(self) -> None:
+        timer, self._wf_capture_timer = self._wf_capture_timer, None
+        self._wf_capture_until = None
+        if timer is not None:
+            timer.cancel()
+
+    def _finish_wf_capture(self) -> None:
+        self._wf_capture_timer = None
+        self._wf_capture_until = None
+        self._clear_errors()
+        try:
+            if foreground_is_own_window():
+                raise ClickrError(
+                    "filter.ownWindow",
+                    "A janela em foco era o próprio Clickr. Troque para a janela desejada.",
+                )
+            try:
+                process, title = self._engine.window_filter.foreground_info()
+            except OSError as exc:
+                raise ClickrError(
+                    "filter.unavailable", f"Não foi possível ler a janela em foco: {exc}"
+                ) from exc
+            if not process and not title:
+                raise ClickrError("filter.noWindow", "Nenhuma janela em foco foi encontrada.")
+            self._apply_config(
+                {
+                    "window_filter": {
+                        "enabled": True,
+                        "process": process or "",
+                        "title_contains": title or "",
+                    }
+                }
+            )
+        except ClickrError as exc:
+            self._error = exc.to_dict()
+        except Exception as exc:  # noqa: BLE001
+            log.exception("Falha ao capturar a janela em foco")
+            self._error = error_from_exception(exc)
+        self._notifier.signal()
 
     def _key_guard(self) -> bool:
         """True quando as teclas iriam para a própria janela do Clickr."""
