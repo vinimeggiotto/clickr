@@ -1648,3 +1648,30 @@ body:not(.booting) .splash {
   background: var(--panel);
   color: var(--text);
 }
+
+/* Aviso de versão nova no rodapé */
+.update-badge {
+  margin-left: 6px;
+  border: 1px solid rgba(242, 163, 59, 0.45);
+  background: rgba(242, 163, 59, 0.12);
+  color: var(--amber);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+}
+
+.update-badge:hover {
+  background: rgba(242, 163, 59, 0.22);
+}
+
+.update-badge:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.update-badge[hidden] {
+  display: none;
+}

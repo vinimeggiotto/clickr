@@ -214,6 +214,17 @@
             <input type="checkbox" id="compactMode">
             <span class="toggle-ui" aria-hidden="true"></span>
           </label>
+          <label class="toggle-row">
+            <span data-i18n="run.launchAtLogin">Iniciar com o sistema (na bandeja)</span>
+            <input type="checkbox" id="launchAtLogin">
+            <span class="toggle-ui" aria-hidden="true"></span>
+          </label>
+          <label class="toggle-row">
+            <span data-i18n="run.checkUpdates">Avisar quando houver versão nova</span>
+            <input type="checkbox" id="checkUpdates">
+            <span class="toggle-ui" aria-hidden="true"></span>
+          </label>
+          <div class="fixed-hint" data-i18n="run.checkUpdatesHint">Consulta a página de versões do projeto no GitHub ao abrir. Nenhum dado seu é enviado.</div>
         </section>
 
         <section class="panel" id="panel-point" role="tabpanel" hidden>
@@ -521,7 +532,10 @@
         <button type="button" class="keycap" id="hotkeyBtn" data-i18n-title="footer.hotkeyTitle" title="Clique para gravar nova tecla">F6</button>
         <span id="hotkeyHint" data-i18n="footer.hotkeyHint">iniciar / parar</span>
       </div>
-      <div class="footer-version" id="appVersion" hidden></div>
+      <div class="footer-version">
+        <span id="appVersion" hidden></span>
+        <button type="button" class="update-badge" id="updateBadge" hidden></button>
+      </div>
       <div class="status" id="statusLabel" data-i18n="status.stopped">parado</div>
     </div>
   </div>

@@ -12,6 +12,7 @@ from typing import Any, Callable, Optional
 
 import webview
 
+from app import autostart, updates
 from app.log import get_logger
 from app.notifier import UiNotifier
 from app.paths import app_version, locales_dir, ui_dir
@@ -89,6 +90,8 @@ class AppController:
         self._recording_hotkey_action = ""
         self._hold_watch: Any = None
         self._pending_import: Optional[tuple[Path, str]] = None
+        self._update_info: Optional[dict[str, str]] = None
+        self._update_checking = False
         self._tray_running: Optional[bool] = None
         self._pick_target = "fixed"
         self._pick_delay_ms = 0
@@ -161,6 +164,9 @@ class AppController:
         self._script.set_on_done(signal)
         self._ui_alive = True
         self._notifier.start()
+        self._refresh_autostart()
+        if self._settings.get("check_updates"):
+            self._check_updates_async()
 
     def start_tray(self, detached: bool = False) -> None:
         """
@@ -221,6 +227,13 @@ class AppController:
         self._scheduler.set_on_change(None)
         self._script.set_on_tick(None)
         self._script.set_on_done(None)
+
+    def has_tray(self) -> bool:
+        return self._tray is not None
+
+    def mark_window_hidden(self) -> None:
+        """A janela foi criada oculta (início minimizado na bandeja)."""
+        self._window_visible = False
 
     def should_close_to_tray(self) -> bool:
         """True se o fechamento da janela deve apenas ocultar (não encerrar)."""
@@ -292,6 +305,7 @@ class AppController:
             "active": self._wf_capture_until is not None,
             "ends_at": self._wf_capture_until,
         }
+        state["update"] = self._update_info
         state["settings"] = self._public_settings()
         state["engine_running"] = bool(state["running"])
         state["running"] = bool(state["running"] or macro_playing or script_status["running"])
@@ -368,6 +382,24 @@ class AppController:
         """Atualiza preferências do aplicativo (não fazem parte dos perfis)."""
         self._apply_prefs(dict(values or {}))
         return self.get_state()
+
+    @api
+    def check_updates_now(self) -> dict[str, Any]:
+        """Consulta o GitHub Releases agora (independente da opção automática)."""
+        self._check_updates_async()
+        return self.get_state()
+
+    def open_update_page(self) -> dict[str, Any]:
+        """Abre no navegador a página da versão nova (sempre no repositório do projeto)."""
+        import webbrowser
+
+        url = updates.safe_release_url((self._update_info or {}).get("url"))
+        try:
+            webbrowser.open(url)
+        except Exception:
+            log.exception("Falha ao abrir o navegador")
+            return {"ok": False, "url": url}
+        return {"ok": True, "url": url}
 
     def save_script(self, source: str = "") -> dict[str, Any]:
         """Guarda o texto do editor de script para a próxima sessão."""
@@ -1059,9 +1091,17 @@ class AppController:
                 self._error = exc.to_dict()
         if values.get("activation") is not None and values["activation"] not in ACTIVATION_MODES:
             values = {k: v for k, v in values.items() if k != "activation"}
-        for key in ("always_on_top", "compact_mode", "launch_at_login", "check_updates"):
+        for key in ("always_on_top", "compact_mode", "check_updates"):
             if key in values and values[key] is not None:
                 changes[key] = bool(values[key])
+        if values.get("launch_at_login") is not None:
+            wanted = bool(values["launch_at_login"])
+            try:
+                autostart.set_enabled(wanted)
+                changes["launch_at_login"] = wanted
+            except Exception as exc:  # noqa: BLE001 - registro/arquivo do SO
+                log.exception("Falha ao configurar início automático")
+                self._fail("autostart.failed", f"Não foi possível alterar o início automático: {exc}")
         for key in ("time_units", "activation"):
             if key in values and values[key] is not None:
                 if key == "time_units" and isinstance(values[key], dict):
@@ -1075,6 +1115,32 @@ class AppController:
         self._settings.update(changes)
         if "always_on_top" in changes:
             self._apply_always_on_top(bool(self._settings.get("always_on_top")))
+        if changes.get("check_updates"):
+            self._check_updates_async()
+
+    def _refresh_autostart(self) -> None:
+        """Mantém o registro de início automático apontando para este executável."""
+        try:
+            if self._settings.get("launch_at_login"):
+                autostart.set_enabled(True)
+        except Exception:
+            log.exception("Falha ao atualizar o início automático")
+
+    def _check_updates_async(self) -> None:
+        if self._update_checking:
+            return
+        self._update_checking = True
+
+        def run() -> None:
+            try:
+                self._update_info = updates.check_latest(self._version())
+            except Exception as exc:  # noqa: BLE001 - rede indisponível é esperado
+                log.info("Verificação de atualização falhou: %s", exc)
+            finally:
+                self._update_checking = False
+            self._notifier.signal()
+
+        threading.Thread(target=run, name="UpdateCheck", daemon=True).start()
 
     def _stop_tier3_runners(self, keep_schedule: bool = False) -> None:
         if self._macro_recorder.is_recording():

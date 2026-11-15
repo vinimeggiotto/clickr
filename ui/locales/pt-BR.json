@@ -80,7 +80,10 @@
     "maxDuration": "Duração máx.",
     "alwaysOnTop": "Sempre no topo",
     "compactMode": "Modo compacto",
-    "unitAria": "Unidade de tempo"
+    "unitAria": "Unidade de tempo",
+    "launchAtLogin": "Iniciar com o sistema (na bandeja)",
+    "checkUpdates": "Avisar quando houver versão nova",
+    "checkUpdatesHint": "Consulta a página de versões do projeto no GitHub ao abrir. Nenhum dado seu é enviado."
   },
   "point": {
     "pick": "Capturar ponto",
@@ -220,7 +223,9 @@
     "hotkeyTitle": "Clique para gravar nova tecla",
     "hotkeyHint": "iniciar / parar",
     "hotkeyRecording": "pressione a combinação…",
-    "hotkeyHintHold": "segure para clicar"
+    "hotkeyHintHold": "segure para clicar",
+    "updateAvailable": "v{v} disponível",
+    "updateTitle": "Abrir a página de download"
   },
   "status": {
     "stopped": "parado",
@@ -299,6 +304,9 @@
       "ownWindow": "A janela em foco era o próprio Clickr. Troque para a janela desejada antes do fim da contagem.",
       "unavailable": "Não foi possível ler a janela em foco neste sistema.",
       "noWindow": "Nenhuma janela em foco foi encontrada."
+    },
+    "autostart": {
+      "failed": "Não foi possível alterar o início automático neste sistema."
     }
   },
   "tray": {

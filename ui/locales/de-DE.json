@@ -80,7 +80,10 @@
     "maxDuration": "Max. Dauer",
     "alwaysOnTop": "Immer im Vordergrund",
     "compactMode": "Kompaktmodus",
-    "unitAria": "Zeiteinheit"
+    "unitAria": "Zeiteinheit",
+    "launchAtLogin": "Mit dem System starten (im Tray)",
+    "checkUpdates": "Bei neuer Version benachrichtigen",
+    "checkUpdatesHint": "Prüft beim Start die Release-Seite des Projekts auf GitHub. Es werden keine Ihrer Daten gesendet."
   },
   "point": {
     "pick": "Punkt erfassen",
@@ -220,7 +223,9 @@
     "hotkeyTitle": "Klicken, um neue Taste aufzunehmen",
     "hotkeyHint": "starten / stoppen",
     "hotkeyRecording": "Kombination drücken…",
-    "hotkeyHintHold": "zum Klicken halten"
+    "hotkeyHintHold": "zum Klicken halten",
+    "updateAvailable": "v{v} verfügbar",
+    "updateTitle": "Download-Seite öffnen"
   },
   "status": {
     "stopped": "gestoppt",
@@ -299,6 +304,9 @@
       "ownWindow": "Das fokussierte Fenster war Clickr selbst. Vor Ablauf des Countdowns zum Zielfenster wechseln.",
       "unavailable": "Das fokussierte Fenster konnte auf diesem System nicht gelesen werden.",
       "noWindow": "Kein fokussiertes Fenster gefunden."
+    },
+    "autostart": {
+      "failed": "Der automatische Start konnte auf diesem System nicht geändert werden."
     }
   },
   "tray": {

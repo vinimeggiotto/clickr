@@ -271,3 +271,41 @@ def test_schedule_validation_errors(app):
     assert err["code"] == "profile.notFound"
     err = app.schedule_set("2999-01-01T00:00", {"repeat": "interval", "interval_s": 1})["last_error"]
     assert err["code"] == "schedule.badInterval"
+
+
+def test_autostart_preference(app, monkeypatch):
+    calls = []
+    monkeypatch.setattr("app.autostart.set_enabled", lambda enabled, **kw: calls.append(enabled))
+    assert app.set_preferences({"launch_at_login": True})["settings"]["launch_at_login"] is True
+    assert calls == [True]
+
+    def boom(enabled, **kw):
+        raise OSError("acesso negado")
+
+    monkeypatch.setattr("app.autostart.set_enabled", boom)
+    state = app.set_preferences({"launch_at_login": False})
+    assert state["last_error"]["code"] == "autostart.failed"
+    assert state["settings"]["launch_at_login"] is True  # preferência não muda se o SO recusar
+
+
+def test_update_check_reports_new_version(app, monkeypatch):
+    monkeypatch.setattr(
+        "app.updates.check_latest",
+        lambda current, **kw: {"version": "9.9.9", "url": "https://github.com/vinimeggiotto/clickr/releases/tag/v9.9.9"},
+    )
+    assert app.get_state()["update"] is None
+    app.set_preferences({"check_updates": True})
+    deadline = time.time() + 2
+    while time.time() < deadline and app.get_state()["update"] is None:
+        time.sleep(0.02)
+    assert app.get_state()["update"]["version"] == "9.9.9"
+
+
+def test_update_check_failure_is_silent(app, monkeypatch):
+    def boom(current, **kw):
+        raise OSError("sem rede")
+
+    monkeypatch.setattr("app.updates.check_latest", boom)
+    state = app.check_updates_now()
+    time.sleep(0.2)
+    assert app.get_state()["update"] is None and app.get_state()["last_error"] is None

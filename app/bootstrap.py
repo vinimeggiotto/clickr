@@ -20,7 +20,7 @@ WINDOW_WIDTH = 468
 WINDOW_HEIGHT = 676
 
 
-def create_app() -> tuple[webview.Window, AppController]:
+def create_app(start_minimized: bool = False) -> tuple[webview.Window, AppController]:
     controller = AppController()
     index = (UI_DIR / "index.html").resolve()
     if not index.is_file():
@@ -40,12 +40,15 @@ def create_app() -> tuple[webview.Window, AppController]:
         frameless=True,
         easy_drag=False,
         background_color="#14100c",
+        hidden=bool(start_minimized),
     )
     controller.attach_window(window)
+    if start_minimized:
+        controller.mark_window_hidden()
     return window, controller
 
 
-def run() -> None:
+def run(start_minimized: bool = False) -> None:
     instance = SingleInstance()
     if not instance.acquire():
         # Já existe um Clickr aberto: pede que ele apareça e encerra este.
@@ -53,7 +56,7 @@ def run() -> None:
         log.info("Outra instância em execução; encerrando esta.")
         return
 
-    window, controller = create_app()
+    window, controller = create_app(start_minimized=start_minimized)
     instance.watch(controller.show_window)
 
     def on_start() -> None:
@@ -61,6 +64,9 @@ def run() -> None:
             controller.bootstrap_services()
         except Exception:
             log.exception("Falha ao iniciar serviços")
+        # Iniciado minimizado sem bandeja = app inalcançável: mostra a janela.
+        if start_minimized and not controller.has_tray():
+            controller.show_window()
 
     def on_closing() -> bool:
         # Oculta na bandeja em vez de encerrar (Sair vem do tray).

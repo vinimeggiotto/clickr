@@ -55,6 +55,9 @@
   const pickSeqBtn = document.getElementById("pickSeqBtn");
   const wfCaptureBtn = document.getElementById("wfCaptureBtn");
   const scriptHint = document.getElementById("scriptHint");
+  const launchAtLogin = document.getElementById("launchAtLogin");
+  const checkUpdates = document.getElementById("checkUpdates");
+  const updateBadge = document.getElementById("updateBadge");
   const renameProfileBtn = document.getElementById("renameProfileBtn");
   const deleteProfileBtn = document.getElementById("deleteProfileBtn");
   const scheduleRepeat = document.getElementById("scheduleRepeat");
@@ -142,6 +145,8 @@
     applyCompactMode(appSettings.compact_mode);
     if (!isFocused(alwaysOnTop)) alwaysOnTop.checked = appSettings.always_on_top !== false;
     if (!isFocused(compactMode)) compactMode.checked = !!appSettings.compact_mode;
+    if (!isFocused(launchAtLogin)) launchAtLogin.checked = !!appSettings.launch_at_login;
+    if (!isFocused(checkUpdates)) checkUpdates.checked = !!appSettings.check_updates;
     renderHotkeys();
     Object.keys(unitFields).forEach(renderUnitField);
     setPrefSegment("activation", appSettings.activation);
@@ -656,6 +661,12 @@
       refreshProfileList(state.profiles);
     }
     applySettings(state.settings);
+    const update = state.update;
+    updateBadge.hidden = !(update && update.version);
+    if (update && update.version) {
+      updateBadge.textContent = t("footer.updateAvailable", { v: update.version });
+      updateBadge.title = t("footer.updateTitle");
+    }
 
     if (state.config) {
       applying = true;
@@ -910,6 +921,19 @@
 
   alwaysOnTop.addEventListener("change", () => {
     call("set_preferences", { always_on_top: alwaysOnTop.checked });
+  });
+
+  launchAtLogin.addEventListener("change", () => {
+    call("set_preferences", { launch_at_login: launchAtLogin.checked });
+  });
+
+  checkUpdates.addEventListener("change", () => {
+    call("set_preferences", { check_updates: checkUpdates.checked });
+  });
+
+  updateBadge.addEventListener("click", () => {
+    const bridge = api();
+    if (bridge && bridge.open_update_page) bridge.open_update_page();
   });
 
   compactMode.addEventListener("change", () => {

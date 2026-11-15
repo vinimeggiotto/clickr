@@ -18,9 +18,10 @@ def main() -> int:
         log.exception("Falha ao ativar DPI awareness")
 
     try:
+        from app.autostart import MINIMIZED_FLAG
         from app.bootstrap import run
 
-        run()
+        run(start_minimized=MINIMIZED_FLAG in sys.argv[1:])
     except Exception:
         log.exception("Erro fatal")
         raise

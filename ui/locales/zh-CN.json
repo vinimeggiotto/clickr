@@ -80,7 +80,10 @@
     "maxDuration": "最长时长",
     "alwaysOnTop": "始终置顶",
     "compactMode": "紧凑模式",
-    "unitAria": "时间单位"
+    "unitAria": "时间单位",
+    "launchAtLogin": "随系统启动（在托盘中）",
+    "checkUpdates": "有新版本时提醒",
+    "checkUpdatesHint": "启动时查询项目在 GitHub 上的发布页面，不会发送您的任何数据。"
   },
   "point": {
     "pick": "捕获坐标",
@@ -220,7 +223,9 @@
     "hotkeyTitle": "点击以录制新快捷键",
     "hotkeyHint": "开始 / 停止",
     "hotkeyRecording": "请按下组合键…",
-    "hotkeyHintHold": "按住以点击"
+    "hotkeyHintHold": "按住以点击",
+    "updateAvailable": "v{v} 可用",
+    "updateTitle": "打开下载页面"
   },
   "status": {
     "stopped": "已停止",
@@ -299,6 +304,9 @@
       "ownWindow": "当前焦点窗口是 Clickr 本身。请在倒计时结束前切换到目标窗口。",
       "unavailable": "无法在此系统上读取焦点窗口。",
       "noWindow": "未找到焦点窗口。"
+    },
+    "autostart": {
+      "failed": "无法在此系统上更改开机自启。"
     }
   },
   "tray": {

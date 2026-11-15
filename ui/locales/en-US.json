@@ -80,7 +80,10 @@
     "maxDuration": "Max duration",
     "alwaysOnTop": "Always on top",
     "compactMode": "Compact mode",
-    "unitAria": "Time unit"
+    "unitAria": "Time unit",
+    "launchAtLogin": "Start with the system (in the tray)",
+    "checkUpdates": "Notify when a new version is available",
+    "checkUpdatesHint": "Checks the project's releases page on GitHub at startup. None of your data is sent."
   },
   "point": {
     "pick": "Capture point",
@@ -220,7 +223,9 @@
     "hotkeyTitle": "Click to record a new key",
     "hotkeyHint": "start / stop",
     "hotkeyRecording": "press the combination…",
-    "hotkeyHintHold": "hold to click"
+    "hotkeyHintHold": "hold to click",
+    "updateAvailable": "v{v} available",
+    "updateTitle": "Open the download page"
   },
   "status": {
     "stopped": "stopped",
@@ -299,6 +304,9 @@
       "ownWindow": "The focused window was Clickr itself. Switch to the target window before the countdown ends.",
       "unavailable": "Could not read the focused window on this system.",
       "noWindow": "No focused window was found."
+    },
+    "autostart": {
+      "failed": "Could not change automatic startup on this system."
     }
   },
   "tray": {
