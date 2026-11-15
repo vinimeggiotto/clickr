@@ -164,6 +164,11 @@ class AppSettings:
         with self._lock:
             return copy.deepcopy(self._data[key])
 
+    def pick(self, keys: tuple[str, ...]) -> dict[str, Any]:
+        """Cópia só das chaves pedidas (evita copiar script/config a cada leitura)."""
+        with self._lock:
+            return {key: copy.deepcopy(self._data[key]) for key in keys}
+
     def update(self, values: dict[str, Any], defer: bool = False) -> dict[str, Any]:
         """Aplica valores normalizados; grava já ou, com defer, após um curto atraso."""
         with self._lock:

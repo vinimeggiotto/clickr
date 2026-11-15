@@ -311,20 +311,18 @@ class AppController:
         state["running"] = bool(state["running"] or macro_playing or script_status["running"])
         return state
 
+    _PUBLIC_SETTINGS = (
+        "hotkeys",
+        "activation",
+        "always_on_top",
+        "compact_mode",
+        "time_units",
+        "launch_at_login",
+        "check_updates",
+    )
+
     def _public_settings(self) -> dict[str, Any]:
-        data = self._settings.load()
-        return {
-            key: data[key]
-            for key in (
-                "hotkeys",
-                "activation",
-                "always_on_top",
-                "compact_mode",
-                "time_units",
-                "launch_at_login",
-                "check_updates",
-            )
-        }
+        return self._settings.pick(self._PUBLIC_SETTINGS)
 
     def _state_with_profiles(self) -> dict[str, Any]:
         state = self.get_state()
