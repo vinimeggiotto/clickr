@@ -6,10 +6,7 @@ import threading
 import time
 from typing import Any, Callable, Optional
 
-from pynput import keyboard, mouse
-
 from core.sendinput import button_from_pynput
-from hotkeys.service import format_key
 
 # Throttle de movimentos para não explodir a lista
 _MOVE_MIN_INTERVAL_S = 0.016
@@ -30,8 +27,8 @@ class MacroRecorder:
         self._recording = False
         self._t0: float = 0.0
         self._last_move_t: float = -1.0
-        self._mouse_listener: Optional[mouse.Listener] = None
-        self._key_listener: Optional[keyboard.Listener] = None
+        self._mouse_listener: Any = None
+        self._key_listener: Any = None
         self._on_change: Optional[Callable[[], None]] = None
 
     def set_on_change(self, callback: Optional[Callable[[], None]]) -> None:
@@ -59,6 +56,10 @@ class MacroRecorder:
         self._notify()
 
     def start(self) -> bool:
+        # Import tardio: pynput exige display/permissões e não deve ser
+        # carregado só por importar o pacote.
+        from pynput import keyboard, mouse
+
         with self._lock:
             if self._recording:
                 return False
@@ -126,12 +127,16 @@ class MacroRecorder:
         self._append({"t": self._elapsed(), "kind": kind, "x": int(x), "y": int(y), "button": btn})
 
     def _on_key_press(self, key: object) -> None:
+        from hotkeys.service import format_key
+
         name = format_key(key)
         if name is None:
             return
         self._append({"t": self._elapsed(), "kind": "key_down", "key": name})
 
     def _on_key_release(self, key: object) -> None:
+        from hotkeys.service import format_key
+
         name = format_key(key)
         if name is None:
             return

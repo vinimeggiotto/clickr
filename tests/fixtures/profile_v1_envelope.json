@@ -1,0 +1,26 @@
+{
+  "name": "farm-legado",
+  "config": {
+    "interval_ms": 150,
+    "jitter_ms": 12,
+    "button": "right",
+    "click_type": "double",
+    "position_mode": "fixed",
+    "fixed_x": 640,
+    "fixed_y": 360,
+    "hold": false,
+    "start_delay_ms": 500,
+    "max_clicks": 1000,
+    "max_duration_ms": null,
+    "burst_count": 3,
+    "burst_pause_ms": 250,
+    "sequence": [
+      {"x": 10, "y": 20, "delay_ms": 100},
+      {"x": 30, "y": 40, "delay_ms": 0}
+    ],
+    "window_filter": {"enabled": true, "process": "notepad.exe", "title_contains": "Sem"},
+    "hotkey": "F8",
+    "always_on_top": false,
+    "compact_mode": true
+  }
+}

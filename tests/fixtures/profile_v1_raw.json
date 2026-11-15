@@ -1,0 +1,8 @@
+{
+  "interval_ms": 33,
+  "button": "middle",
+  "click_type": "hold",
+  "hold": true,
+  "hotkey": "F9",
+  "chave_desconhecida": 123
+}
