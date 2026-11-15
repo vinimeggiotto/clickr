@@ -46,4 +46,11 @@ def test_js_literal_keys_exist():
         src = (ROOT / "ui" / script).read_text(encoding="utf-8")
         for key in re.findall(r'\bt\(\s*"([A-Za-z0-9_.]+)"', src):
             if key.split(".")[0] in prefixes:
-                assert key in keys or any(k.startswith(key + ".") for k in keys), f"{script}: {key}"
+                # Chaves montadas em tempo de execução terminam em "." ou "_" no código.
+                dynamic = key.endswith((".", "_"))
+                found = (
+                    any(k.startswith(key) for k in keys)
+                    if dynamic
+                    else key in keys or any(k.startswith(key + ".") for k in keys)
+                )
+                assert found, f"{script}: {key}"
