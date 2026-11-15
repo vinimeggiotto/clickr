@@ -179,7 +179,9 @@
     "countDuration": "{n} evento(s) · {s} s",
     "playingRound": "Reproduciendo {i} de {n}",
     "deleteTitle": "Eliminar macro",
-    "deleteBody": "La macro “{name}” se borrará del disco. Esta acción no se puede deshacer."
+    "deleteBody": "La macro “{name}” se borrará del disco. Esta acción no se puede deshacer.",
+    "overwriteTitle": "Reemplazar macro",
+    "overwriteBody": "Ya existe una macro llamada “{name}”. Su contenido actual será reemplazado."
   },
   "script": {
     "dsl": "DSL",

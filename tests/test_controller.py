@@ -309,3 +309,19 @@ def test_update_check_failure_is_silent(app, monkeypatch):
     state = app.check_updates_now()
     time.sleep(0.2)
     assert app.get_state()["update"] is None and app.get_state()["last_error"] is None
+
+
+def test_last_saved_macro_is_reloaded_on_start(app):
+    events = [{"t": 0.0, "kind": "mouse_down", "x": 5, "y": 5, "button": "left"},
+              {"t": 0.01, "kind": "mouse_up", "x": 5, "y": 5, "button": "left"}]
+    app._macro_recorder.set_events(events)
+    app.macro_save("rotina")
+    app.shutdown()
+    from app.controller import AppController
+
+    again = AppController()
+    try:
+        macro = again.get_state()["macro"]
+        assert macro["name"] == "rotina" and macro["event_count"] == 2
+    finally:
+        again.shutdown()

@@ -7,7 +7,9 @@
 - `.tab`: uppercase, letter-spacing, padding vertical generoso, alinhamento à esquerda.
 - Ativo: mesmo tratamento do segmented (gradiente + amber).
 - Modo compacto: `.tab-adv` oculto.
-- **Manual** fica no rail principal (não é avançado).
+- **Manual** e **Atalhos** ficam no rail principal (não são avançados).
+- Ordem: Clique, Run, Point, Perfis, Atalhos, Manual, Adv, Macro, Script, Agenda.
+- Acessibilidade: cada `.tab` tem `id` + `aria-controls` e cada painel `aria-labelledby`; só a aba ativa entra na ordem do Tab (tabindex itinerante); setas, Home e End percorrem as abas visíveis.
 
 ## Manual (painel)
 

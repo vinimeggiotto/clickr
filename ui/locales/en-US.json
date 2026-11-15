@@ -179,7 +179,9 @@
     "countDuration": "{n} event(s) · {s} s",
     "playingRound": "Playing {i} of {n}",
     "deleteTitle": "Delete macro",
-    "deleteBody": "The macro “{name}” will be deleted from disk. This cannot be undone."
+    "deleteBody": "The macro “{name}” will be deleted from disk. This cannot be undone.",
+    "overwriteTitle": "Replace macro",
+    "overwriteBody": "A macro named “{name}” already exists. Its current content will be replaced."
   },
   "script": {
     "dsl": "DSL",

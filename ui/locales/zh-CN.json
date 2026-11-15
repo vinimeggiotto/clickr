@@ -179,7 +179,9 @@
     "countDuration": "{n} 个事件 · {s} 秒",
     "playingRound": "正在播放第 {i} / {n} 次",
     "deleteTitle": "删除宏",
-    "deleteBody": "宏“{name}”将从磁盘删除，此操作无法撤销。"
+    "deleteBody": "宏“{name}”将从磁盘删除，此操作无法撤销。",
+    "overwriteTitle": "替换宏",
+    "overwriteBody": "已存在名为“{name}”的宏，其当前内容将被替换。"
   },
   "script": {
     "dsl": "DSL",

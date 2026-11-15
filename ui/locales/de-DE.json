@@ -179,7 +179,9 @@
     "countDuration": "{n} Ereignis(se) · {s} s",
     "playingRound": "Wiedergabe {i} von {n}",
     "deleteTitle": "Makro löschen",
-    "deleteBody": "Das Makro „{name}“ wird von der Festplatte gelöscht. Das kann nicht rückgängig gemacht werden."
+    "deleteBody": "Das Makro „{name}“ wird von der Festplatte gelöscht. Das kann nicht rückgängig gemacht werden.",
+    "overwriteTitle": "Makro ersetzen",
+    "overwriteBody": "Ein Makro namens „{name}“ existiert bereits. Sein Inhalt wird ersetzt."
   },
   "script": {
     "dsl": "DSL",

@@ -25,9 +25,9 @@ Demais campos de contexto: `click_count`, `started_at`, `script.line`, `macro.it
 2. Parar durante a contagem não executa nenhuma ação e deixa `elapsed_ms = 0`.
 3. A taxa real considera cliques efetivos (duplo conta 2); ações puladas não entram.
 4. `blocked = "filter"`: a janela em foco não casa com o filtro. `blocked = "own_window"`: o alvo é a janela do próprio Clickr.
-5. **Entrega à UI:** threads de trabalho (motor, macro, script, agenda, atalhos) apenas sinalizam; uma thread dedicada envia o estado completo à UI no máximo ~15 vezes por segundo. A UI mantém, além disso, uma consulta periódica a `get_state`.
+5. **Entrega à UI:** threads de trabalho (motor, macro, script, agenda, atalhos) apenas sinalizam; uma thread dedicada envia o estado completo à UI no máximo ~15 vezes por segundo. A UI mantém, além disso, uma consulta a `get_state` a cada 500 ms.
 6. Contagem regressiva e relógio são interpolados na UI a cada 100 ms entre duas atualizações.
-7. **Erros:** `last_error` é um único objeto `{ code, message, params }` (ou `null`), escolhido nesta ordem: ação da UI, motor, macro, script, agenda. Cada chamada da bridge limpa os erros anteriores.
+7. **Erros:** `last_error` é um único objeto `{ code, message, params }` (ou `null`), escolhido nesta ordem: ação da UI, motor, macro, script, agenda. Cada chamada de ação da bridge (métodos com o decorador `@api`) limpa os erros anteriores antes de executar.
 
 ## UI
 

@@ -1177,6 +1177,15 @@
       showLocalError(t("macro.needName"));
       return;
     }
+    const taken = [...macroList.options].some((o) => o.value.toLowerCase() === name.toLowerCase());
+    if (taken) {
+      const ok = await confirmDialog(
+        t("macro.overwriteTitle"),
+        t("macro.overwriteBody", { name }),
+        t("profiles.overwrite")
+      );
+      if (!ok) return;
+    }
     const state = await call("macro_save", name);
     if (state && state.saved_macro) macroName.value = state.saved_macro;
   });

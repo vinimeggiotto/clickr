@@ -74,6 +74,7 @@ class AppController:
             bindings=self._settings.get("hotkeys"),
         )
         self._macro_recorder = MacroRecorder()
+        self._restore_last_macro()
         self._macro_player = MacroPlayer()
         self._scheduler = Scheduler()
         self._script = ScriptRunner()
@@ -129,6 +130,19 @@ class AppController:
             self._settings.update({"window_pos": [int(x), int(y)]}, defer=True)
         except Exception:
             pass
+
+    def _restore_last_macro(self) -> None:
+        """Recarrega a macro salva usada por último (para agendamentos e para o Reproduzir)."""
+        name = self._settings.get("macro")["name"]
+        if not name:
+            return
+        try:
+            self._macro_recorder.set_events(self._macros.load(name))
+        except (ValueError, OSError):
+            log.info("Macro %r não pôde ser recarregada", name)
+            prefs = self._settings.get("macro")
+            prefs["name"] = ""
+            self._settings.update({"macro": prefs})
 
     def _restore_last_config(self) -> None:
         last = self._settings.get("last_config")

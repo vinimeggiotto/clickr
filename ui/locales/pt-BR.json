@@ -179,7 +179,9 @@
     "countDuration": "{n} evento(s) · {s} s",
     "playingRound": "Reproduzindo {i} de {n}",
     "deleteTitle": "Excluir macro",
-    "deleteBody": "A macro “{name}” será apagada do disco. Esta ação não pode ser desfeita."
+    "deleteBody": "A macro “{name}” será apagada do disco. Esta ação não pode ser desfeita.",
+    "overwriteTitle": "Substituir macro",
+    "overwriteBody": "Já existe uma macro chamada “{name}”. O conteúdo atual dela será substituído."
   },
   "script": {
     "dsl": "DSL",
