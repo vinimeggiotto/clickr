@@ -436,8 +436,23 @@
         </section>
 
         <section class="panel panel-adv" id="panel-script" role="tabpanel" hidden>
-          <label class="field-label" for="scriptSource" data-i18n="script.dsl">DSL</label>
-          <textarea id="scriptSource" class="script-area" spellcheck="false" rows="4" data-i18n-placeholder="script.placeholder" placeholder="move 100 200&#10;click left&#10;wait 100&#10;key SPACE&#10;loop 3&#10;  click&#10;  wait 50&#10;end"></textarea>
+          <div class="script-head">
+            <label class="field-label" for="scriptSource" data-i18n="script.dsl">DSL</label>
+            <button type="button" class="action-btn ghost tiny" id="scriptHelpBtn" data-i18n="script.help">comandos</button>
+          </div>
+          <div class="script-help" id="scriptHelp" hidden>
+            <code>click [btn] [X Y]</code><span data-i18n="script.helpClick">clique (left, right, middle, x1, x2)</span>
+            <code>dclick [btn] [X Y]</code><span data-i18n="script.helpDclick">duplo clique</span>
+            <code>move X Y</code><span data-i18n="script.helpMove">move o cursor</span>
+            <code>drag X1 Y1 X2 Y2</code><span data-i18n="script.helpDrag">arrasta de um ponto a outro</span>
+            <code>scroll N</code><span data-i18n="script.helpScroll">rola a roda (negativo = para baixo)</span>
+            <code>wait MS | MIN-MAX</code><span data-i18n="script.helpWait">espera fixa ou aleatória</span>
+            <code>key A | CTRL+C</code><span data-i18n="script.helpKey">tecla ou combinação</span>
+            <code>type "abc"</code><span data-i18n="script.helpType">digita o texto</span>
+            <code>loop N … end</code><span data-i18n="script.helpLoop">repete o bloco N vezes</span>
+            <code># …</code><span data-i18n="script.helpComment">comentário</span>
+          </div>
+          <textarea id="scriptSource" class="script-area" spellcheck="false" rows="8" data-i18n-placeholder="script.placeholder" placeholder="move 100 200&#10;click left&#10;wait 100&#10;key SPACE&#10;loop 3&#10;  click&#10;  wait 50&#10;end"></textarea>
           <div class="fixed-hint" id="scriptHint"></div>
           <div class="action-row">
             <button type="button" class="action-btn" id="scriptRunBtn" data-i18n="script.run">Executar</button>

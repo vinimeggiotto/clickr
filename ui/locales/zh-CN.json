@@ -169,8 +169,19 @@
     "dsl": "DSL",
     "run": "执行",
     "stop": "停止",
-    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend",
-    "runningLine": "正在执行第 {n} 行"
+    "placeholder": "move 100 200\nclick left\nwait 80-150\nkey CTRL+C\ntype \"你好\"\nloop 3\n  dclick 300 400\n  scroll -2\nend",
+    "runningLine": "正在执行第 {n} 行",
+    "help": "命令",
+    "helpClick": "点击（left、right、middle、x1、x2）",
+    "helpDclick": "双击",
+    "helpMove": "移动光标",
+    "helpDrag": "从一点拖到另一点",
+    "helpScroll": "滚动滚轮（负数 = 向下）",
+    "helpWait": "固定或随机等待",
+    "helpKey": "按键或组合键",
+    "helpType": "输入文本",
+    "helpLoop": "将代码块重复 N 次",
+    "helpComment": "注释"
   },
   "schedule": {
     "startAt": "开始于",

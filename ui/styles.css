@@ -1586,3 +1586,39 @@ body:not(.booting) .splash {
   grid-template-columns: 1fr 1fr 1fr;
   gap: 6px;
 }
+
+/* Script: cabeçalho, ajuda de comandos e editor que ocupa o painel */
+.script-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.script-help {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 10px;
+  align-items: baseline;
+  background: var(--groove);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 10px;
+  color: var(--text-dim);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.script-help[hidden] {
+  display: none;
+}
+
+.script-help code {
+  font-family: "Cascadia Code", "JetBrains Mono", Consolas, ui-monospace, monospace;
+  color: var(--amber);
+  white-space: nowrap;
+}
+
+.panel .script-area {
+  flex: 1 0 150px;
+  min-height: 150px;
+}

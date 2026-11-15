@@ -169,8 +169,19 @@
     "dsl": "DSL",
     "run": "Ejecutar",
     "stop": "Parar",
-    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend",
-    "runningLine": "Ejecutando línea {n}"
+    "placeholder": "move 100 200\nclick left\nwait 80-150\nkey CTRL+C\ntype \"hola\"\nloop 3\n  dclick 300 400\n  scroll -2\nend",
+    "runningLine": "Ejecutando línea {n}",
+    "help": "comandos",
+    "helpClick": "clic (left, right, middle, x1, x2)",
+    "helpDclick": "doble clic",
+    "helpMove": "mueve el cursor",
+    "helpDrag": "arrastra de un punto a otro",
+    "helpScroll": "desplaza la rueda (negativo = abajo)",
+    "helpWait": "espera fija o aleatoria",
+    "helpKey": "tecla o combinación",
+    "helpType": "escribe el texto",
+    "helpLoop": "repite el bloque N veces",
+    "helpComment": "comentario"
   },
   "schedule": {
     "startAt": "Inicio en",

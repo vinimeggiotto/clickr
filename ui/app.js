@@ -1086,6 +1086,13 @@
   macroStopBtn.addEventListener("click", () => call("macro_stop"));
   macroClearBtn.addEventListener("click", () => call("macro_clear"));
 
+  const scriptHelpBtn = document.getElementById("scriptHelpBtn");
+  const scriptHelp = document.getElementById("scriptHelp");
+  scriptHelpBtn.addEventListener("click", () => {
+    scriptHelp.hidden = !scriptHelp.hidden;
+    scriptHelpBtn.setAttribute("aria-expanded", scriptHelp.hidden ? "false" : "true");
+  });
+
   // O texto do script é guardado para a próxima sessão (com pequeno atraso).
   scriptSource.addEventListener("input", () => {
     if (scriptSaveTimer) clearTimeout(scriptSaveTimer);

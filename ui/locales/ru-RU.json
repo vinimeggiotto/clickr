@@ -169,8 +169,19 @@
     "dsl": "DSL",
     "run": "Запуск",
     "stop": "Стоп",
-    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend",
-    "runningLine": "Выполняется строка {n}"
+    "placeholder": "move 100 200\nclick left\nwait 80-150\nkey CTRL+C\ntype \"привет\"\nloop 3\n  dclick 300 400\n  scroll -2\nend",
+    "runningLine": "Выполняется строка {n}",
+    "help": "команды",
+    "helpClick": "клик (left, right, middle, x1, x2)",
+    "helpDclick": "двойной клик",
+    "helpMove": "перемещает курсор",
+    "helpDrag": "перетаскивает из точки в точку",
+    "helpScroll": "прокрутка колеса (минус = вниз)",
+    "helpWait": "фиксированная или случайная пауза",
+    "helpKey": "клавиша или сочетание",
+    "helpType": "печатает текст",
+    "helpLoop": "повторяет блок N раз",
+    "helpComment": "комментарий"
   },
   "schedule": {
     "startAt": "Старт в",
