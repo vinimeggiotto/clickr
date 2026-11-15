@@ -130,7 +130,8 @@
     "savedLabel": "Gespeicherte Profile",
     "listAria": "Profilliste",
     "needName": "Profilnamen eingeben.",
-    "needSelect": "Profil zum Laden auswählen."
+    "needSelect": "Profil zum Laden auswählen.",
+    "delete": "Löschen"
   },
   "manualUi": {
     "modeAria": "Handbuchmodus",
@@ -151,7 +152,18 @@
     "stopRecord": "Aufnahme stoppen",
     "play": "Abspielen",
     "stop": "Stopp",
-    "clear": "Leeren"
+    "clear": "Leeren",
+    "repeat": "Wiederholungen",
+    "speed": "Geschwindigkeit",
+    "name": "Makroname",
+    "namePlaceholder": "mein-makro",
+    "savedLabel": "Gespeicherte Makros",
+    "needName": "Namen für das Makro eingeben.",
+    "needSelect": "Makro auswählen.",
+    "countDuration": "{n} Ereignis(se) · {s} s",
+    "playingRound": "Wiedergabe {i} von {n}",
+    "deleteTitle": "Makro löschen",
+    "deleteBody": "Das Makro „{name}“ wird von der Festplatte gelöscht. Das kann nicht rückgängig gemacht werden."
   },
   "script": {
     "dsl": "DSL",
@@ -209,7 +221,10 @@
       "recordFailed": "Makroaufzeichnung konnte nicht gestartet werden.",
       "busy": "Makro zuerst stoppen.",
       "unsupportedKey": "Das Makro enthält eine nicht unterstützte Taste: {key}",
-      "unknownEvent": "Unbekanntes Makroereignis: {kind}"
+      "unknownEvent": "Unbekanntes Makroereignis: {kind}",
+      "notFound": "Makro nicht gefunden: {name}",
+      "invalidFile": "Ungültige Makrodatei.",
+      "badOptions": "Ungültige Wiederholungen oder Geschwindigkeit."
     },
     "schedule": {
       "empty": "Datum und Uhrzeit für die Planung eingeben.",

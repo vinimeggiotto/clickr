@@ -1575,3 +1575,14 @@ body:not(.booting) .splash {
   font-size: 13px;
   text-align: right;
 }
+
+.action-row.triple .action-btn {
+  padding-left: 6px;
+  padding-right: 6px;
+  letter-spacing: 0.6px;
+}
+
+.action-row.triple {
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}

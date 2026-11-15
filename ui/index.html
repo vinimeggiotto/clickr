@@ -40,6 +40,17 @@
     </div>
   </div>
 
+  <div id="confirmModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+    <div class="modal-card">
+      <h2 id="confirmModalTitle" class="modal-title"></h2>
+      <p class="modal-body" id="confirmModalBody"></p>
+      <div class="modal-actions">
+        <button type="button" class="action-btn ghost" id="confirmModalCancel" data-i18n="trayModal.cancel">Cancelar</button>
+        <button type="button" class="action-btn" id="confirmModalOk"></button>
+      </div>
+    </div>
+  </div>
+
   <div id="localeGate" class="locale-gate" hidden role="dialog" aria-modal="true" data-i18n-aria="localeGate.aria" aria-labelledby="localeGateTitle">
     <div class="locale-gate-card">
       <h2 id="localeGateTitle" class="locale-gate-title" data-i18n="localeGate.title">Escolha o idioma</h2>
@@ -393,6 +404,35 @@
             <button type="button" class="action-btn ghost" id="macroStopBtn" data-i18n="macro.stop">Parar</button>
             <button type="button" class="action-btn ghost" id="macroClearBtn" data-i18n="macro.clear">Limpar</button>
           </div>
+          <div class="field-grid">
+            <div class="field">
+              <label for="macroRepeat" data-i18n="macro.repeat">Repetições</label>
+              <div class="lcd-input compact">
+                <input type="number" id="macroRepeat" value="1" min="1" max="100000" step="1">
+                <span>&times;</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="macroSpeed" data-i18n="macro.speed">Velocidade</label>
+              <div class="lcd-input compact">
+                <input type="number" id="macroSpeed" value="1" min="0.1" max="10" step="0.1">
+                <span>&times;</span>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="macroName" data-i18n="macro.name">Nome da macro</label>
+            <div class="lcd-input compact">
+              <input type="text" id="macroName" maxlength="64" data-i18n-placeholder="macro.namePlaceholder" placeholder="minha-macro" autocomplete="off">
+            </div>
+          </div>
+          <div class="action-row triple">
+            <button type="button" class="action-btn" id="macroSaveBtn" data-i18n="profiles.save">Salvar</button>
+            <button type="button" class="action-btn ghost" id="macroLoadBtn" data-i18n="profiles.load">Carregar</button>
+            <button type="button" class="action-btn ghost" id="macroDeleteBtn" data-i18n="profiles.delete">Excluir</button>
+          </div>
+          <label class="field-label" for="macroList" data-i18n="macro.savedLabel">Macros salvas</label>
+          <select id="macroList" class="profile-select" size="3" data-i18n-aria="macro.savedLabel" aria-label="Macros salvas"></select>
         </section>
 
         <section class="panel panel-adv" id="panel-script" role="tabpanel" hidden>

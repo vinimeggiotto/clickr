@@ -55,6 +55,13 @@
   const pickSeqBtn = document.getElementById("pickSeqBtn");
   const wfCaptureBtn = document.getElementById("wfCaptureBtn");
   const scriptHint = document.getElementById("scriptHint");
+  const macroRepeat = document.getElementById("macroRepeat");
+  const macroSpeed = document.getElementById("macroSpeed");
+  const macroName = document.getElementById("macroName");
+  const macroList = document.getElementById("macroList");
+  const macroSaveBtn = document.getElementById("macroSaveBtn");
+  const macroLoadBtn = document.getElementById("macroLoadBtn");
+  const macroDeleteBtn = document.getElementById("macroDeleteBtn");
   const keyRow = document.getElementById("keyRow");
   const keyName = document.getElementById("keyName");
   const keyCaptureBtn = document.getElementById("keyCaptureBtn");
@@ -354,6 +361,65 @@
   }
   setInterval(renderLive, 100);
 
+  // --- Diálogo de confirmação ---------------------------------------------
+  const confirmModal = document.getElementById("confirmModal");
+  const confirmModalTitle = document.getElementById("confirmModalTitle");
+  const confirmModalBody = document.getElementById("confirmModalBody");
+  const confirmModalOk = document.getElementById("confirmModalOk");
+  const confirmModalCancel = document.getElementById("confirmModalCancel");
+  let confirmResolve = null;
+
+  function closeConfirm(result) {
+    confirmModal.hidden = true;
+    const resolve = confirmResolve;
+    confirmResolve = null;
+    if (resolve) resolve(result);
+  }
+
+  /** Pergunta antes de uma ação destrutiva. Resolve true se confirmada. */
+  function confirmDialog(title, body, okLabel) {
+    if (confirmResolve) closeConfirm(false);
+    confirmModalTitle.textContent = title;
+    confirmModalBody.textContent = body;
+    confirmModalOk.textContent = okLabel;
+    confirmModal.hidden = false;
+    confirmModalCancel.focus();
+    return new Promise((resolve) => {
+      confirmResolve = resolve;
+    });
+  }
+
+  confirmModalOk.addEventListener("click", () => closeConfirm(true));
+  confirmModalCancel.addEventListener("click", () => closeConfirm(false));
+  confirmModal.addEventListener("click", (e) => {
+    if (e.target === confirmModal) closeConfirm(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !confirmModal.hidden) closeConfirm(false);
+  });
+
+  function fillSelect(select, names) {
+    const selected = select.value;
+    select.innerHTML = "";
+    names.forEach((name) => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      select.appendChild(opt);
+    });
+    if (selected && names.includes(selected)) select.value = selected;
+  }
+
+  let lastMacrosKey = null;
+  let macroNameSeeded = false;
+
+  function refreshMacroList(names) {
+    const key = JSON.stringify(names);
+    if (key === lastMacrosKey) return;
+    lastMacrosKey = key;
+    fillSelect(macroList, names);
+  }
+
   function isFocused(...els) {
     return els.some((el) => document.activeElement === el);
   }
@@ -526,14 +592,32 @@
     if (macro.recording) {
       macroHint.textContent = t("macro.recording", { n: evCount });
       macroRecordBtn.textContent = t("macro.stopRecord");
+    } else if (macro.playing && (macro.repeat || 1) > 1) {
+      macroHint.textContent = t("macro.playingRound", {
+        i: macro.iteration || 1,
+        n: macro.repeat,
+      });
+      macroRecordBtn.textContent = t("macro.record");
     } else {
       macroHint.textContent = evCount
-        ? t("macro.count", { n: evCount })
+        ? t("macro.countDuration", {
+            n: evCount,
+            s: ((macro.duration_ms || 0) / 1000).toFixed(1),
+          })
         : t("macro.empty");
       macroRecordBtn.textContent = t("macro.record");
     }
     macroPlayBtn.disabled = !!macro.recording || evCount === 0;
     macroClearBtn.disabled = !!macro.recording || !!macro.playing;
+    macroSaveBtn.disabled = !!macro.recording || evCount === 0;
+    if (!isFocused(macroRepeat)) macroRepeat.value = String(macro.repeat || 1);
+    if (!isFocused(macroSpeed)) macroSpeed.value = String(macro.speed || 1);
+    if (Array.isArray(state.macros)) refreshMacroList(state.macros);
+    if (!macroNameSeeded && macro.name !== undefined) {
+      // Só na primeira atualização: mostra o nome da macro usada por último.
+      macroNameSeeded = true;
+      if (macro.name && !macroName.value) macroName.value = macro.name;
+    }
 
     if (schedule.active && schedule.at) {
       scheduleHint.textContent = t("schedule.active", {
@@ -950,7 +1034,55 @@
     await call(recording ? "macro_record_stop" : "macro_record_start");
   });
 
-  macroPlayBtn.addEventListener("click", () => call("macro_play"));
+  function macroOptions() {
+    const repeat = Math.min(100000, Math.max(1, parseInt(macroRepeat.value || "1", 10) || 1));
+    const rawSpeed = parseFloat(String(macroSpeed.value || "1").replace(",", "."));
+    const speed = Math.min(10, Math.max(0.1, Number.isFinite(rawSpeed) ? rawSpeed : 1));
+    return [repeat, speed];
+  }
+
+  macroPlayBtn.addEventListener("click", () => call("macro_play", ...macroOptions()));
+  macroRepeat.addEventListener("change", () => call("macro_set_options", ...macroOptions()));
+  macroSpeed.addEventListener("change", () => call("macro_set_options", ...macroOptions()));
+
+  macroSaveBtn.addEventListener("click", async () => {
+    const name = (macroName.value || macroList.value || "").trim();
+    if (!name) {
+      showLocalError(t("macro.needName"));
+      return;
+    }
+    const state = await call("macro_save", name);
+    if (state && state.saved_macro) macroName.value = state.saved_macro;
+  });
+
+  macroLoadBtn.addEventListener("click", async () => {
+    const name = (macroList.value || macroName.value || "").trim();
+    if (!name) {
+      showLocalError(t("macro.needSelect"));
+      return;
+    }
+    const state = await call("macro_load", name);
+    if (state && !state.last_error) macroName.value = name;
+  });
+
+  macroDeleteBtn.addEventListener("click", async () => {
+    const name = (macroList.value || macroName.value || "").trim();
+    if (!name) {
+      showLocalError(t("macro.needSelect"));
+      return;
+    }
+    const ok = await confirmDialog(
+      t("macro.deleteTitle"),
+      t("macro.deleteBody", { name }),
+      t("profiles.delete")
+    );
+    if (ok) await call("macro_delete", name);
+  });
+
+  macroList.addEventListener("change", () => {
+    if (macroList.value) macroName.value = macroList.value;
+  });
+  macroList.addEventListener("dblclick", () => macroLoadBtn.click());
   macroStopBtn.addEventListener("click", () => call("macro_stop"));
   macroClearBtn.addEventListener("click", () => call("macro_clear"));
 
@@ -1194,6 +1326,9 @@
       }
       if (settings && Array.isArray(settings.profiles)) {
         refreshProfileList(settings.profiles);
+      }
+      if (settings && Array.isArray(settings.macros)) {
+        refreshMacroList(settings.macros);
       }
       applySettings(settings);
       if (settings && typeof settings.last_script === "string" && settings.last_script) {

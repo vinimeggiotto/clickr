@@ -130,7 +130,8 @@
     "savedLabel": "Perfis salvos",
     "listAria": "Lista de perfis",
     "needName": "Informe um nome de perfil.",
-    "needSelect": "Selecione um perfil para carregar."
+    "needSelect": "Selecione um perfil para carregar.",
+    "delete": "Excluir"
   },
   "manualUi": {
     "modeAria": "Modo do Manual",
@@ -151,7 +152,18 @@
     "stopRecord": "Parar gravação",
     "play": "Reproduzir",
     "stop": "Parar",
-    "clear": "Limpar"
+    "clear": "Limpar",
+    "repeat": "Repetições",
+    "speed": "Velocidade",
+    "name": "Nome da macro",
+    "namePlaceholder": "minha-macro",
+    "savedLabel": "Macros salvas",
+    "needName": "Informe um nome para a macro.",
+    "needSelect": "Selecione uma macro.",
+    "countDuration": "{n} evento(s) · {s} s",
+    "playingRound": "Reproduzindo {i} de {n}",
+    "deleteTitle": "Excluir macro",
+    "deleteBody": "A macro “{name}” será apagada do disco. Esta ação não pode ser desfeita."
   },
   "script": {
     "dsl": "DSL",
@@ -209,7 +221,10 @@
       "recordFailed": "Não foi possível iniciar a gravação da macro.",
       "busy": "Pare a macro antes de continuar.",
       "unsupportedKey": "A macro contém uma tecla não suportada: {key}",
-      "unknownEvent": "Evento de macro desconhecido: {kind}"
+      "unknownEvent": "Evento de macro desconhecido: {kind}",
+      "notFound": "Macro não encontrada: {name}",
+      "invalidFile": "Arquivo de macro inválido.",
+      "badOptions": "Repetições ou velocidade inválidas."
     },
     "schedule": {
       "empty": "Informe data e hora para agendar.",

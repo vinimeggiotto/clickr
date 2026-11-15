@@ -123,6 +123,12 @@ class MacroRecorder:
         with self._lock:
             self._events = [dict(e) for e in events]
 
+    def duration_ms(self) -> int:
+        with self._lock:
+            if not self._events:
+                return 0
+            return int(float(self._events[-1].get("t", 0) or 0) * 1000)
+
     def clear(self) -> None:
         with self._lock:
             self._events = []

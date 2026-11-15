@@ -49,8 +49,12 @@ DEFAULT_SETTINGS: dict[str, Any] = {
     "launch_at_login": False,
     "check_updates": False,
     "schedule": None,
+    "macro": {"repeat": 1, "speed": 1.0, "name": ""},
 }
 
+MAX_MACRO_REPEAT = 100_000
+MIN_MACRO_SPEED = 0.1
+MAX_MACRO_SPEED = 10.0
 _MAX_SCRIPT_CHARS = 100_000
 _SAVE_DEBOUNCE_S = 0.5
 
@@ -91,6 +95,17 @@ def _clean(key: str, value: Any) -> Any:
             for field in TIME_UNIT_FIELDS:
                 if value.get(field) in TIME_UNITS:
                     out[field] = value[field]
+        return out
+    if key == "macro":
+        out = dict(default)
+        if isinstance(value, dict):
+            repeat, speed, name = value.get("repeat"), value.get("speed"), value.get("name")
+            if isinstance(repeat, int) and not isinstance(repeat, bool):
+                out["repeat"] = min(MAX_MACRO_REPEAT, max(1, repeat))
+            if isinstance(speed, (int, float)) and not isinstance(speed, bool):
+                out["speed"] = min(MAX_MACRO_SPEED, max(MIN_MACRO_SPEED, float(speed)))
+            if isinstance(name, str):
+                out["name"] = name[:64]
         return out
     if key == "schedule":
         return copy.deepcopy(value) if isinstance(value, dict) else None

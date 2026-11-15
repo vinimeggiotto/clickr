@@ -24,6 +24,7 @@ from core.types import LEGACY_APP_KEYS, PROFILE_VERSION, V1_CONFIG_KEYS, ClickCo
 from hotkeys.service import HotkeyService
 from macros.player import MacroPlayer
 from macros.recorder import MacroRecorder
+from macros.repo import MacrosRepo
 from profiles.repo import ProfilesRepo
 from scheduler.service import Scheduler
 from scripts.runner import ScriptRunner
@@ -64,6 +65,7 @@ class AppController:
     def __init__(self) -> None:
         self._engine = ClickEngine()
         self._profiles = ProfilesRepo()
+        self._macros = MacrosRepo()
         self._settings = AppSettings()
         self._restore_last_config()
         self._hotkeys = HotkeyService(
@@ -257,10 +259,17 @@ class AppController:
             or script_status.get("last_error")
             or sched.get("last_error")
         )
+        macro_prefs = self._settings.get("macro")
+        progress = self._macro_player.progress()
         state["macro"] = {
             "recording": macro_recording,
             "playing": macro_playing,
             "event_count": self._macro_recorder.event_count(),
+            "duration_ms": self._macro_recorder.duration_ms(),
+            "iteration": progress["iteration"] if macro_playing else 0,
+            "repeat": macro_prefs["repeat"],
+            "speed": macro_prefs["speed"],
+            "name": macro_prefs["name"],
         }
         state["schedule"] = {
             "active": sched["active"],
@@ -593,14 +602,78 @@ class AppController:
         return self.get_state()
 
     @api
-    def macro_play(self) -> dict[str, Any]:
+    def macro_play(self, repeat: Any = None, speed: Any = None) -> dict[str, Any]:
+        """Reproduz a macro atual. repeat/speed omitidos usam os últimos valores."""
         if self._macro_player.is_playing():
             return self.get_state()
+        prefs = self._settings.get("macro")
+        if repeat is not None or speed is not None:
+            prefs = self._save_macro_prefs(repeat=repeat, speed=speed)
         events = self._macro_recorder.get_events()
+        if self._macro_recorder.is_recording():
+            self._macro_recorder.stop()
         self._engine.stop()
         self._script.stop()
-        self._macro_player.play(events)
+        self._macro_player.play(events, repeat=prefs["repeat"], speed=prefs["speed"])
         return self.get_state()
+
+    @api
+    def macro_set_options(self, repeat: Any = None, speed: Any = None) -> dict[str, Any]:
+        self._save_macro_prefs(repeat=repeat, speed=speed)
+        return self.get_state()
+
+    def list_macros(self) -> list[str]:
+        try:
+            return self._macros.list_macros()
+        except OSError:
+            log.exception("Falha ao listar macros")
+            return []
+
+    def _state_with_macros(self) -> dict[str, Any]:
+        state = self.get_state()
+        state["macros"] = self.list_macros()
+        return state
+
+    @api
+    def macro_save(self, name: str) -> dict[str, Any]:
+        if self._macro_recorder.is_recording():
+            raise ClickrError("macro.busy", "Pare a macro antes de salvar.")
+        saved = self._macros.save(name, self._macro_recorder.get_events())
+        self._save_macro_prefs(name=saved)
+        state = self._state_with_macros()
+        state["saved_macro"] = saved
+        return state
+
+    @api
+    def macro_load(self, name: str) -> dict[str, Any]:
+        if self._macro_recorder.is_recording() or self._macro_player.is_playing():
+            raise ClickrError("macro.busy", "Pare a macro antes de carregar outra.")
+        events = self._macros.load(name)
+        self._macro_recorder.set_events(events)
+        self._save_macro_prefs(name=str(name).strip())
+        return self._state_with_macros()
+
+    @api
+    def macro_delete(self, name: str) -> dict[str, Any]:
+        deleted = self._macros.delete(name)
+        if self._settings.get("macro")["name"] == deleted:
+            self._save_macro_prefs(name="")
+        return self._state_with_macros()
+
+    def _save_macro_prefs(
+        self, repeat: Any = None, speed: Any = None, name: Optional[str] = None
+    ) -> dict[str, Any]:
+        prefs = self._settings.get("macro")
+        try:
+            if repeat is not None:
+                prefs["repeat"] = int(repeat)
+            if speed is not None:
+                prefs["speed"] = float(speed)
+        except (TypeError, ValueError):
+            raise ClickrError("macro.badOptions", "Repetições ou velocidade inválidas.") from None
+        if name is not None:
+            prefs["name"] = name
+        return self._settings.update({"macro": prefs})["macro"]
 
     @api
     def macro_stop(self) -> dict[str, Any]:
@@ -615,6 +688,7 @@ class AppController:
             self._fail("macro.busy", "Pare a macro antes de limpar.")
             return self.get_state()
         self._macro_recorder.clear()
+        self._save_macro_prefs(name="")
         return self.get_state()
 
     # --- Scheduler -----------------------------------------------------
@@ -768,6 +842,7 @@ class AppController:
                 "supported_locales": list(SUPPORTED_LOCALES),
                 "version": self._version(),
                 "profiles": self.list_profiles(),
+                "macros": self.list_macros(),
                 "manual_seen": bool(data.get("manual_seen")),
                 "tray_hint_shown": bool(data.get("tray_hint_shown")),
                 "last_script": data.get("last_script") or "",

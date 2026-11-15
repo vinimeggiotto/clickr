@@ -130,7 +130,8 @@
     "savedLabel": "已保存配置",
     "listAria": "配置列表",
     "needName": "请输入配置名称。",
-    "needSelect": "请选择要加载的配置。"
+    "needSelect": "请选择要加载的配置。",
+    "delete": "删除"
   },
   "manualUi": {
     "modeAria": "手册模式",
@@ -151,7 +152,18 @@
     "stopRecord": "停止录制",
     "play": "播放",
     "stop": "停止",
-    "clear": "清除"
+    "clear": "清除",
+    "repeat": "重复次数",
+    "speed": "速度",
+    "name": "宏名称",
+    "namePlaceholder": "我的宏",
+    "savedLabel": "已保存的宏",
+    "needName": "请输入宏的名称。",
+    "needSelect": "请选择一个宏。",
+    "countDuration": "{n} 个事件 · {s} 秒",
+    "playingRound": "正在播放第 {i} / {n} 次",
+    "deleteTitle": "删除宏",
+    "deleteBody": "宏“{name}”将从磁盘删除，此操作无法撤销。"
   },
   "script": {
     "dsl": "DSL",
@@ -209,7 +221,10 @@
       "recordFailed": "无法开始录制宏。",
       "busy": "请先停止宏再继续。",
       "unsupportedKey": "宏包含不支持的按键：{key}",
-      "unknownEvent": "未知的宏事件：{kind}"
+      "unknownEvent": "未知的宏事件：{kind}",
+      "notFound": "未找到宏：{name}",
+      "invalidFile": "宏文件无效。",
+      "badOptions": "重复次数或速度无效。"
     },
     "schedule": {
       "empty": "请输入要计划的日期和时间。",

@@ -130,7 +130,8 @@
     "savedLabel": "Saved profiles",
     "listAria": "Profile list",
     "needName": "Enter a profile name.",
-    "needSelect": "Select a profile to load."
+    "needSelect": "Select a profile to load.",
+    "delete": "Delete"
   },
   "manualUi": {
     "modeAria": "Manual mode",
@@ -151,7 +152,18 @@
     "stopRecord": "Stop recording",
     "play": "Play",
     "stop": "Stop",
-    "clear": "Clear"
+    "clear": "Clear",
+    "repeat": "Repeats",
+    "speed": "Speed",
+    "name": "Macro name",
+    "namePlaceholder": "my-macro",
+    "savedLabel": "Saved macros",
+    "needName": "Enter a name for the macro.",
+    "needSelect": "Select a macro.",
+    "countDuration": "{n} event(s) · {s} s",
+    "playingRound": "Playing {i} of {n}",
+    "deleteTitle": "Delete macro",
+    "deleteBody": "The macro “{name}” will be deleted from disk. This cannot be undone."
   },
   "script": {
     "dsl": "DSL",
@@ -209,7 +221,10 @@
       "recordFailed": "Could not start macro recording.",
       "busy": "Stop the macro before continuing.",
       "unsupportedKey": "The macro contains an unsupported key: {key}",
-      "unknownEvent": "Unknown macro event: {kind}"
+      "unknownEvent": "Unknown macro event: {kind}",
+      "notFound": "Macro not found: {name}",
+      "invalidFile": "Invalid macro file.",
+      "badOptions": "Invalid repeats or speed."
     },
     "schedule": {
       "empty": "Enter a date and time to schedule.",
