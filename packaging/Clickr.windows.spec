@@ -19,6 +19,9 @@ a = Analysis(
         (os.path.join(ROOT, 'VERSION'), '.'),
     ],
     hiddenimports=[
+        'hotkeys.backend_win32',
+        'hotkeys.backend_pynput',
+        'app.tray',
         'clr',
         'webview',
         'webview.platforms.edgechromium',

@@ -736,6 +736,7 @@
       );
       setSegmentActive("position_mode", cfg.position_mode);
       updateFixedHint();
+      refreshPressed();
       renderSequence(localConfig.sequence);
       highlightSequence(state.sequence_index, engineRunning && localConfig.sequence.length > 0);
       applying = false;
@@ -838,6 +839,8 @@
       const on = tab.dataset.tab === name;
       tab.classList.toggle("active", on);
       tab.setAttribute("aria-selected", on ? "true" : "false");
+      // Tabindex itinerante: só a aba ativa entra na ordem do Tab.
+      tab.tabIndex = on ? 0 : -1;
     });
     document.querySelectorAll(".panel").forEach((panel) => {
       const on = panel.id === `panel-${name}`;
@@ -845,6 +848,34 @@
       panel.hidden = !on;
     });
   }
+
+  /** Setas / Home / End percorrem as abas visíveis (padrão de tablist vertical). */
+  function onTabsKeydown(e) {
+    const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End"];
+    if (!keys.includes(e.key)) return;
+    const tabs = [...document.querySelectorAll(".tab")].filter((tab) => !tab.hidden);
+    const current = tabs.indexOf(document.activeElement);
+    if (current < 0) return;
+    e.preventDefault();
+    let next = current;
+    if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = tabs.length - 1;
+    else if (e.key === "ArrowUp" || e.key === "ArrowLeft") next = (current - 1 + tabs.length) % tabs.length;
+    else next = (current + 1) % tabs.length;
+    activateTab(tabs[next].dataset.tab);
+    tabs[next].focus();
+  }
+  document.querySelector(".tabs").addEventListener("keydown", onTabsKeydown);
+
+  /** Mantém aria-pressed coerente com a opção ativa de cada grupo segmentado. */
+  function refreshPressed() {
+    document.querySelectorAll(".segmented .seg").forEach((seg) => {
+      seg.setAttribute("aria-pressed", seg.classList.contains("active") ? "true" : "false");
+    });
+  }
+  document.addEventListener("click", (e) => {
+    if (e.target.closest && e.target.closest(".segmented")) setTimeout(refreshPressed, 0);
+  });
 
   /** Lê o intervalo digitado; null se vazio ou inválido (nada é enviado). */
   function readInterval(el) {
@@ -1279,6 +1310,9 @@
   if (trayModal) {
     trayModal.addEventListener("click", (e) => {
       if (e.target === trayModal) closeTrayModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !trayModal.hidden) closeTrayModal();
     });
   }
 

@@ -97,21 +97,21 @@
     <div class="controls">
       <div class="workspace">
       <nav class="tabs" role="tablist" data-i18n-aria="tabs.aria" aria-label="Painéis" aria-orientation="vertical">
-        <button type="button" class="tab active" data-tab="click" role="tab" aria-selected="true" data-i18n="tabs.click">Clique</button>
-        <button type="button" class="tab" data-tab="run" role="tab" aria-selected="false" data-i18n="tabs.run">Run</button>
-        <button type="button" class="tab" data-tab="point" role="tab" aria-selected="false" data-i18n="tabs.point">Point</button>
-        <button type="button" class="tab" data-tab="profiles" role="tab" aria-selected="false" data-i18n="tabs.profiles">Perfis</button>
-        <button type="button" class="tab" data-tab="keys" role="tab" aria-selected="false" data-i18n="tabs.keys">Atalhos</button>
-        <button type="button" class="tab" data-tab="manual" role="tab" aria-selected="false" data-i18n="tabs.manual">Manual</button>
-        <button type="button" class="tab tab-adv" data-tab="advanced" role="tab" aria-selected="false" data-i18n="tabs.advanced">Adv</button>
-        <button type="button" class="tab tab-adv" data-tab="macro" role="tab" aria-selected="false" data-i18n="tabs.macro">Macro</button>
-        <button type="button" class="tab tab-adv" data-tab="script" role="tab" aria-selected="false" data-i18n="tabs.script">Script</button>
-        <button type="button" class="tab tab-adv" data-tab="schedule" role="tab" aria-selected="false" data-i18n="tabs.schedule">Agenda</button>
+        <button type="button" class="tab active" id="tab-click" aria-controls="panel-click" data-tab="click" role="tab" aria-selected="true" data-i18n="tabs.click">Clique</button>
+        <button type="button" class="tab" id="tab-run" aria-controls="panel-run" data-tab="run" role="tab" aria-selected="false" data-i18n="tabs.run">Run</button>
+        <button type="button" class="tab" id="tab-point" aria-controls="panel-point" data-tab="point" role="tab" aria-selected="false" data-i18n="tabs.point">Point</button>
+        <button type="button" class="tab" id="tab-profiles" aria-controls="panel-profiles" data-tab="profiles" role="tab" aria-selected="false" data-i18n="tabs.profiles">Perfis</button>
+        <button type="button" class="tab" id="tab-keys" aria-controls="panel-keys" data-tab="keys" role="tab" aria-selected="false" data-i18n="tabs.keys">Atalhos</button>
+        <button type="button" class="tab" id="tab-manual" aria-controls="panel-manual" data-tab="manual" role="tab" aria-selected="false" data-i18n="tabs.manual">Manual</button>
+        <button type="button" class="tab tab-adv" id="tab-advanced" aria-controls="panel-advanced" data-tab="advanced" role="tab" aria-selected="false" data-i18n="tabs.advanced">Adv</button>
+        <button type="button" class="tab tab-adv" id="tab-macro" aria-controls="panel-macro" data-tab="macro" role="tab" aria-selected="false" data-i18n="tabs.macro">Macro</button>
+        <button type="button" class="tab tab-adv" id="tab-script" aria-controls="panel-script" data-tab="script" role="tab" aria-selected="false" data-i18n="tabs.script">Script</button>
+        <button type="button" class="tab tab-adv" id="tab-schedule" aria-controls="panel-schedule" data-tab="schedule" role="tab" aria-selected="false" data-i18n="tabs.schedule">Agenda</button>
       </nav>
 
       <div class="main-col">
       <div class="panels">
-        <section class="panel active" id="panel-click" role="tabpanel">
+        <section class="panel active" id="panel-click" role="tabpanel" aria-labelledby="tab-click" tabindex="-1">
           <div class="field">
             <label for="intervalMs" data-i18n="click.interval">Intervalo</label>
             <div class="lcd-input">
@@ -139,11 +139,11 @@
 
           <div class="row" id="mouseButtonRow">
             <div class="segmented dense" data-group="button" role="group" data-i18n-aria="click.buttonAria" aria-label="Botão do mouse">
-              <button type="button" class="seg active" data-val="left">L</button>
-              <button type="button" class="seg" data-val="right">R</button>
-              <button type="button" class="seg" data-val="middle">M</button>
-              <button type="button" class="seg" data-val="x1">4</button>
-              <button type="button" class="seg" data-val="x2">5</button>
+              <button type="button" class="seg active" data-val="left" data-i18n-aria="click.btnLeft" data-i18n-title="click.btnLeft" aria-label="Botão esquerdo" title="Botão esquerdo">L</button>
+              <button type="button" class="seg" data-val="right" data-i18n-aria="click.btnRight" data-i18n-title="click.btnRight" aria-label="Botão direito" title="Botão direito">R</button>
+              <button type="button" class="seg" data-val="middle" data-i18n-aria="click.btnMiddle" data-i18n-title="click.btnMiddle" aria-label="Botão do meio" title="Botão do meio">M</button>
+              <button type="button" class="seg" data-val="x1" data-i18n-aria="click.btnX1" data-i18n-title="click.btnX1" aria-label="Botão lateral 4" title="Botão lateral 4">4</button>
+              <button type="button" class="seg" data-val="x2" data-i18n-aria="click.btnX2" data-i18n-title="click.btnX2" aria-label="Botão lateral 5" title="Botão lateral 5">5</button>
             </div>
           </div>
 
@@ -163,7 +163,7 @@
           </div>
         </section>
 
-        <section class="panel" id="panel-run" role="tabpanel" hidden>
+        <section class="panel" id="panel-run" role="tabpanel" aria-labelledby="tab-run" tabindex="-1" hidden>
           <div class="field-grid">
             <div class="field">
               <label for="startDelay" data-i18n="run.startDelay">Delay início</label>
@@ -227,7 +227,7 @@
           <div class="fixed-hint" data-i18n="run.checkUpdatesHint">Consulta a página de versões do projeto no GitHub ao abrir. Nenhum dado seu é enviado.</div>
         </section>
 
-        <section class="panel" id="panel-point" role="tabpanel" hidden>
+        <section class="panel" id="panel-point" role="tabpanel" aria-labelledby="tab-point" tabindex="-1" hidden>
           <div class="field-grid xy-grid">
             <div class="field">
               <label for="fixedX">X</label>
@@ -278,7 +278,7 @@
           </div>
         </section>
 
-        <section class="panel" id="panel-advanced" role="tabpanel" hidden>
+        <section class="panel" id="panel-advanced" role="tabpanel" aria-labelledby="tab-advanced" tabindex="-1" hidden>
           <label class="toggle-row">
             <span data-i18n="advanced.windowFilter">Filtro de janela</span>
             <input type="checkbox" id="wfEnabled">
@@ -322,7 +322,7 @@
           <div class="fixed-hint" data-i18n="advanced.hintXButtons">Botões 4/5 = XBUTTON1/2 no seletor L R M 4 5.</div>
         </section>
 
-        <section class="panel" id="panel-profiles" role="tabpanel" hidden>
+        <section class="panel" id="panel-profiles" role="tabpanel" aria-labelledby="tab-profiles" tabindex="-1" hidden>
           <div class="field">
             <label for="profileName" data-i18n="profiles.name">Nome do perfil</label>
             <div class="lcd-input">
@@ -345,7 +345,7 @@
           </div>
         </section>
 
-        <section class="panel" id="panel-keys" role="tabpanel" hidden>
+        <section class="panel" id="panel-keys" role="tabpanel" aria-labelledby="tab-keys" tabindex="-1" hidden>
           <div class="hk-list" id="hotkeyList">
             <div class="hk-row" data-action="toggle">
               <span class="hk-label" data-i18n="keys.toggle">Iniciar / parar</span>
@@ -378,7 +378,7 @@
           <div class="fixed-hint" id="activationHint" data-i18n="keys.modeToggleHint">Uma pressão inicia, outra para.</div>
         </section>
 
-        <section class="panel" id="panel-manual" role="tabpanel" hidden>
+        <section class="panel" id="panel-manual" role="tabpanel" aria-labelledby="tab-manual" tabindex="-1" hidden>
           <div class="manual-modes segmented" role="tablist" data-i18n-aria="manualUi.modeAria" aria-label="Modo do Manual">
             <button type="button" class="seg active" id="modeGuide" data-mode="guide" data-i18n="manualUi.guide">Guia</button>
             <button type="button" class="seg" id="modeWizard" data-mode="wizard" data-i18n="manualUi.wizard">Assistente</button>
@@ -409,7 +409,7 @@
           </div>
         </section>
 
-        <section class="panel panel-adv" id="panel-macro" role="tabpanel" hidden>
+        <section class="panel panel-adv" id="panel-macro" role="tabpanel" aria-labelledby="tab-macro" tabindex="-1" hidden>
           <div class="fixed-hint" id="macroHint" data-i18n="macro.empty">Nenhum evento gravado.</div>
           <div class="action-row">
             <button type="button" class="action-btn" id="macroRecordBtn" data-i18n="macro.record">Gravar</button>
@@ -450,7 +450,7 @@
           <select id="macroList" class="profile-select" size="3" data-i18n-aria="macro.savedLabel" aria-label="Macros salvas"></select>
         </section>
 
-        <section class="panel panel-adv" id="panel-script" role="tabpanel" hidden>
+        <section class="panel panel-adv" id="panel-script" role="tabpanel" aria-labelledby="tab-script" tabindex="-1" hidden>
           <div class="script-head">
             <label class="field-label" for="scriptSource" data-i18n="script.dsl">DSL</label>
             <button type="button" class="action-btn ghost tiny" id="scriptHelpBtn" data-i18n="script.help">comandos</button>
@@ -475,7 +475,7 @@
           </div>
         </section>
 
-        <section class="panel panel-adv" id="panel-schedule" role="tabpanel" hidden>
+        <section class="panel panel-adv" id="panel-schedule" role="tabpanel" aria-labelledby="tab-schedule" tabindex="-1" hidden>
           <div class="field">
             <label for="scheduleAt" data-i18n="schedule.startAt">Início em</label>
             <div class="lcd-input">
@@ -522,7 +522,7 @@
         </section>
       </div>
 
-      <div class="error" id="errorLabel"></div>
+      <div class="error" id="errorLabel" role="alert" aria-live="assertive"></div>
       </div><!-- /.main-col -->
       </div><!-- /.workspace -->
     </div>

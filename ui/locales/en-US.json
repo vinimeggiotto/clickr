@@ -71,7 +71,12 @@
     "actionKey": "KEY",
     "key": "Key",
     "keyPlaceholder": "SPACE, E, CTRL+C",
-    "keyCapture": "capture"
+    "keyCapture": "capture",
+    "btnLeft": "Left button",
+    "btnRight": "Right button",
+    "btnMiddle": "Middle button",
+    "btnX1": "Side button 4",
+    "btnX2": "Side button 5"
   },
   "run": {
     "startDelay": "Start delay",
@@ -336,104 +341,121 @@
       "advanced": "Adv",
       "macro": "Macro",
       "script": "Script",
-      "schedule": "Schedule"
+      "schedule": "Schedule",
+      "keys": "Keys"
     },
     "guide": {
       "welcome": {
         "title": "Welcome to Clickr",
         "body": [
-          "Windows autoclicker with a native motor (SendInput).",
-          "Use the pulse button or the hotkey (default F6) to start and stop.",
-          "The window X does not quit the app — it goes to the tray. To quit for real: tray icon → Quit."
+          "Autoclicker for Windows, macOS and Linux with a native input engine.",
+          "Use the centre button or the shortcut (F6 by default) to start and stop.",
+          "The last configuration you used is restored when the app opens.",
+          "The window's X does not quit the app — it goes to the tray. To really quit: tray icon → Quit."
         ],
         "tips": [
-          "Click the F6 keycap in the footer to record another shortcut key.",
+          "Elapsed time and the real click rate are shown under the counter.",
           "Want a guided preset? Use Wizard mode at the top of this tab."
         ]
       },
       "click": {
         "title": "Click tab — essentials",
         "body": [
-          "Interval (ms) + slider: time between clicks. Estimated CPS appears below.",
-          "Button: L / R / M / 4 / 5 (side mouse buttons).",
-          "Type: Single, Double, or Hold (keeps pressed until stop).",
-          "Position: Cursor (where the mouse is) or Fixed point (XY)."
+          "Interval (ms) + slider: time between actions. The estimated rate is shown below.",
+          "Mouse or Key: repeat a mouse button or a key/combination (e.g. E, SPACE, CTRL+C).",
+          "Button: L / R / M / 4 / 5 (mouse side buttons).",
+          "Type: Single, Double or Hold (kept pressed until you stop).",
+          "Position: Cursor (wherever the mouse is) or Fixed point (XY coordinate)."
         ],
         "tips": [
-          "Hold releases the button when you stop the engine.",
-          "After the Wizard, change everything again on this tab."
+          "Clickr never clicks on its own window: move the cursor off it for clicks to begin.",
+          "Hold releases the button or key when you stop the engine."
         ]
       },
       "run": {
-        "title": "Run tab — limits and extras",
+        "title": "Run tab — limits and system",
         "body": [
-          "Start delay: wait before the first click (useful to return to the target window).",
-          "Jitter ±: random variation on the interval (less “mechanical” clicks).",
-          "Click limit / max duration: stops alone when N or the time is reached.",
-          "Always on top: window above others. Compact mode: hides Adv, Macro, Script, and Schedule."
+          "Start delay: wait before the first action; the countdown shows in the centre button.",
+          "Jitter ±: random variation of the interval (less “mechanical” clicks).",
+          "Click limit / max. duration: stops by itself at N or at the time.",
+          "Time fields accept ms, s, min or h — choose the unit next to the value.",
+          "Always on top, Compact mode, Start with the system and New-version notice are app preferences (profiles do not change them)."
         ],
         "tips": []
       },
       "point": {
         "title": "Point tab — coordinates",
         "body": [
-          "Set X and Y manually or use Capture point (overlay on all monitors).",
-          "Sequence: list of points with per-step delay. The engine cycles the list when not empty.",
-          "+ point uses the current cursor position (or XY if provided)."
+          "Set X and Y by hand or use Capture point: the screen dims slightly and your click marks the position.",
+          "Position variation ±: each click lands up to N pixels from the point. Return the cursor: the mouse goes back to where it was after the click.",
+          "Sequence: list of points with a delay per step. The engine cycles through the list when it is not empty.",
+          "“Capture” picks a point on screen and adds it to the list; “+ X/Y” adds the coordinates typed above.",
+          "In the list: edit the delay inline, use ↑ ↓ to reorder and × to remove."
         ],
         "tips": [
-          "Esc cancels capture. Click marks the real OS cursor position."
+          "Esc cancels the capture. A point lying under the Clickr window is skipped — the footer tells you."
         ]
       },
       "profiles": {
         "title": "Profiles tab",
         "body": [
-          "Save the current config with a name under the Clickr user data folder (profiles/).",
-          "Load applies a profile from the list. Export/Import swaps JSON with other machines."
+          "Save the current click configuration under a name. Load applies a profile from the list.",
+          "Rename uses the selected profile and the name typed in the field. Delete asks for confirmation.",
+          "Export/Import exchanges JSON files with other machines; replacing an existing profile always asks first.",
+          "Profiles store only click behaviour. Shortcuts and app preferences are kept separately."
         ],
-        "tips": []
+        "tips": [
+          "Profiles created in earlier versions keep working as before, including the shortcut they defined."
+        ]
       },
       "advanced": {
         "title": "Adv tab — filter and burst",
         "body": [
-          "Window filter: only clicks if the focused process and/or title match.",
-          "Burst: N fast clicks, pause, repeat — useful for controlled bursts.",
-          "Buttons 4 and 5 are on the Click tab selector."
+          "Window filter: acts only if the process and/or title of the focused window match.",
+          "Use current window: click, switch to the target window and it is read after 3 seconds.",
+          "Burst: N quick clicks, a pause, then repeat — useful for controlled bursts.",
+          "While the filter is holding clicks back, the footer shows “outside filter window”."
         ],
         "tips": [
-          "With filter on and empty criteria, all clicks are allowed."
+          "With the filter on and empty criteria, every action is allowed."
         ]
       },
       "macro": {
         "title": "Macro tab",
         "body": [
-          "Record: captures mouse and keyboard with relative timing.",
-          "Play: resends events via SendInput.",
-          "Stop / Clear interrupt or erase the recording."
+          "Record: captures mouse (including the wheel) and keyboard with relative timing.",
+          "Play: replays the recording. Repeats sets how many times; Speed makes it faster or slower (1 = original).",
+          "Give it a name and use Save / Load / Delete to keep macros between sessions.",
+          "Stop interrupts and releases any key or button left pressed."
         ],
         "tips": [
-          "During recording, the engine toggle hotkey is ignored."
+          "Set a “Record / stop macro” shortcut in the Keys tab so that clicking the button is not part of the recording."
         ]
       },
       "script": {
-        "title": "Script tab — DSL",
+        "title": "Script tab",
         "body": [
-          "Commands: click [button], move X Y, wait ms, key NAME, loop N … end.",
-          "Limits: up to 500 lines, loops 1–1000, loop depth ≤ 2.",
-          "Run / Stop control the runner."
+          "One command per line: click, dclick, move, drag, scroll, wait, key, type and loop N … end.",
+          "The “commands” button opens the reference with the syntax of each one.",
+          "wait takes a fixed value or a random range (e.g. wait 80-150); key takes combinations (e.g. key CTRL+C).",
+          "Limits: up to 500 lines, loops from 1 to 1000, at most 2 nested loops.",
+          "The text is kept for next time; while running, the current line is shown."
         ],
         "tips": [
-          "Example: move 100 200 → click left → wait 100 → key SPACE"
+          "Syntax errors tell you the line number."
         ]
       },
       "schedule": {
         "title": "Schedule tab",
         "body": [
-          "Pick a local date/time and Schedule.",
-          "When the time arrives, the click engine starts on its own.",
-          "Cancel removes the pending schedule."
+          "Choose the local date/time and what to start: auto-click with the current settings, a saved profile, the loaded macro or the script.",
+          "Repeat: once, every day at the same time, or every interval.",
+          "The schedule is saved: recurring schedules come back when you reopen the app.",
+          "Cancel removes the active schedule."
         ],
-        "tips": []
+        "tips": [
+          "Clickr must be running (it can stay in the tray) for the schedule to fire."
+        ]
       },
       "safety": {
         "title": "Responsible use",
@@ -444,6 +466,18 @@
         ],
         "tips": [
           "You are responsible for how you use the software."
+        ]
+      },
+      "keys": {
+        "title": "Keys tab",
+        "body": [
+          "Each action has its own global shortcut: Start / stop, Stop everything, Capture point at cursor and Record / stop macro.",
+          "Click a shortcut and press the combination — Ctrl, Alt, Shift and Win are allowed (e.g. Ctrl+Alt+F6). Esc cancels; × removes.",
+          "Toggle: one press starts, another stops. Hold: clicks only while the shortcut is held down.",
+          "“Stop everything” halts auto-click, macro, script and capture at once."
+        ],
+        "tips": [
+          "On Windows the shortcut is not passed on to the focused program. Prefer function keys or combinations with a modifier."
         ]
       }
     },

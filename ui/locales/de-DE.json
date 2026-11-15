@@ -71,7 +71,12 @@
     "actionKey": "TASTE",
     "key": "Taste",
     "keyPlaceholder": "SPACE, E, CTRL+C",
-    "keyCapture": "erfassen"
+    "keyCapture": "erfassen",
+    "btnLeft": "Linke Taste",
+    "btnRight": "Rechte Taste",
+    "btnMiddle": "Mittlere Taste",
+    "btnX1": "Seitentaste 4",
+    "btnX2": "Seitentaste 5"
   },
   "run": {
     "startDelay": "Startverzögerung",
@@ -336,95 +341,121 @@
       "advanced": "Adv",
       "macro": "Makro",
       "script": "Skript",
-      "schedule": "Plan"
+      "schedule": "Plan",
+      "keys": "Tasten"
     },
     "guide": {
       "welcome": {
         "title": "Willkommen bei Clickr",
         "body": [
-          "Autoclicker für Windows mit nativem Motor (SendInput).",
-          "Nutzen Sie den Pulse-Button oder den Hotkey (Standard F6) zum Starten und Stoppen.",
-          "Das X schließt die App nicht — sie geht in den Tray. Zum echten Beenden: Tray-Symbol → Beenden."
+          "Autoklicker für Windows, macOS und Linux mit nativer Eingabe-Engine.",
+          "Mit der mittleren Schaltfläche oder der Taste (Standard F6) starten und stoppen.",
+          "Die zuletzt verwendete Konfiguration wird beim Öffnen wiederhergestellt.",
+          "Das X des Fensters beendet die App nicht – sie geht in den Tray. Wirklich beenden: Tray-Symbol → Beenden."
         ],
         "tips": [
-          "Klicken Sie auf die F6-Taste im Footer, um einen anderen Hotkey aufzunehmen.",
-          "Geführtes Preset? Nutzen Sie den Assistenten oben in diesem Tab."
+          "Unter dem Zähler stehen die verstrichene Zeit und die tatsächliche Klickrate.",
+          "Geführte Voreinstellung gewünscht? Assistenten-Modus oben in diesem Tab verwenden."
         ]
       },
       "click": {
-        "title": "Tab Klick — Grundlagen",
+        "title": "Tab Klick – Grundlagen",
         "body": [
-          "Intervall (ms) + Slider: Zeit zwischen Klicks. Geschätzte CPS unten.",
-          "Taste: L / R / M / 4 / 5 (seitliche Maustasten).",
-          "Typ: Einfach, Doppelt oder Halten (gedrückt bis Stopp).",
-          "Position: Cursor (Mausposition) oder Fixpunkt (XY)."
+          "Intervall (ms) + Regler: Zeit zwischen Aktionen. Die geschätzte Rate steht darunter.",
+          "Maus oder Taste: eine Maustaste oder eine Taste/Kombination wiederholen (z. B. E, SPACE, CTRL+C).",
+          "Taste: L / R / M / 4 / 5 (Seitentasten der Maus).",
+          "Typ: Einfach, Doppelt oder Halten (bleibt bis zum Stopp gedrückt).",
+          "Position: Cursor (wo die Maus ist) oder fester Punkt (XY-Koordinate)."
         ],
         "tips": [
-          "Halten lässt die Taste los, wenn Sie den Motor stoppen.",
-          "Nach dem Assistenten können Sie alles hier erneut ändern."
+          "Clickr klickt nie auf das eigene Fenster: Cursor davon wegbewegen, damit die Klicks beginnen.",
+          "Halten lässt Taste oder Maustaste beim Stoppen los."
         ]
       },
       "run": {
-        "title": "Tab Run — Limits und Extras",
+        "title": "Tab Run – Limits und System",
         "body": [
-          "Startverzögerung: Warten vor dem ersten Klick.",
-          "Jitter ±: zufällige Intervallvariation.",
-          "Klicklimit / max. Dauer: stoppt allein bei N oder Zeit.",
-          "Immer im Vordergrund und Kompaktmodus."
+          "Startverzögerung: Wartezeit vor der ersten Aktion; der Countdown erscheint in der mittleren Schaltfläche.",
+          "Jitter ±: zufällige Variation des Intervalls (weniger „mechanische“ Klicks).",
+          "Klicklimit / max. Dauer: stoppt selbst bei N oder nach der Zeit.",
+          "Zeitfelder akzeptieren ms, s, min oder h – Einheit neben dem Wert wählen.",
+          "Immer im Vordergrund, Kompaktmodus, Mit dem System starten und Versionshinweis sind App-Einstellungen (Profile ändern sie nicht)."
         ],
         "tips": []
       },
       "point": {
-        "title": "Tab Punkt — Koordinaten",
+        "title": "Tab Point – Koordinaten",
         "body": [
-          "X und Y manuell setzen oder Punkt erfassen (Overlay auf allen Monitoren).",
-          "Sequenz: Punktliste mit Verzögerung pro Schritt.",
-          "+ Punkt nutzt die aktuelle Cursorposition (oder XY)."
+          "X und Y von Hand setzen oder Punkt erfassen verwenden: der Bildschirm wird leicht abgedunkelt, der Klick markiert die Position.",
+          "Positionsabweichung ±: jeder Klick landet bis zu N Pixel vom Punkt. Cursor zurücksetzen: die Maus kehrt nach dem Klick zurück.",
+          "Sequenz: Liste von Punkten mit Verzögerung pro Schritt. Die Engine durchläuft die Liste zyklisch, wenn sie nicht leer ist.",
+          "„Erfassen“ wählt einen Punkt auf dem Bildschirm und fügt ihn der Liste hinzu; „+ X/Y“ fügt die oben eingegebenen Koordinaten hinzu.",
+          "In der Liste: Verzögerung direkt bearbeiten, mit ↑ ↓ umsortieren, mit × entfernen."
         ],
         "tips": [
-          "Esc bricht die Erfassung ab."
+          "Esc bricht die Erfassung ab. Ein Punkt unter dem Clickr-Fenster wird übersprungen – die Fußzeile zeigt es an."
         ]
       },
       "profiles": {
         "title": "Tab Profile",
         "body": [
-          "Aktuelle Konfiguration unter dem Clickr-Benutzerdatenordner (profiles/) speichern.",
-          "Laden wendet ein Profil an. Export/Import tauscht JSON."
-        ],
-        "tips": []
-      },
-      "advanced": {
-        "title": "Tab Adv — Filter und Burst",
-        "body": [
-          "Fensterfilter und Burst (Salven). Außerhalb des Basis-Assistenten.",
-          "Tasten 4 und 5 sind im Selektor des Klick-Tabs."
+          "Aktuelle Klick-Konfiguration unter einem Namen speichern. Laden wendet ein Profil aus der Liste an.",
+          "Umbenennen nutzt das gewählte Profil und den eingegebenen Namen. Löschen fragt nach Bestätigung.",
+          "Export/Import tauscht JSON-Dateien mit anderen Rechnern; vor dem Ersetzen eines Profils wird immer gefragt.",
+          "Profile speichern nur das Klickverhalten. Tastenkürzel und App-Einstellungen bleiben getrennt."
         ],
         "tips": [
-          "Bei aktivem Filter ohne Kriterien sind alle Klicks erlaubt."
+          "Profile aus früheren Versionen funktionieren wie bisher, einschließlich ihrer Tastenbelegung."
+        ]
+      },
+      "advanced": {
+        "title": "Tab Adv – Filter und Burst",
+        "body": [
+          "Fensterfilter: wirkt nur, wenn Prozess und/oder Titel des fokussierten Fensters passen.",
+          "Aktuelles Fenster verwenden: klicken, zum Zielfenster wechseln, es wird nach 3 Sekunden gelesen.",
+          "Burst: N schnelle Klicks, Pause, Wiederholung – nützlich für kontrollierte Salven.",
+          "Solange der Filter Klicks zurückhält, zeigt die Fußzeile „außerhalb des Filterfensters“."
+        ],
+        "tips": [
+          "Bei aktivem Filter ohne Kriterien sind alle Aktionen erlaubt."
         ]
       },
       "macro": {
         "title": "Tab Makro",
         "body": [
-          "Aufnehmen und Abspielen von Maus/Tastatur mit relativen Zeiten."
+          "Aufnehmen: erfasst Maus (inkl. Rad) und Tastatur mit relativen Zeiten.",
+          "Wiedergeben: spielt die Aufnahme ab. Wiederholungen legt die Anzahl fest; Geschwindigkeit beschleunigt oder verlangsamt (1 = Original).",
+          "Namen vergeben und mit Speichern / Laden / Löschen Makros über Sitzungen hinweg behalten.",
+          "Stopp unterbricht und lässt gedrückte Tasten oder Maustasten los."
         ],
         "tips": [
-          "Während der Aufnahme wird der Toggle-Hotkey ignoriert."
+          "Im Tab Tasten ein Kürzel für „Makro aufnehmen / stoppen“ festlegen, damit der Klick auf die Schaltfläche nicht aufgezeichnet wird."
         ]
       },
       "script": {
-        "title": "Tab Skript — DSL",
+        "title": "Tab Skript",
         "body": [
-          "Befehle: click, move, wait, key und loop…end."
+          "Ein Befehl pro Zeile: click, dclick, move, drag, scroll, wait, key, type und loop N … end.",
+          "Die Schaltfläche „Befehle“ öffnet die Referenz mit der Syntax.",
+          "wait akzeptiert einen festen Wert oder einen Zufallsbereich (z. B. wait 80-150); key akzeptiert Kombinationen (z. B. key CTRL+C).",
+          "Limits: bis zu 500 Zeilen, Schleifen von 1 bis 1000, höchstens 2 verschachtelte Schleifen.",
+          "Der Text bleibt für das nächste Mal erhalten; beim Ausführen wird die aktuelle Zeile angezeigt."
         ],
-        "tips": []
+        "tips": [
+          "Syntaxfehler nennen die Zeilennummer."
+        ]
       },
       "schedule": {
-        "title": "Tab Plan",
+        "title": "Tab Zeitplan",
         "body": [
-          "Lokales Datum/Uhrzeit planen; der Motor startet dann selbst."
+          "Lokales Datum/Uhrzeit wählen und was gestartet wird: Autoklick mit den aktuellen Einstellungen, ein gespeichertes Profil, das geladene Makro oder das Skript.",
+          "Wiederholung: einmal, täglich zur selben Zeit oder in einem Intervall.",
+          "Der Zeitplan wird gespeichert: wiederkehrende Zeitpläne sind nach dem Neustart wieder aktiv.",
+          "Abbrechen entfernt den aktiven Zeitplan."
         ],
-        "tips": []
+        "tips": [
+          "Clickr muss laufen (kann im Tray bleiben), damit der Zeitplan auslöst."
+        ]
       },
       "safety": {
         "title": "Verantwortungsvoller Einsatz",
@@ -435,6 +466,18 @@
         ],
         "tips": [
           "Sie sind für die Nutzung verantwortlich."
+        ]
+      },
+      "keys": {
+        "title": "Tab Tasten",
+        "body": [
+          "Jede Aktion hat ihr eigenes globales Tastenkürzel: Start / Stopp, Alles stoppen, Punkt am Cursor erfassen und Makro aufnehmen / stoppen.",
+          "Kürzel anklicken und Kombination drücken – Strg, Alt, Umschalt und Win sind erlaubt (z. B. Strg+Alt+F6). Esc bricht ab; × entfernt.",
+          "Umschalten: einmal drücken startet, erneut stoppt. Halten: klickt nur, solange die Taste gehalten wird.",
+          "„Alles stoppen“ beendet Autoklick, Makro, Skript und Erfassung auf einmal."
+        ],
+        "tips": [
+          "Unter Windows erreicht das Kürzel das fokussierte Programm nicht. Funktionstasten oder Kombinationen mit Modifikator bevorzugen."
         ]
       }
     },

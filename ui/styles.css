@@ -187,7 +187,7 @@ body:not(.booting) .splash {
 
 .splash-label {
   margin: 0;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -269,7 +269,7 @@ body:not(.booting) .splash {
   border-radius: 6px;
   background: var(--groove);
   color: var(--text);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.3px;
   text-transform: none;
   cursor: pointer;
@@ -369,7 +369,7 @@ body:not(.booting) .splash {
 }
 
 .readout-label {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -427,7 +427,7 @@ body:not(.booting) .splash {
 
 .field label,
 .field-label {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 1.5px;
   color: var(--text-dim);
   text-transform: uppercase;
@@ -510,7 +510,7 @@ body:not(.booting) .splash {
 
 .fixed-hint {
   margin-top: 8px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-dim);
   letter-spacing: 0.5px;
   min-height: 14px;
@@ -541,7 +541,7 @@ body:not(.booting) .splash {
   border: none;
   background: transparent;
   color: var(--text-dim);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.8px;
   padding: 7px 4px;
   border-radius: 6px;
@@ -589,7 +589,7 @@ body:not(.booting) .splash {
   border: none;
   background: transparent;
   color: var(--text-dim);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.8px;
   text-transform: uppercase;
   font-weight: 700;
@@ -634,7 +634,7 @@ body:not(.booting) .splash {
 
 .action-btn.tiny {
   padding: 5px 8px;
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.8px;
 }
 
@@ -693,7 +693,7 @@ body:not(.booting) .splash {
 
 .seq-item .meta {
   color: var(--text-dim);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .seq-item .rm {
@@ -1022,7 +1022,7 @@ body:not(.booting) .splash {
 .footer-version {
   flex: 1;
   text-align: center;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 1px;
   font-variant-numeric: tabular-nums;
   color: var(--text-dim);
@@ -1057,7 +1057,7 @@ body:not(.booting) .splash {
 
 .manual-foot-hint {
   margin: 0;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-dim);
   letter-spacing: 0.3px;
   min-height: 14px;
@@ -1118,7 +1118,7 @@ body:not(.booting) .splash {
 
 .manual-progress {
   flex-shrink: 0;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -1253,7 +1253,7 @@ body:not(.booting) .splash {
 
 .error {
   margin-top: 2px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--danger);
   min-height: 14px;
 }
@@ -1395,7 +1395,7 @@ body:not(.booting) .splash {
 .key-input .keycap {
   flex-shrink: 0;
   font-family: inherit;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.6px;
   text-transform: uppercase;
 }
@@ -1408,7 +1408,7 @@ body:not(.booting) .splash {
 /* Sequência editável */
 .seq-item .idx {
   color: var(--text-dim);
-  font-size: 10px;
+  font-size: 11px;
   min-width: 18px;
 }
 
@@ -1423,7 +1423,7 @@ body:not(.booting) .splash {
   align-items: baseline;
   gap: 3px;
   color: var(--text-dim);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .seq-item .delay input {
@@ -1603,7 +1603,7 @@ body:not(.booting) .splash {
   background: var(--groove);
   border-radius: 8px;
   padding: 8px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-dim);
   box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
 }
@@ -1658,7 +1658,7 @@ body:not(.booting) .splash {
   border-radius: 999px;
   padding: 1px 8px;
   font-family: inherit;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.4px;
   cursor: pointer;
 }
@@ -1674,4 +1674,20 @@ body:not(.booting) .splash {
 
 .update-badge[hidden] {
   display: none;
+}
+
+/* Legibilidade: nenhum texto abaixo de 11 px; rótulos longos não quebram o layout */
+.tab {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.5px;
+}
+
+.field label,
+.field-label {
+  letter-spacing: 1.2px;
+}
+
+.action-btn.tiny {
+  letter-spacing: 0.5px;
 }

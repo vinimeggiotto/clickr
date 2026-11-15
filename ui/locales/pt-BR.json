@@ -71,7 +71,12 @@
     "actionKey": "TECLA",
     "key": "Tecla",
     "keyPlaceholder": "SPACE, E, CTRL+C",
-    "keyCapture": "capturar"
+    "keyCapture": "capturar",
+    "btnLeft": "Botão esquerdo",
+    "btnRight": "Botão direito",
+    "btnMiddle": "Botão do meio",
+    "btnX1": "Botão lateral 4",
+    "btnX2": "Botão lateral 5"
   },
   "run": {
     "startDelay": "Delay início",
@@ -336,104 +341,121 @@
       "advanced": "Adv",
       "macro": "Macro",
       "script": "Script",
-      "schedule": "Agenda"
+      "schedule": "Agenda",
+      "keys": "Atalhos"
     },
     "guide": {
       "welcome": {
         "title": "Bem-vindo ao Clickr",
         "body": [
-          "Autoclicker para Windows com motor nativo (SendInput).",
-          "Use o botão pulse ou a hotkey (padrão F6) para iniciar e parar.",
+          "Autoclicker para Windows, macOS e Linux, com motor de input nativo.",
+          "Use o botão central ou o atalho (padrão F6) para iniciar e parar.",
+          "A última configuração usada volta sozinha quando você abre o app.",
           "O X da janela não encerra o app — ele vai para a bandeja. Para sair de verdade: ícone na bandeja → Sair."
         ],
         "tips": [
-          "Clique no keycap F6 no rodapé para gravar outra tecla de atalho.",
+          "Sob o contador aparecem o tempo decorrido e a taxa real de cliques.",
           "Quer montar um preset guiado? Use o modo Assistente no topo desta aba."
         ]
       },
       "click": {
         "title": "Aba Clique — essencial",
         "body": [
-          "Intervalo (ms) + slider: tempo entre cliques. O CPS estimado aparece abaixo.",
+          "Intervalo (ms) + slider: tempo entre ações. A taxa estimada aparece abaixo.",
+          "Mouse ou Tecla: repita um botão do mouse ou uma tecla/combinação (ex.: E, SPACE, CTRL+C).",
           "Botão: L / R / M / 4 / 5 (botões laterais do mouse).",
           "Tipo: Simples, Duplo ou Hold (mantém pressionado até parar).",
           "Posição: Cursor (onde o mouse estiver) ou Ponto fixo (coordenada XY)."
         ],
         "tips": [
-          "Hold solta o botão quando você parar o motor.",
-          "Depois do Assistente, altere tudo de novo nesta aba."
+          "O Clickr nunca clica na própria janela: tire o cursor de cima dela para os cliques começarem.",
+          "Hold solta o botão ou a tecla quando você para o motor."
         ]
       },
       "run": {
-        "title": "Aba Run — limites e extras",
+        "title": "Aba Run — limites e sistema",
         "body": [
-          "Delay início: espera antes do primeiro clique (útil para voltar à janela alvo).",
+          "Delay início: espera antes da primeira ação; a contagem aparece no botão central.",
           "Jitter ±: variação aleatória no intervalo (cliques menos “mecânicos”).",
           "Limite de cliques / duração máx.: para sozinho ao atingir N ou o tempo.",
-          "Sempre no topo: janela acima das outras. Modo compacto: esconde Adv, Macro, Script e Agenda."
+          "Os campos de tempo aceitam ms, s, min ou h — escolha a unidade ao lado do valor.",
+          "Sempre no topo, Modo compacto, Iniciar com o sistema e Avisar de versão nova são preferências do app (não mudam com os perfis)."
         ],
         "tips": []
       },
       "point": {
         "title": "Aba Point — coordenadas",
         "body": [
-          "Defina X e Y manualmente ou use Capturar ponto (overlay em todos os monitores).",
-          "Sequência: lista de pontos com delay por passo. O motor cicla a lista quando não está vazia.",
-          "+ ponto usa a posição atual do cursor (ou XY se informados)."
+          "Defina X e Y manualmente ou use Capturar ponto: a tela escurece de leve e o clique marca a posição.",
+          "Variação da posição ±: cada clique cai a até N pixels do ponto. Devolver o cursor: o mouse volta para onde estava depois do clique.",
+          "Sequência: lista de pontos com delay por passo. O motor percorre a lista em ciclo quando ela não está vazia.",
+          "“Capturar” escolhe um ponto na tela e já o coloca na lista; “+ X/Y” adiciona as coordenadas digitadas acima.",
+          "Na lista: edite o delay direto na linha, use ↑ ↓ para reordenar e × para remover."
         ],
         "tips": [
-          "Esc cancela a captura. Clique marca a posição real do cursor no SO."
+          "Esc cancela a captura. Um ponto que fica embaixo da janela do Clickr é pulado — o rodapé avisa."
         ]
       },
       "profiles": {
         "title": "Aba Perfis",
         "body": [
-          "Salve a configuração atual com um nome na pasta de dados do Clickr (profiles/).",
-          "Carregar aplica um perfil da lista. Exportar/Importar troca JSON com outras máquinas."
+          "Salve a configuração de clique atual com um nome. Carregar aplica um perfil da lista.",
+          "Renomear usa o perfil selecionado e o nome digitado no campo. Excluir pede confirmação.",
+          "Exportar/Importar troca arquivos JSON com outras máquinas; substituir um perfil existente sempre pergunta antes.",
+          "Perfis guardam só o comportamento de clique. Atalhos e preferências do app ficam separados."
         ],
-        "tips": []
+        "tips": [
+          "Perfis criados em versões anteriores continuam funcionando como antes, inclusive o atalho que eles definiam."
+        ]
       },
       "advanced": {
         "title": "Aba Adv — filtro e burst",
         "body": [
-          "Filtro de janela: só clica se o processo e/ou título da janela em foco baterem.",
+          "Filtro de janela: só age se o processo e/ou o título da janela em foco baterem.",
+          "Usar janela atual: clique, troque para a janela desejada e ela é lida após 3 segundos.",
           "Burst: N cliques rápidos, pausa, e repete — útil para rajadas controladas.",
-          "Botões 4 e 5 ficam no seletor da aba Clique."
+          "Quando o filtro está segurando os cliques, o rodapé mostra “fora da janela do filtro”."
         ],
         "tips": [
-          "Com filtro ligado e critérios vazios, todos os cliques são permitidos."
+          "Com filtro ligado e critérios vazios, todas as ações são permitidas."
         ]
       },
       "macro": {
         "title": "Aba Macro",
         "body": [
-          "Gravar: captura mouse e teclado com tempos relativos.",
-          "Reproduzir: reenvia os eventos via SendInput.",
-          "Parar / Limpar interrompem ou apagam a gravação."
+          "Gravar: captura mouse (incluindo a roda) e teclado com tempos relativos.",
+          "Reproduzir: repete a gravação. Repetições define quantas vezes; Velocidade acelera ou desacelera (1 = original).",
+          "Dê um nome e use Salvar / Carregar / Excluir para guardar macros entre sessões.",
+          "Parar interrompe e solta qualquer tecla ou botão que tenha ficado pressionado."
         ],
         "tips": [
-          "Durante a gravação, a hotkey de toggle do motor é ignorada."
+          "Defina um atalho de “Gravar / parar macro” na aba Atalhos: assim o clique no botão não entra na gravação."
         ]
       },
       "script": {
-        "title": "Aba Script — DSL",
+        "title": "Aba Script",
         "body": [
-          "Comandos: click [botão], move X Y, wait ms, key NOME, loop N … end.",
-          "Limites: até 500 linhas, loops 1–1000, profundidade de loop ≤ 2.",
-          "Executar / Parar controlam o runner."
+          "Um comando por linha: click, dclick, move, drag, scroll, wait, key, type e loop N … end.",
+          "O botão “comandos” abre a referência com a sintaxe de cada um.",
+          "wait aceita um valor fixo ou uma faixa aleatória (ex.: wait 80-150); key aceita combinações (ex.: key CTRL+C).",
+          "Limites: até 500 linhas, loops de 1 a 1000, no máximo 2 loops aninhados.",
+          "O texto fica salvo para a próxima vez; durante a execução a linha atual é mostrada."
         ],
         "tips": [
-          "Exemplo: move 100 200 → click left → wait 100 → key SPACE"
+          "Erros de sintaxe indicam o número da linha."
         ]
       },
       "schedule": {
         "title": "Aba Agenda",
         "body": [
-          "Escolha data/hora local e Agendar.",
-          "Quando chegar a hora, o motor de clique inicia sozinho.",
-          "Cancelar remove o agendamento pendente."
+          "Escolha data/hora local e o que iniciar: o autoclique com a configuração atual, um perfil salvo, a macro carregada ou o script.",
+          "Repetição: uma vez, todo dia no mesmo horário, ou a cada intervalo.",
+          "O agendamento fica salvo: agendamentos recorrentes voltam quando você reabre o app.",
+          "Cancelar remove o agendamento ativo."
         ],
-        "tips": []
+        "tips": [
+          "O Clickr precisa estar aberto (pode ficar na bandeja) para o agendamento disparar."
+        ]
       },
       "safety": {
         "title": "Uso responsável",
@@ -444,6 +466,18 @@
         ],
         "tips": [
           "Você é responsável pelo uso do software."
+        ]
+      },
+      "keys": {
+        "title": "Aba Atalhos",
+        "body": [
+          "Cada ação tem o seu atalho global: Iniciar / parar, Parar tudo, Capturar ponto no cursor e Gravar / parar macro.",
+          "Clique no atalho e pressione a combinação — pode usar Ctrl, Alt, Shift e Win (ex.: Ctrl+Alt+F6). Esc cancela; × remove.",
+          "Alternar: uma pressão inicia, outra para. Segurar: clica só enquanto o atalho estiver pressionado.",
+          "“Parar tudo” interrompe autoclique, macro, script e captura de uma vez."
+        ],
+        "tips": [
+          "No Windows o atalho não chega ao programa em foco. Prefira teclas de função ou combinações com modificador."
         ]
       }
     },

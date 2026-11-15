@@ -22,6 +22,8 @@ a = Analysis(
         (os.path.join(ROOT, 'VERSION'), '.'),
     ],
     hiddenimports=[
+        'hotkeys.backend_pynput',
+        'app.tray',
         'webview',
         'webview.platforms.gtk',
         'webview.platforms.qt',

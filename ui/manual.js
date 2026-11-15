@@ -10,6 +10,7 @@
     { id: "run", goto: "run" },
     { id: "point", goto: "point" },
     { id: "profiles", goto: "profiles" },
+    { id: "keys", goto: "keys" },
     { id: "advanced", goto: "advanced" },
     { id: "macro", goto: "macro" },
     { id: "script", goto: "script" },
