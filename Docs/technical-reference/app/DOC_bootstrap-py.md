@@ -28,3 +28,7 @@ Criar a janela pywebview do Clickr, garantir instância única e amarrar o ciclo
 |--------|---------|--------|
 | `create_app(start_minimized=False)` | bool | `(Window, AppController)` |
 | `run(start_minimized=False)` | bool | inicia loop GUI (bloqueante) |
+
+## "Sempre no topo" na criação
+
+`create_app` passa `on_top=controller.initial_on_top()` a `webview.create_window`. Nada altera a janela nativa durante a partida: no WinForms, mudar `TopMost` a partir de outra thread enquanto o WebView2 inicializa trava a interface.

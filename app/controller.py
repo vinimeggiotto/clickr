@@ -14,7 +14,7 @@ from typing import Any, Callable, Optional
 import webview
 
 from app import autostart, updates
-from app.log import get_logger
+from app.log import disarm_startup_watchdog, get_logger
 from app.notifier import UiNotifier
 from app.paths import app_version, locales_dir, ui_dir
 from app.settings import ACTIVATION_MODES, HOTKEY_ACTIONS, SUPPORTED_LOCALES, AppSettings
@@ -101,6 +101,7 @@ class AppController:
         self._wf_capture_timer: Optional[threading.Timer] = None
         self._quit_requested = False
         self._ui_alive = False
+        self._ui_loaded = False
 
     def attach_window(self, window: Any) -> None:
         self._window = window
@@ -108,14 +109,14 @@ class AppController:
             window.events.moved += self._on_window_moved
         except Exception:
             log.info("Evento de movimento da janela indisponível")
-        try:
-            # Reaplica quando a janela já existe de fato (a primeira tentativa
-            # pode acontecer antes de o formulário nativo estar pronto).
-            window.events.shown += lambda *_a: self._apply_always_on_top(
-                bool(self._settings.get("always_on_top"))
-            )
-        except Exception:
-            log.info("Evento de exibição da janela indisponível")
+
+    def initial_on_top(self) -> bool:
+        """
+        "Sempre no topo" para a criação da janela. A preferência é passada a
+        create_window; nada toca a janela nativa durante a partida (alterar
+        TopMost de outra thread enquanto o WebView2 inicia trava a interface).
+        """
+        return bool(self._settings.get("always_on_top"))
 
     @staticmethod
     def _legacy_win_scale() -> float:
@@ -208,7 +209,6 @@ class AppController:
             self._hotkeys.start()
         except Exception:
             log.exception("Falha ao iniciar hotkeys globais")
-        self._apply_always_on_top(bool(self._settings.get("always_on_top")))
         self.start_tray()
         self._engine.set_click_guard(self._click_guard)
         self._engine.set_key_guard(self._key_guard)
@@ -991,6 +991,11 @@ class AppController:
 
     def get_settings(self) -> dict[str, Any]:
         """Preferências do app (locale) + versão do arquivo VERSION."""
+        # Primeira chamada que a página faz: a interface carregou de fato.
+        if not self._ui_loaded:
+            self._ui_loaded = True
+            disarm_startup_watchdog()
+            log.info("UI carregada")
         data = self._settings.load()
         out = self._public_settings()
         out.update(

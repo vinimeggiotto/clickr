@@ -6,9 +6,10 @@ import sys
 
 
 def main() -> int:
-    from app.log import setup_logging
+    from app.log import arm_startup_watchdog, setup_logging
 
     log = setup_logging()
+    arm_startup_watchdog()
 
     from core.dpi import enable_dpi_awareness
 

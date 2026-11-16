@@ -325,3 +325,49 @@ def test_last_saved_macro_is_reloaded_on_start(app):
         assert macro["name"] == "rotina" and macro["event_count"] == 2
     finally:
         again.shutdown()
+
+
+def test_startup_never_touches_native_window_from_other_threads(app):
+    """Regressão: alterar on_top durante a partida travava a interface no Windows."""
+    window = app.test_window
+    assert window.kwargs["on_top"] is True  # preferência padrão vai em create_window
+    assert window.events.shown.handlers == []
+
+
+def test_on_top_preference_is_used_at_window_creation(app, tmp_path):
+    app.set_preferences({"always_on_top": False})
+    app.shutdown()
+    from app.bootstrap import create_app
+
+    window, controller = create_app()
+    try:
+        assert window.kwargs["on_top"] is False
+    finally:
+        controller.shutdown()
+
+
+def test_first_get_settings_disarms_startup_watchdog(app, tmp_path, monkeypatch):
+    from app import log as applog
+
+    monkeypatch.setattr(applog, "_watchdog_file", None)
+    applog.arm_startup_watchdog(seconds=60)
+    assert applog.watchdog_armed()
+    app.get_settings()
+    assert not applog.watchdog_armed()
+    text = (tmp_path / "Clickr" / "clickr.log").read_text(encoding="utf-8")
+    assert "watchdog armado" in text
+
+
+def test_watchdog_dumps_thread_stacks_when_ui_never_loads(tmp_path, monkeypatch):
+    import time as _t
+
+    from app import log as applog
+
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    monkeypatch.setattr(applog, "_watchdog_file", None)
+    applog.arm_startup_watchdog(seconds=0.3)
+    _t.sleep(0.8)
+    applog.disarm_startup_watchdog()
+    text = (tmp_path / "Clickr" / "clickr.log").read_text(encoding="utf-8")
+    assert "Thread 0x" in text or "most recent call first" in text

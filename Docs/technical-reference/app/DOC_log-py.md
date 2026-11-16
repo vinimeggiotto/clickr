@@ -22,3 +22,10 @@ Fornecer o logger do aplicativo, gravando em arquivo rotativo em `{user_data_dir
 |--------|---------|--------|
 | `setup_logging()` | — | `logging.Logger` configurado |
 | `get_logger()` | — | `logging.Logger` |
+
+## Diagnóstico de partida
+
+- `setup_logging()` também anexa o logger `pywebview` ao mesmo arquivo e grava uma linha inicial com as versões (Clickr, Python, pywebview, pynput, pystray, pythonnet) e o sistema operacional.
+- `arm_startup_watchdog(seconds=20)` (chamado em `main.py`) usa `faulthandler.dump_traceback_later`: se a interface não carregar no prazo, a pilha de todas as threads é gravada em `clickr.log`. Não encerra o processo.
+- `disarm_startup_watchdog()` cancela o despejo; é chamado na primeira execução de `AppController.get_settings`, que é a primeira chamada feita pela página ao carregar.
+- `watchdog_armed()` informa se o watchdog está ativo.

@@ -72,3 +72,9 @@ Campos extras devolvidos por algumas ações: `saved_profile`, `renamed_profile`
 | `start_tray(detached=False)` | cria a bandeja (idempotente) |
 | `has_tray()` / `mark_window_hidden()` / `should_close_to_tray()` | apoio ao fechamento e ao início minimizado |
 | `shutdown()` | encerra serviços e grava pendências |
+
+## Partida e janela nativa
+
+- `initial_on_top()` devolve a preferência `always_on_top` para `create_window`; `bootstrap_services` não chama mais `_apply_always_on_top` e não há handler em `window.events.shown`.
+- `_apply_always_on_top` é usado somente quando o usuário troca a opção (ou ao carregar um perfil v1).
+- A primeira chamada a `get_settings` marca a interface como carregada e desarma o watchdog de partida (`app.log`).

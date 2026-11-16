@@ -9,6 +9,11 @@ gerado). O log fica em `{pasta de dados}/clickr.log`.
 
 ## Windows
 
+### Partida
+- [ ] `python main.py` e o exe: o splash aparece e a interface carrega em poucos segundos.
+- [ ] Se a janela ficar só com o fundo: esperar ~25 s, encerrar pelo Gerenciador de Tarefas e guardar `%APPDATA%\Clickr\clickr.log`. O arquivo traz as versões (Clickr, Python, pywebview) e a pilha de cada thread no momento do travamento.
+- [ ] Com "Sempre no topo" desligado, fechar e reabrir: a janela já abre sem ficar por cima das outras.
+
 ### Compatibilidade com a 1.0.x
 - [ ] Copiar uma pasta `%APPDATA%\Clickr` usada na 1.0.1 (com `settings.json` e perfis) e abrir a 1.1.0: o idioma é mantido e nenhum erro aparece.
 - [ ] Carregar um perfil salvo na 1.0.1: intervalo, botão, tipo, posição, burst, sequência e filtro voltam; o atalho e "sempre no topo" daquele perfil também são aplicados.
