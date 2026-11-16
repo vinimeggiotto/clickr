@@ -187,7 +187,7 @@ body:not(.booting) .splash {
 
 .splash-label {
   margin: 0;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -269,7 +269,7 @@ body:not(.booting) .splash {
   border-radius: 6px;
   background: var(--groove);
   color: var(--text);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.3px;
   text-transform: none;
   cursor: pointer;
@@ -369,7 +369,7 @@ body:not(.booting) .splash {
 }
 
 .readout-label {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -427,7 +427,7 @@ body:not(.booting) .splash {
 
 .field label,
 .field-label {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 1.5px;
   color: var(--text-dim);
   text-transform: uppercase;
@@ -510,7 +510,7 @@ body:not(.booting) .splash {
 
 .fixed-hint {
   margin-top: 8px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-dim);
   letter-spacing: 0.5px;
   min-height: 14px;
@@ -541,7 +541,7 @@ body:not(.booting) .splash {
   border: none;
   background: transparent;
   color: var(--text-dim);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.8px;
   padding: 7px 4px;
   border-radius: 6px;
@@ -589,7 +589,7 @@ body:not(.booting) .splash {
   border: none;
   background: transparent;
   color: var(--text-dim);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.8px;
   text-transform: uppercase;
   font-weight: 700;
@@ -634,7 +634,7 @@ body:not(.booting) .splash {
 
 .action-btn.tiny {
   padding: 5px 8px;
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.8px;
 }
 
@@ -663,7 +663,7 @@ body:not(.booting) .splash {
   padding: 0;
   flex: 1;
   min-height: 0;
-  max-height: 72px;
+  max-height: 132px;
   overflow-x: hidden;
   overflow-y: auto;
   background: var(--groove);
@@ -677,7 +677,7 @@ body:not(.booting) .splash {
 
 .seq-item {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr auto auto;
   gap: 6px;
   align-items: center;
   padding: 6px 8px;
@@ -693,7 +693,7 @@ body:not(.booting) .splash {
 
 .seq-item .meta {
   color: var(--text-dim);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .seq-item .rm {
@@ -722,8 +722,93 @@ body:not(.booting) .splash {
   gap: 8px;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--amber-dim) transparent;
   animation: panelIn 0.18s ease-out;
+}
+
+.panel > * {
+  flex-shrink: 0;
+}
+
+.panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel::-webkit-scrollbar-thumb {
+  background: var(--amber-dim);
+  border-radius: 3px;
+}
+
+.panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Atalhos: uma linha por ação */
+.hk-list {
+  display: flex;
+  flex-direction: column;
+  background: var(--groove);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.hk-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  min-height: 36px;
+}
+
+.hk-row:last-child {
+  border-bottom: none;
+}
+
+.hk-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--text);
+  letter-spacing: 0.3px;
+}
+
+.hk-key {
+  max-width: 132px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hk-key.unset {
+  color: var(--text-dim);
+}
+
+.hk-clear {
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.hk-clear:hover {
+  color: var(--danger);
+}
+
+.hk-clear:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+
+.hk-clear[hidden] {
+  display: none;
 }
 
 .panel.active {
@@ -937,7 +1022,7 @@ body:not(.booting) .splash {
 .footer-version {
   flex: 1;
   text-align: center;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 1px;
   font-variant-numeric: tabular-nums;
   color: var(--text-dim);
@@ -972,7 +1057,7 @@ body:not(.booting) .splash {
 
 .manual-foot-hint {
   margin: 0;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-dim);
   letter-spacing: 0.3px;
   min-height: 14px;
@@ -1033,7 +1118,7 @@ body:not(.booting) .splash {
 
 .manual-progress {
   flex-shrink: 0;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -1168,7 +1253,7 @@ body:not(.booting) .splash {
 
 .error {
   margin-top: 2px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--danger);
   min-height: 14px;
 }
@@ -1297,4 +1382,312 @@ body:not(.booting) .splash {
 .locale-gate-btn:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 1px;
+}
+
+.field > .segmented {
+  margin-top: 6px;
+}
+
+.key-input {
+  align-items: center;
+}
+
+.key-input .keycap {
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.row[hidden],
+.field[hidden] {
+  display: none;
+}
+
+/* Sequência editável */
+.seq-item .idx {
+  color: var(--text-dim);
+  font-size: 11px;
+  min-width: 18px;
+}
+
+.seq-item .xy {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.seq-item .delay {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.seq-item .delay input {
+  width: 52px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  color: var(--amber);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 2px 4px;
+  text-align: right;
+  outline: none;
+}
+
+.seq-item .delay input:focus-visible {
+  border-color: var(--amber);
+}
+
+.seq-item .ops {
+  display: flex;
+  gap: 1px;
+}
+
+.seq-item .ops button {
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 3px 4px;
+  border-radius: 4px;
+}
+
+.seq-item .ops button:hover:not(:disabled) {
+  color: var(--amber);
+}
+
+.seq-item .ops button.rm:hover {
+  color: var(--danger);
+}
+
+.seq-item .ops button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.seq-item .ops button:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+
+.seq-item.current {
+  background: rgba(242, 163, 59, 0.1);
+  box-shadow: inset 2px 0 0 var(--amber);
+}
+
+/* Seletor de unidade de tempo dentro do campo LCD */
+.unit-select {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 11px;
+  padding: 0 0 0 2px;
+  cursor: pointer;
+  outline: none;
+  border-radius: 4px;
+}
+
+.unit-select:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+
+.unit-select option {
+  background: var(--panel);
+  color: var(--text);
+}
+
+/* Estatísticas ao vivo (tempo decorrido e taxa real) */
+.live-stats {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: "Cascadia Code", "JetBrains Mono", Consolas, ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+
+.device.active .live-stats {
+  opacity: 1;
+}
+
+.device.active .live-stats #liveCps,
+.device.active .live-stats #liveElapsed {
+  color: var(--amber);
+}
+
+.live-stats .sep {
+  margin: 0 4px;
+}
+
+/* Contagem regressiva do delay inicial dentro do botão principal */
+.countdown {
+  font-family: "Cascadia Code", "JetBrains Mono", Consolas, ui-monospace, monospace;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown[hidden] {
+  display: none;
+}
+
+.device.counting #icon {
+  display: none;
+}
+
+/* Motor ligado, mas a ação está sendo pulada (filtro ou janela do próprio app) */
+.device.blocked .status {
+  color: var(--text);
+}
+
+.device.blocked .status::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--amber);
+}
+
+/* Delay do próximo ponto: linha compacta ao lado do rótulo */
+.seq-add-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.seq-add-row .lcd-input {
+  margin-top: 0;
+  width: 120px;
+  padding: 4px 8px;
+}
+
+.seq-add-row .lcd-input input {
+  font-size: 13px;
+  text-align: right;
+}
+
+.action-row.triple .action-btn {
+  padding-left: 6px;
+  padding-right: 6px;
+  letter-spacing: 0.6px;
+}
+
+.action-row.triple {
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+/* Script: cabeçalho, ajuda de comandos e editor que ocupa o painel */
+.script-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.script-help {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 10px;
+  align-items: baseline;
+  background: var(--groove);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.script-help[hidden] {
+  display: none;
+}
+
+.script-help code {
+  font-family: "Cascadia Code", "JetBrains Mono", Consolas, ui-monospace, monospace;
+  color: var(--amber);
+  white-space: nowrap;
+}
+
+.panel .script-area {
+  flex: 1 0 150px;
+  min-height: 150px;
+}
+
+/* Select simples (alvo do agendamento, perfil) */
+.plain-select {
+  width: 100%;
+  margin-top: 6px;
+  background: var(--groove);
+  color: var(--text);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.6);
+  outline: none;
+  cursor: pointer;
+}
+
+.plain-select:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+
+.plain-select option {
+  background: var(--panel);
+  color: var(--text);
+}
+
+/* Aviso de versão nova no rodapé */
+.update-badge {
+  margin-left: 6px;
+  border: 1px solid rgba(242, 163, 59, 0.45);
+  background: rgba(242, 163, 59, 0.12);
+  color: var(--amber);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+}
+
+.update-badge:hover {
+  background: rgba(242, 163, 59, 0.22);
+}
+
+.update-badge:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.update-badge[hidden] {
+  display: none;
+}
+
+/* Legibilidade: nenhum texto abaixo de 11 px; rótulos longos não quebram o layout */
+.tab {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.5px;
+}
+
+.field label,
+.field-label {
+  letter-spacing: 1.2px;
+}
+
+.action-btn.tiny {
+  letter-spacing: 0.5px;
 }

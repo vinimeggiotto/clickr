@@ -2,18 +2,20 @@
 
 ## Objetivo
 
-Permitir que o usuário grave qualquer tecla suportada como atalho global de start/stop.
+Permitir que o usuário grave o atalho global de start/stop.
+
+> A partir da 1.1 esta feature faz parte de **Atalhos** (um atalho por ação, combinações com modificadores e modo "segurar"). As regras completas estão em [`atalhos`](../atalhos/regras-de-negocio.md); este documento registra apenas o que mudou em relação à 1.0.x.
 
 ## Comportamento
 
-1. Default: `F6`.
-2. Clique no keycap inicia gravação (`recording_hotkey`); o próximo key press válido vira a hotkey.
-3. Clique novamente durante a gravação cancela.
-4. Durante gravação ou pick location, a hotkey de toggle é ignorada.
-5. Teclas suportadas: F1–F24, letras/dígitos, Space, Enter, Tab, Esc, setas, Home/End, Page Up/Down, Insert/Delete, Pause, etc.
-6. O nome da tecla é persistido em `ClickConfig.hotkey` e em perfis.
+1. Default do atalho de iniciar/parar: `F6` (inalterado).
+2. O keycap do rodapé continua gravando o atalho de iniciar/parar; a aba **Atalhos** oferece o mesmo e as demais ações.
+3. Além de tecla única, aceita combinações (`CTRL+ALT+F6`). `Esc` sozinho cancela a gravação.
+4. O atalho deixou de ser `ClickConfig.hotkey`: agora é a preferência `hotkeys.toggle` em `settings.json`.
+5. Perfis v2 não guardam atalho. Perfis da 1.0.x com `hotkey` ainda aplicam esse valor ao atalho de iniciar/parar quando carregados.
 
 ## Regras
 
-- Gravação via listener pynput separado; o listener principal continua ativo mas ignora presses enquanto `recording`.
-- Hotkey inválida gera `last_error` e não altera a tecla atual.
+- `set_config({ hotkey })` ainda é aceito e encaminhado ao atalho de iniciar/parar.
+- Hotkey inválida gera `last_error` (`hotkey.unsupported`) e não altera a tecla atual.
+- O atalho de iniciar/parar não pode ficar vazio (`hotkey.toggleRequired`).

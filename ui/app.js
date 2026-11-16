@@ -49,6 +49,38 @@
   const scheduleHint = document.getElementById("scheduleHint");
   const scheduleSetBtn = document.getElementById("scheduleSetBtn");
   const scheduleCancelBtn = document.getElementById("scheduleCancelBtn");
+  const countdownEl = document.getElementById("countdown");
+  const liveElapsed = document.getElementById("liveElapsed");
+  const liveCps = document.getElementById("liveCps");
+  const pickSeqBtn = document.getElementById("pickSeqBtn");
+  const wfCaptureBtn = document.getElementById("wfCaptureBtn");
+  const scriptHint = document.getElementById("scriptHint");
+  const launchAtLogin = document.getElementById("launchAtLogin");
+  const checkUpdates = document.getElementById("checkUpdates");
+  const updateBadge = document.getElementById("updateBadge");
+  const renameProfileBtn = document.getElementById("renameProfileBtn");
+  const deleteProfileBtn = document.getElementById("deleteProfileBtn");
+  const scheduleRepeat = document.getElementById("scheduleRepeat");
+  const scheduleIntervalRow = document.getElementById("scheduleIntervalRow");
+  const scheduleEvery = document.getElementById("scheduleEvery");
+  const scheduleEveryUnit = document.getElementById("scheduleEveryUnit");
+  const scheduleTarget = document.getElementById("scheduleTarget");
+  const scheduleProfileRow = document.getElementById("scheduleProfileRow");
+  const scheduleProfile = document.getElementById("scheduleProfile");
+  const macroRepeat = document.getElementById("macroRepeat");
+  const macroSpeed = document.getElementById("macroSpeed");
+  const macroName = document.getElementById("macroName");
+  const macroList = document.getElementById("macroList");
+  const macroSaveBtn = document.getElementById("macroSaveBtn");
+  const macroLoadBtn = document.getElementById("macroLoadBtn");
+  const macroDeleteBtn = document.getElementById("macroDeleteBtn");
+  const keyRow = document.getElementById("keyRow");
+  const keyName = document.getElementById("keyName");
+  const keyCaptureBtn = document.getElementById("keyCaptureBtn");
+  const mouseButtonRow = document.getElementById("mouseButtonRow");
+  const positionRow = document.getElementById("positionRow");
+  const posJitter = document.getElementById("posJitter");
+  const restoreCursor = document.getElementById("restoreCursor");
 
   for (let i = 0; i < 16; i++) {
     strip.appendChild(document.createElement("span"));
@@ -59,6 +91,17 @@
   let pollTimer = null;
   let apiReady = false;
   let applying = false;
+  let toggling = false;
+  let stateError = "";
+  let localError = "";
+  let localErrorTimer = null;
+  let intervalTimer = null;
+  let lastSequenceKey = null;
+  let lastProfilesKey = null;
+
+  const POLL_MS = 500;
+  const LOCAL_ERROR_MS = 8000;
+  const INTERVAL_DEBOUNCE_MS = 400;
 
   const localConfig = {
     interval_ms: 80,
@@ -76,10 +119,79 @@
     burst_pause_ms: null,
     sequence: [],
     window_filter: { enabled: false, process: "", title_contains: "" },
-    hotkey: "F6",
+    restore_cursor: false,
+    position_jitter_px: 0,
+    action: "mouse",
+    key_name: "SPACE",
+  };
+
+  // Preferências do aplicativo (não fazem parte dos perfis).
+  const appSettings = {
+    hotkeys: { toggle: "F6", stop_all: "", pick_point: "", macro_record: "" },
+    activation: "toggle",
     always_on_top: true,
     compact_mode: false,
+    time_units: { start_delay: "ms", max_duration: "ms", burst_pause: "ms" },
+    launch_at_login: false,
+    check_updates: false,
   };
+  let scriptSaveTimer = null;
+
+  function applySettings(settings) {
+    if (!settings || typeof settings !== "object") return;
+    Object.keys(appSettings).forEach((key) => {
+      if (settings[key] !== undefined && settings[key] !== null) appSettings[key] = settings[key];
+    });
+    applyCompactMode(appSettings.compact_mode);
+    if (!isFocused(alwaysOnTop)) alwaysOnTop.checked = appSettings.always_on_top !== false;
+    if (!isFocused(compactMode)) compactMode.checked = !!appSettings.compact_mode;
+    if (!isFocused(launchAtLogin)) launchAtLogin.checked = !!appSettings.launch_at_login;
+    if (!isFocused(checkUpdates)) checkUpdates.checked = !!appSettings.check_updates;
+    renderHotkeys();
+    Object.keys(unitFields).forEach(renderUnitField);
+    setPrefSegment("activation", appSettings.activation);
+    const hold = appSettings.activation === "hold";
+    const activationHint = document.getElementById("activationHint");
+    if (activationHint) {
+      activationHint.textContent = t(hold ? "keys.modeHoldHint" : "keys.modeToggleHint");
+    }
+  }
+
+  let recordingAction = "";
+
+  function renderHotkeys() {
+    const hotkeys = appSettings.hotkeys || {};
+    hotkeyBtn.textContent = hotkeys.toggle || "—";
+    hotkeyBtn.classList.toggle("recording", recordingAction === "toggle");
+    document.querySelectorAll(".hk-key").forEach((btn) => {
+      const action = btn.dataset.hk;
+      const combo = hotkeys[action] || "";
+      const recording = recordingAction === action;
+      btn.textContent = recording ? "…" : combo || t("keys.none");
+      btn.classList.toggle("unset", !combo && !recording);
+      btn.classList.toggle("recording", recording);
+    });
+    document.querySelectorAll(".hk-clear").forEach((btn) => {
+      btn.hidden = !hotkeys[btn.dataset.hkClear];
+    });
+    const hold = appSettings.activation === "hold";
+    hotkeyHint.textContent = recordingAction
+      ? t("footer.hotkeyRecording")
+      : t(hold ? "footer.hotkeyHintHold" : "footer.hotkeyHint");
+  }
+
+  function setPrefSegment(pref, value) {
+    const el = document.querySelector(`.segmented[data-pref="${pref}"]`);
+    if (!el) return;
+    el.querySelectorAll(".seg").forEach((seg) => {
+      seg.classList.toggle("active", seg.dataset.val === value);
+    });
+  }
+
+  function toggleHotkeyCapture(action) {
+    if (recordingAction) return call("cancel_record_hotkey");
+    return call("record_hotkey", action);
+  }
 
   function syncCps() {
     const ms = Math.max(1, parseInt(intervalMs.value || "1", 10));
@@ -121,41 +233,304 @@
     return n;
   }
 
+  /** Erro vindo do backend: {code, message, params} | string | null → texto. */
+  function formatError(err) {
+    if (!err) return "";
+    if (typeof err === "string") return err;
+    if (!err.code || err.code === "generic") return err.message || "";
+    const key = "errors." + err.code;
+    const text = t(key, err.params || {});
+    if (typeof text === "string" && text !== key) return text;
+    return err.message || String(err.code || "");
+  }
+
+  function renderError() {
+    errorLabel.textContent = localError || stateError || "";
+  }
+
+  /**
+   * Mensagem gerada na própria UI (validação, exceção da bridge, aviso do
+   * assistente). Não é apagada pelas atualizações de estado: some sozinha
+   * depois de alguns segundos ou quando outra mensagem a substitui.
+   */
+  function showLocalError(message) {
+    localError = message ? String(message) : "";
+    if (localErrorTimer) {
+      clearTimeout(localErrorTimer);
+      localErrorTimer = null;
+    }
+    if (localError) {
+      localErrorTimer = setTimeout(() => {
+        localError = "";
+        localErrorTimer = null;
+        renderError();
+      }, LOCAL_ERROR_MS);
+    }
+    renderError();
+  }
+
+  function clearLocalError() {
+    showLocalError("");
+  }
+
+  /**
+   * Chama um método da bridge. Se o retorno for um estado, aplica na UI.
+   * Exceções da bridge viram mensagem local; retorna null nesse caso.
+   */
+  async function call(method, ...args) {
+    const bridge = api();
+    if (!bridge || typeof bridge[method] !== "function") return null;
+    try {
+      const result = await bridge[method](...args);
+      if (result && typeof result === "object" && result.config) {
+        clearLocalError();
+        applyVisual(result);
+      }
+      return result;
+    } catch (err) {
+      showLocalError(String((err && err.message) || err));
+      return null;
+    }
+  }
+
+  // --- Unidades de tempo ------------------------------------------------
+  // O backend trabalha sempre em ms; a unidade é só apresentação.
+  const UNIT_MS = { ms: 1, s: 1000, min: 60000, h: 3600000 };
+  const unitFields = {
+    start_delay: { input: startDelay, key: "start_delay_ms", empty: 0 },
+    max_duration: { input: maxDuration, key: "max_duration_ms", empty: null },
+    burst_pause: { input: burstPause, key: "burst_pause_ms", empty: null },
+  };
+
+  function unitOf(field) {
+    const unit = appSettings.time_units && appSettings.time_units[field];
+    return UNIT_MS[unit] ? unit : "ms";
+  }
+
+  function msToUnitText(ms, unit) {
+    if (ms == null) return "";
+    const value = ms / UNIT_MS[unit];
+    return String(Math.round(value * 1000) / 1000);
+  }
+
+  /** Texto do campo → ms (inteiro). `undefined` se inválido. */
+  function unitTextToMs(text, unit, emptyValue) {
+    const raw = String(text || "").trim().replace(",", ".");
+    if (raw === "") return emptyValue;
+    const value = parseFloat(raw);
+    if (!Number.isFinite(value) || value < 0) return undefined;
+    return Math.round(value * UNIT_MS[unit]);
+  }
+
+  function renderUnitField(field) {
+    const { input, key } = unitFields[field];
+    const unit = unitOf(field);
+    const select = document.querySelector(`.unit-select[data-unit="${field}"]`);
+    if (select && !isFocused(select)) select.value = unit;
+    if (!isFocused(input)) {
+      const ms = localConfig[key];
+      input.value = ms == null ? "" : msToUnitText(ms, unit);
+    }
+  }
+
+  function commitUnitField(field) {
+    const { input, key, empty } = unitFields[field];
+    let ms = unitTextToMs(input.value, unitOf(field), empty);
+    if (ms === undefined) {
+      renderUnitField(field);
+      return;
+    }
+    // Duração máxima 0 equivale a "sem limite".
+    if (field === "max_duration" && ms === 0) ms = null;
+    const payload = {};
+    payload[key] = ms;
+    pushConfig(payload);
+  }
+
+  /** 90 → "90 s", 600 → "10 min", 7200 → "2 h". */
+  function formatSpan(seconds) {
+    if (seconds % 3600 === 0 && seconds >= 3600) return `${seconds / 3600} h`;
+    if (seconds % 60 === 0 && seconds >= 60) return `${seconds / 60} min`;
+    return `${seconds} s`;
+  }
+
+  function formatClock(ms) {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const sec = total % 60;
+    const pad = (n) => String(n).padStart(2, "0");
+    return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+  }
+
+  // --- Estatísticas ao vivo ---------------------------------------------
+  const live = { phase: "idle", startsAt: null, elapsedMs: 0, receivedAt: 0, cps: 0 };
+
+  function renderLive() {
+    const now = Date.now();
+    const counting = live.phase === "countdown" && live.startsAt != null;
+    device.classList.toggle("counting", counting);
+    countdownEl.hidden = !counting;
+    if (counting) {
+      const left = Math.max(0, live.startsAt * 1000 - now);
+      countdownEl.textContent = left >= 10000 ? String(Math.ceil(left / 1000)) : (left / 1000).toFixed(1);
+    }
+    const elapsed =
+      live.phase === "running" ? live.elapsedMs + (now - live.receivedAt) : live.elapsedMs;
+    liveElapsed.textContent = formatClock(elapsed);
+    liveCps.textContent = (live.phase === "running" ? live.cps : 0).toFixed(1);
+  }
+  setInterval(renderLive, 100);
+
+  // --- Diálogo de confirmação ---------------------------------------------
+  const confirmModal = document.getElementById("confirmModal");
+  const confirmModalTitle = document.getElementById("confirmModalTitle");
+  const confirmModalBody = document.getElementById("confirmModalBody");
+  const confirmModalOk = document.getElementById("confirmModalOk");
+  const confirmModalCancel = document.getElementById("confirmModalCancel");
+  let confirmResolve = null;
+
+  function closeConfirm(result) {
+    confirmModal.hidden = true;
+    const resolve = confirmResolve;
+    confirmResolve = null;
+    if (resolve) resolve(result);
+  }
+
+  /** Pergunta antes de uma ação destrutiva. Resolve true se confirmada. */
+  function confirmDialog(title, body, okLabel) {
+    if (confirmResolve) closeConfirm(false);
+    confirmModalTitle.textContent = title;
+    confirmModalBody.textContent = body;
+    confirmModalOk.textContent = okLabel;
+    confirmModal.hidden = false;
+    confirmModalCancel.focus();
+    return new Promise((resolve) => {
+      confirmResolve = resolve;
+    });
+  }
+
+  confirmModalOk.addEventListener("click", () => closeConfirm(true));
+  confirmModalCancel.addEventListener("click", () => closeConfirm(false));
+  confirmModal.addEventListener("click", (e) => {
+    if (e.target === confirmModal) closeConfirm(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !confirmModal.hidden) closeConfirm(false);
+  });
+
+  function fillSelect(select, names) {
+    const selected = select.value;
+    select.innerHTML = "";
+    names.forEach((name) => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      select.appendChild(opt);
+    });
+    if (selected && names.includes(selected)) select.value = selected;
+  }
+
+  let lastMacrosKey = null;
+  let macroNameSeeded = false;
+
+  function refreshMacroList(names) {
+    const key = JSON.stringify(names);
+    if (key === lastMacrosKey) return;
+    lastMacrosKey = key;
+    fillSelect(macroList, names);
+  }
+
   function isFocused(...els) {
     return els.some((el) => document.activeElement === el);
   }
 
-  function renderSequence(sequence) {
+  function renderSequence(sequence, force) {
     const steps = Array.isArray(sequence) ? sequence : [];
+    const key = JSON.stringify(steps);
+    if (!force && key === lastSequenceKey) return;
+    // Não recria a lista enquanto o usuário edita um delay nela.
+    if (seqList.contains(document.activeElement) && document.activeElement.tagName === "INPUT") {
+      return;
+    }
+    lastSequenceKey = key;
     seqList.innerHTML = "";
     steps.forEach((step, index) => {
       const li = document.createElement("li");
       li.className = "seq-item";
-      const info = document.createElement("div");
-      info.innerHTML =
-        `#${index + 1}  ${step.x}, ${step.y}` +
-        `<div class="meta">${t("point.seqDelayMeta", { ms: step.delay_ms || 0 })}</div>`;
-      const rm = document.createElement("button");
-      rm.type = "button";
-      rm.className = "rm";
-      rm.title = t("point.seqRemove");
-      rm.textContent = "×";
-      rm.addEventListener("click", async () => {
-        const bridge = api();
-        if (!bridge) return;
-        try {
-          applyVisual(await bridge.remove_sequence_point(index));
-        } catch (err) {
-          errorLabel.textContent = String(err.message || err);
-        }
+      li.dataset.index = String(index);
+
+      const idx = document.createElement("span");
+      idx.className = "idx";
+      idx.textContent = `#${index + 1}`;
+
+      const xy = document.createElement("span");
+      xy.className = "xy";
+      xy.textContent = `${step.x}, ${step.y}`;
+
+      const delay = document.createElement("label");
+      delay.className = "delay";
+      const delayInput = document.createElement("input");
+      delayInput.type = "number";
+      delayInput.min = "0";
+      delayInput.step = "10";
+      delayInput.value = String(step.delay_ms || 0);
+      delayInput.setAttribute("aria-label", t("point.seqDelayAria", { n: index + 1 }));
+      delayInput.addEventListener("change", () => {
+        const ms = Math.max(0, parseInt(delayInput.value || "0", 10) || 0);
+        delayInput.blur();
+        call("update_sequence_point", index, { delay_ms: ms });
       });
-      li.appendChild(info);
-      li.appendChild(rm);
+      delayInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") delayInput.blur();
+      });
+      delay.appendChild(delayInput);
+      delay.appendChild(document.createTextNode("ms"));
+
+      const ops = document.createElement("span");
+      ops.className = "ops";
+      const mkBtn = (label, title, cls, handler, disabled) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        if (cls) btn.className = cls;
+        btn.textContent = label;
+        btn.title = title;
+        btn.setAttribute("aria-label", title);
+        btn.disabled = !!disabled;
+        btn.addEventListener("click", handler);
+        return btn;
+      };
+      ops.appendChild(
+        mkBtn("↑", t("point.seqUp"), "", () => call("move_sequence_point", index, index - 1), index === 0)
+      );
+      ops.appendChild(
+        mkBtn(
+          "↓",
+          t("point.seqDown"),
+          "",
+          () => call("move_sequence_point", index, index + 1),
+          index === steps.length - 1
+        )
+      );
+      ops.appendChild(
+        mkBtn("×", t("point.seqRemove"), "rm", () => call("remove_sequence_point", index), false)
+      );
+
+      li.appendChild(idx);
+      li.appendChild(xy);
+      li.appendChild(delay);
+      li.appendChild(ops);
       seqList.appendChild(li);
     });
     seqHint.textContent = steps.length
       ? t("point.seqCount", { n: steps.length })
       : t("point.seqEmpty");
+  }
+
+  function highlightSequence(index, active) {
+    seqList.querySelectorAll(".seq-item").forEach((li) => {
+      li.classList.toggle("current", active && li.dataset.index === String(index));
+    });
   }
 
   function applyCompactMode(enabled) {
@@ -200,37 +575,97 @@
     }
     lastCount = count;
 
-    errorLabel.textContent = state.last_error || "";
+    stateError = formatError(state.last_error);
+    renderError();
 
-    const recording = !!state.recording_hotkey;
-    hotkeyBtn.classList.toggle("recording", recording);
-    hotkeyHint.textContent = recording ? t("footer.hotkeyRecording") : t("footer.hotkeyHint");
+    live.phase = state.phase || (engineRunning ? "running" : "idle");
+    live.startsAt = state.starts_at == null ? null : state.starts_at;
+    live.elapsedMs = state.elapsed_ms || 0;
+    live.cps = state.actual_cps || 0;
+    live.receivedAt = Date.now();
+    renderLive();
+    if (live.phase === "countdown") statusLabel.textContent = t("status.countdown");
+    else if (engineRunning && state.blocked === "own_window") {
+      statusLabel.textContent = t("status.blockedOwn");
+    } else if (engineRunning && state.blocked === "filter") {
+      statusLabel.textContent = t("status.blockedFilter");
+    }
+    device.classList.toggle("blocked", engineRunning && !!state.blocked);
+
+    const capture = state.window_capture || {};
+    wfCaptureBtn.classList.toggle("recording", !!capture.active);
+    if (capture.active && capture.ends_at) {
+      const left = Math.max(0, Math.ceil(capture.ends_at - Date.now() / 1000));
+      wfCaptureBtn.textContent = t("advanced.useCurrentWindowWait", { n: left });
+    } else {
+      wfCaptureBtn.textContent = t("advanced.useCurrentWindow");
+    }
+
+    scriptHint.textContent =
+      script.running && script.line ? t("script.runningLine", { n: script.line }) : "";
+
+    recordingAction = state.recording_hotkey ? state.recording_hotkey_action || "toggle" : "";
     pickBtn.disabled = !!state.picking;
     pickBtn.textContent = state.picking ? t("point.picking") : t("point.pick");
 
     const evCount = macro.event_count || 0;
+    macroRecordBtn.dataset.recording = macro.recording ? "1" : "0";
     if (macro.recording) {
       macroHint.textContent = t("macro.recording", { n: evCount });
       macroRecordBtn.textContent = t("macro.stopRecord");
+    } else if (macro.playing && (macro.repeat || 1) > 1) {
+      macroHint.textContent = t("macro.playingRound", {
+        i: macro.iteration || 1,
+        n: macro.repeat,
+      });
+      macroRecordBtn.textContent = t("macro.record");
     } else {
       macroHint.textContent = evCount
-        ? t("macro.count", { n: evCount })
+        ? t("macro.countDuration", {
+            n: evCount,
+            s: ((macro.duration_ms || 0) / 1000).toFixed(1),
+          })
         : t("macro.empty");
       macroRecordBtn.textContent = t("macro.record");
     }
     macroPlayBtn.disabled = !!macro.recording || evCount === 0;
     macroClearBtn.disabled = !!macro.recording || !!macro.playing;
+    macroSaveBtn.disabled = !!macro.recording || evCount === 0;
+    if (!isFocused(macroRepeat)) macroRepeat.value = String(macro.repeat || 1);
+    if (!isFocused(macroSpeed)) macroSpeed.value = String(macro.speed || 1);
+    if (Array.isArray(state.macros)) refreshMacroList(state.macros);
+    if (!macroNameSeeded && macro.name !== undefined) {
+      // Só na primeira atualização: mostra o nome da macro usada por último.
+      macroNameSeeded = true;
+      if (macro.name && !macroName.value) macroName.value = macro.name;
+    }
 
     if (schedule.active && schedule.at) {
-      scheduleHint.textContent = t("schedule.active", {
-        at: schedule.at.replace("T", " "),
+      const what = t("schedule.target_" + (schedule.target || "engine"), {
+        name: schedule.profile || "",
       });
+      let how = "";
+      if (schedule.repeat === "daily") how = t("schedule.repeatsDaily");
+      else if (schedule.repeat === "interval") {
+        how = t("schedule.repeatsEvery", { every: formatSpan(schedule.interval_s || 0) });
+      }
+      scheduleHint.textContent =
+        t("schedule.activeFull", { at: schedule.at.replace("T", " "), what }) +
+        (how ? " " + how : "");
     } else {
       scheduleHint.textContent = t("schedule.none");
     }
+    scheduleCancelBtn.disabled = !schedule.active;
 
     if (Array.isArray(state.profiles)) {
       refreshProfileList(state.profiles);
+    }
+    applySettings(state.settings);
+    const update = state.update;
+    updateBadge.hidden = !(update && update.version);
+    if (update && update.version) {
+      updateBadge.textContent = t("footer.updateAvailable", { v: update.version });
+      updateBadge.title = t("footer.updateTitle");
     }
 
     if (state.config) {
@@ -257,34 +692,35 @@
           process: wf.process || "",
           title_contains: wf.title_contains || "",
         },
-        hotkey: cfg.hotkey || "F6",
-        always_on_top: cfg.always_on_top !== false,
-        compact_mode: !!cfg.compact_mode,
+        restore_cursor: !!cfg.restore_cursor,
+        position_jitter_px: cfg.position_jitter_px || 0,
+        action: cfg.action === "key" ? "key" : "mouse",
+        key_name: cfg.key_name || "SPACE",
       });
-      applyCompactMode(localConfig.compact_mode);
+      const keyMode = localConfig.action === "key";
+      keyRow.hidden = !keyMode;
+      mouseButtonRow.hidden = keyMode;
+      positionRow.hidden = keyMode;
+      setSegmentActive("action", localConfig.action);
+      if (!isFocused(keyName)) keyName.value = localConfig.key_name;
+      keyCaptureBtn.classList.toggle("recording", recordingAction === "action_key");
+      if (!isFocused(posJitter)) posJitter.value = String(localConfig.position_jitter_px);
+      if (!isFocused(restoreCursor)) restoreCursor.checked = localConfig.restore_cursor;
 
       if (!isFocused(intervalMs, intervalSlider)) {
         intervalMs.value = String(cfg.interval_ms);
         intervalSlider.value = String(Math.min(500, Math.max(10, cfg.interval_ms)));
         syncCps();
       }
-      if (!isFocused(startDelay)) {
-        startDelay.value = String(localConfig.start_delay_ms);
-      }
+      Object.keys(unitFields).forEach(renderUnitField);
       if (!isFocused(jitterMs)) {
         jitterMs.value = String(localConfig.jitter_ms);
       }
       if (!isFocused(maxClicks)) {
         maxClicks.value = localConfig.max_clicks == null ? "" : String(localConfig.max_clicks);
       }
-      if (!isFocused(maxDuration)) {
-        maxDuration.value =
-          localConfig.max_duration_ms == null ? "" : String(localConfig.max_duration_ms);
-      }
       if (!isFocused(fixedX)) fixedX.value = String(localConfig.fixed_x);
       if (!isFocused(fixedY)) fixedY.value = String(localConfig.fixed_y);
-      if (!isFocused(alwaysOnTop)) alwaysOnTop.checked = localConfig.always_on_top;
-      if (!isFocused(compactMode)) compactMode.checked = localConfig.compact_mode;
       if (!isFocused(wfEnabled)) wfEnabled.checked = localConfig.window_filter.enabled;
       if (!isFocused(wfProcess)) wfProcess.value = localConfig.window_filter.process;
       if (!isFocused(wfTitle)) wfTitle.value = localConfig.window_filter.title_contains;
@@ -292,12 +728,7 @@
         burstCount.value =
           localConfig.burst_count == null ? "" : String(localConfig.burst_count);
       }
-      if (!isFocused(burstPause)) {
-        burstPause.value =
-          localConfig.burst_pause_ms == null ? "" : String(localConfig.burst_pause_ms);
-      }
 
-      hotkeyBtn.textContent = localConfig.hotkey;
       setSegmentActive("button", cfg.button);
       setSegmentActive(
         "click_type",
@@ -305,23 +736,22 @@
       );
       setSegmentActive("position_mode", cfg.position_mode);
       updateFixedHint();
+      refreshPressed();
       renderSequence(localConfig.sequence);
+      highlightSequence(state.sequence_index, engineRunning && localConfig.sequence.length > 0);
       applying = false;
     }
   }
 
+  let profileNames = [];
+
   function refreshProfileList(names) {
-    const selected = profileList.value;
-    profileList.innerHTML = "";
-    names.forEach((name) => {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      profileList.appendChild(opt);
-    });
-    if (selected && names.includes(selected)) {
-      profileList.value = selected;
-    }
+    const key = JSON.stringify(names);
+    if (key === lastProfilesKey) return;
+    lastProfilesKey = key;
+    profileNames = names.slice();
+    fillSelect(profileList, names);
+    fillSelect(scheduleProfile, names);
   }
 
   function setSegmentActive(group, value) {
@@ -346,14 +776,7 @@
   async function pushConfig(partial) {
     if (applying) return;
     Object.assign(localConfig, partial);
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      const state = await bridge.set_config(partial);
-      applyVisual(state);
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+    await call("set_config", partial);
   }
 
   async function pushWindowFilter(partial) {
@@ -365,17 +788,23 @@
   async function refreshState() {
     const bridge = api();
     if (!bridge) return;
-    const state = await bridge.get_state();
-    applyVisual(state);
+    try {
+      applyVisual(await bridge.get_state());
+    } catch (_) {
+      /* bridge ocupada ou encerrando: o próximo ciclo tenta de novo */
+    }
   }
 
-  window.__clickrApplyState = () => {
-    refreshState();
+  // O backend envia o estado pronto (com limite de frequência); sem argumento,
+  // a UI busca por conta própria.
+  window.__clickrApplyState = (state) => {
+    if (state && typeof state === "object") applyVisual(state);
+    else refreshState();
   };
 
   function startPolling() {
     if (pollTimer) return;
-    pollTimer = setInterval(refreshState, 100);
+    pollTimer = setInterval(refreshState, POLL_MS);
   }
 
   function stopPolling() {
@@ -385,25 +814,24 @@
   }
 
   async function toggleRun() {
-    const bridge = api();
-    if (!bridge) return;
-    const state = await bridge.get_state();
-    const macro = state.macro || {};
-    const script = state.script || {};
-    let next;
-    if (macro.recording) {
-      next = await bridge.macro_record_stop();
-    } else if (macro.playing) {
-      next = await bridge.macro_stop();
-    } else if (script.running) {
-      next = await bridge.script_stop();
-    } else if (state.running) {
-      next = await bridge.stop();
-    } else {
-      next = await bridge.start();
+    if (toggling) return;
+    toggling = true;
+    try {
+      const bridge = api();
+      if (!bridge) return;
+      const state = await bridge.get_state();
+      const macro = state.macro || {};
+      const script = state.script || {};
+      if (macro.recording) await call("macro_record_stop");
+      else if (macro.playing) await call("macro_stop");
+      else if (script.running) await call("script_stop");
+      else if (state.running) await call("stop");
+      else await call("start");
+    } catch (err) {
+      showLocalError(String((err && err.message) || err));
+    } finally {
+      toggling = false;
     }
-    applyVisual(next);
-    startPolling();
   }
 
   function activateTab(name) {
@@ -411,6 +839,8 @@
       const on = tab.dataset.tab === name;
       tab.classList.toggle("active", on);
       tab.setAttribute("aria-selected", on ? "true" : "false");
+      // Tabindex itinerante: só a aba ativa entra na ordem do Tab.
+      tab.tabIndex = on ? 0 : -1;
     });
     document.querySelectorAll(".panel").forEach((panel) => {
       const on = panel.id === `panel-${name}`;
@@ -419,25 +849,94 @@
     });
   }
 
-  intervalMs.addEventListener("input", () => {
-    intervalSlider.value = intervalMs.value;
-    syncCps();
-    const ms = Math.max(1, parseInt(intervalMs.value || "1", 10));
-    pushConfig({ interval_ms: ms });
+  /** Setas / Home / End percorrem as abas visíveis (padrão de tablist vertical). */
+  function onTabsKeydown(e) {
+    const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End"];
+    if (!keys.includes(e.key)) return;
+    const tabs = [...document.querySelectorAll(".tab")].filter((tab) => !tab.hidden);
+    const current = tabs.indexOf(document.activeElement);
+    if (current < 0) return;
+    e.preventDefault();
+    let next = current;
+    if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = tabs.length - 1;
+    else if (e.key === "ArrowUp" || e.key === "ArrowLeft") next = (current - 1 + tabs.length) % tabs.length;
+    else next = (current + 1) % tabs.length;
+    activateTab(tabs[next].dataset.tab);
+    tabs[next].focus();
+  }
+  document.querySelector(".tabs").addEventListener("keydown", onTabsKeydown);
+
+  /** Mantém aria-pressed coerente com a opção ativa de cada grupo segmentado. */
+  function refreshPressed() {
+    document.querySelectorAll(".segmented .seg").forEach((seg) => {
+      seg.setAttribute("aria-pressed", seg.classList.contains("active") ? "true" : "false");
+    });
+  }
+  document.addEventListener("click", (e) => {
+    if (e.target.closest && e.target.closest(".segmented")) setTimeout(refreshPressed, 0);
   });
+
+  /** Lê o intervalo digitado; null se vazio ou inválido (nada é enviado). */
+  function readInterval(el) {
+    const raw = String(el.value || "").trim();
+    if (raw === "") return null;
+    const n = parseInt(raw, 10);
+    if (!Number.isFinite(n) || n < 1) return null;
+    return n;
+  }
+
+  function commitInterval(el) {
+    if (intervalTimer) {
+      clearTimeout(intervalTimer);
+      intervalTimer = null;
+    }
+    const ms = readInterval(el);
+    if (ms == null) {
+      // Campo vazio/inválido: mantém o valor em vigor.
+      intervalMs.value = String(localConfig.interval_ms);
+      syncCps();
+      return;
+    }
+    if (ms !== localConfig.interval_ms) pushConfig({ interval_ms: ms });
+  }
+
+  function scheduleInterval(el) {
+    if (intervalTimer) clearTimeout(intervalTimer);
+    if (readInterval(el) == null) return;
+    intervalTimer = setTimeout(() => commitInterval(el), INTERVAL_DEBOUNCE_MS);
+  }
+
+  intervalMs.addEventListener("input", () => {
+    if (readInterval(intervalMs) != null) {
+      intervalSlider.value = intervalMs.value;
+      syncCps();
+    }
+    scheduleInterval(intervalMs);
+  });
+  intervalMs.addEventListener("change", () => commitInterval(intervalMs));
 
   intervalSlider.addEventListener("input", () => {
     intervalMs.value = intervalSlider.value;
     syncCps();
-    const ms = Math.max(1, parseInt(intervalSlider.value || "1", 10));
-    pushConfig({ interval_ms: ms });
+    scheduleInterval(intervalSlider);
   });
+  intervalSlider.addEventListener("change", () => commitInterval(intervalSlider));
   syncCps();
 
-  startDelay.addEventListener("change", () => {
-    const ms = Math.max(0, parseInt(startDelay.value || "0", 10) || 0);
-    startDelay.value = String(ms);
-    pushConfig({ start_delay_ms: ms });
+  Object.keys(unitFields).forEach((field) => {
+    unitFields[field].input.addEventListener("change", () => commitUnitField(field));
+  });
+
+  document.querySelectorAll(".unit-select[data-unit]").forEach((select) => {
+    select.addEventListener("change", () => {
+      const field = select.dataset.unit;
+      appSettings.time_units = { ...appSettings.time_units, [field]: select.value };
+      renderUnitField(field);
+      const units = {};
+      units[field] = select.value;
+      call("set_preferences", { time_units: units });
+    });
   });
 
   jitterMs.addEventListener("change", () => {
@@ -450,24 +949,27 @@
     pushConfig({ max_clicks: parseOptionalInt(maxClicks) });
   });
 
-  maxDuration.addEventListener("change", () => {
-    pushConfig({ max_duration_ms: parseOptionalInt(maxDuration) });
-  });
 
   alwaysOnTop.addEventListener("change", () => {
-    pushConfig({ always_on_top: alwaysOnTop.checked });
+    call("set_preferences", { always_on_top: alwaysOnTop.checked });
   });
 
-  compactMode.addEventListener("change", async () => {
-    const enabled = compactMode.checked;
-    applyCompactMode(enabled);
+  launchAtLogin.addEventListener("change", () => {
+    call("set_preferences", { launch_at_login: launchAtLogin.checked });
+  });
+
+  checkUpdates.addEventListener("change", () => {
+    call("set_preferences", { check_updates: checkUpdates.checked });
+  });
+
+  updateBadge.addEventListener("click", () => {
     const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.set_compact_mode(enabled));
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+    if (bridge && bridge.open_update_page) bridge.open_update_page();
+  });
+
+  compactMode.addEventListener("change", () => {
+    applyCompactMode(compactMode.checked);
+    call("set_preferences", { compact_mode: compactMode.checked });
   });
 
   fixedX.addEventListener("change", () => {
@@ -478,6 +980,30 @@
   fixedY.addEventListener("change", () => {
     const y = parseInt(fixedY.value || "0", 10) || 0;
     pushConfig({ fixed_y: y, position_mode: "fixed" });
+  });
+
+  keyName.addEventListener("change", () => {
+    const value = (keyName.value || "").trim();
+    if (!value) {
+      keyName.value = localConfig.key_name;
+      return;
+    }
+    pushConfig({ key_name: value });
+  });
+
+  keyCaptureBtn.addEventListener("click", () => {
+    if (recordingAction) call("cancel_record_hotkey");
+    else call("capture_action_key");
+  });
+
+  posJitter.addEventListener("change", () => {
+    const px = Math.min(500, Math.max(0, parseInt(posJitter.value || "0", 10) || 0));
+    posJitter.value = String(px);
+    pushConfig({ position_jitter_px: px });
+  });
+
+  restoreCursor.addEventListener("change", () => {
+    pushConfig({ restore_cursor: restoreCursor.checked });
   });
 
   wfEnabled.addEventListener("change", () => {
@@ -496,137 +1022,129 @@
     pushConfig({ burst_count: parseOptionalInt(burstCount) });
   });
 
-  burstPause.addEventListener("change", () => {
-    pushConfig({ burst_pause_ms: parseOptionalNonNeg(burstPause) });
+
+  pickBtn.addEventListener("click", () => call("pick_location"));
+
+  function seqDelayValue() {
+    return Math.max(0, parseInt(seqDelay.value || "0", 10) || 0);
+  }
+
+  // "+ X/Y": adiciona as coordenadas dos campos X e Y acima.
+  addSeqBtn.addEventListener("click", () => {
+    const x = parseInt(fixedX.value || "0", 10) || 0;
+    const y = parseInt(fixedY.value || "0", 10) || 0;
+    call("add_sequence_point", x, y, seqDelayValue());
   });
 
-  pickBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      const state = await bridge.pick_location();
-      applyVisual(state);
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+  // "capturar": escolhe o ponto na tela e já o coloca na lista.
+  pickSeqBtn.addEventListener("click", () => call("pick_location", "sequence", seqDelayValue()));
+
+  wfCaptureBtn.addEventListener("click", () => {
+    if (wfCaptureBtn.classList.contains("recording")) call("cancel_capture_foreground_window");
+    else call("capture_foreground_window", 3);
   });
 
-  addSeqBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    const delay = Math.max(0, parseInt(seqDelay.value || "0", 10) || 0);
-    try {
-      // Usa XY do ponto fixo se modo fixed; senão cursor atual (omitido)
-      const payload =
-        localConfig.position_mode === "fixed"
-          ? {
-              x: localConfig.fixed_x,
-              y: localConfig.fixed_y,
-              delay_ms: delay,
-            }
-          : { delay_ms: delay };
-      let state;
-      if (payload.x != null) {
-        state = await bridge.add_sequence_point(payload.x, payload.y, payload.delay_ms);
-      } else {
-        state = await bridge.add_sequence_point(null, null, delay);
-      }
-      applyVisual(state);
-      errorLabel.textContent = "";
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+  clearSeqBtn.addEventListener("click", () => call("clear_sequence"));
+
+  hotkeyBtn.addEventListener("click", () => toggleHotkeyCapture("toggle"));
+
+  document.querySelectorAll(".hk-key").forEach((btn) => {
+    btn.addEventListener("click", () => toggleHotkeyCapture(btn.dataset.hk));
   });
 
-  clearSeqBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.clear_sequence());
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+  document.querySelectorAll(".hk-clear").forEach((btn) => {
+    btn.addEventListener("click", () => call("clear_hotkey", btn.dataset.hkClear));
   });
 
-  hotkeyBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      const state = await bridge.get_state();
-      if (state.recording_hotkey) {
-        applyVisual(await bridge.cancel_record_hotkey());
-      } else {
-        applyVisual(await bridge.record_hotkey());
-      }
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+  document.querySelectorAll(".segmented[data-pref]").forEach((group) => {
+    group.addEventListener("click", (e) => {
+      const btn = e.target.closest(".seg");
+      if (!btn) return;
+      const values = {};
+      values[group.dataset.pref] = btn.dataset.val;
+      call("set_preferences", values);
+    });
   });
 
   saveProfileBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
     const name = (profileName.value || profileList.value || "").trim();
     if (!name) {
-      errorLabel.textContent = t("profiles.needName");
+      showLocalError(t("profiles.needName"));
       return;
     }
-    try {
-      const state = await bridge.save_profile(name);
-      profileName.value = state.saved_profile || name;
-      applyVisual(state);
-      errorLabel.textContent = "";
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
+    const exists = profileNames.some((n) => n.toLowerCase() === name.toLowerCase());
+    if (exists) {
+      const ok = await confirmDialog(
+        t("profiles.overwriteTitle"),
+        t("profiles.overwriteBody", { name }),
+        t("profiles.overwrite")
+      );
+      if (!ok) return;
     }
+    const state = await call("save_profile", name);
+    if (state && state.saved_profile) profileName.value = state.saved_profile;
   });
 
   loadProfileBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
     const name = (profileList.value || profileName.value || "").trim();
     if (!name) {
-      errorLabel.textContent = t("profiles.needSelect");
+      showLocalError(t("profiles.needSelect"));
       return;
     }
-    try {
-      const state = await bridge.load_profile(name);
-      profileName.value = name;
-      applyVisual(state);
-      errorLabel.textContent = "";
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
+    const state = await call("load_profile", name);
+    if (state && !state.last_error) profileName.value = name;
+  });
+
+  renameProfileBtn.addEventListener("click", async () => {
+    const from = (profileList.value || "").trim();
+    const to = (profileName.value || "").trim();
+    if (!from) {
+      showLocalError(t("profiles.needSelect"));
+      return;
+    }
+    if (!to || to === from) {
+      showLocalError(t("profiles.needNewName"));
+      return;
+    }
+    const state = await call("rename_profile", from, to);
+    if (state && state.renamed_profile) {
+      profileName.value = state.renamed_profile;
+      profileList.value = state.renamed_profile;
     }
   });
 
-  exportProfileBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    const name = (profileName.value || profileList.value || "").trim();
-    try {
-      const state = await bridge.export_profile(name);
-      applyVisual(state);
-      if (state.exported_path) {
-        errorLabel.textContent = "";
-      }
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
+  deleteProfileBtn.addEventListener("click", async () => {
+    const name = (profileList.value || "").trim();
+    if (!name) {
+      showLocalError(t("profiles.needSelect"));
+      return;
     }
+    const ok = await confirmDialog(
+      t("profiles.deleteTitle"),
+      t("profiles.deleteBody", { name }),
+      t("profiles.delete")
+    );
+    if (!ok) return;
+    const state = await call("delete_profile", name);
+    if (state && state.deleted_profile && profileName.value === name) profileName.value = "";
+  });
+
+  exportProfileBtn.addEventListener("click", () => {
+    call("export_profile", (profileName.value || profileList.value || "").trim());
   });
 
   importProfileBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    const name = (profileName.value || "").trim();
-    try {
-      const state = await bridge.import_profile(name);
-      if (state.imported_profile) {
-        profileName.value = state.imported_profile;
-      }
-      applyVisual(state);
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
+    let state = await call("import_profile", (profileName.value || "").trim());
+    if (state && state.import_conflict) {
+      const ok = await confirmDialog(
+        t("profiles.overwriteTitle"),
+        t("profiles.overwriteBody", { name: state.import_conflict }),
+        t("profiles.overwrite")
+      );
+      if (!ok) return;
+      state = await call("import_profile_confirm");
     }
+    if (state && state.imported_profile) profileName.value = state.imported_profile;
   });
 
   profileList.addEventListener("change", () => {
@@ -638,87 +1156,121 @@
   });
 
   macroRecordBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      const state = await bridge.get_state();
-      const recording = state.macro && state.macro.recording;
-      applyVisual(recording ? await bridge.macro_record_stop() : await bridge.macro_record_start());
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+    const recording = macroRecordBtn.dataset.recording === "1";
+    await call(recording ? "macro_record_stop" : "macro_record_start");
   });
 
-  macroPlayBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.macro_play());
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
+  function macroOptions() {
+    const repeat = Math.min(100000, Math.max(1, parseInt(macroRepeat.value || "1", 10) || 1));
+    const rawSpeed = parseFloat(String(macroSpeed.value || "1").replace(",", "."));
+    const speed = Math.min(10, Math.max(0.1, Number.isFinite(rawSpeed) ? rawSpeed : 1));
+    return [repeat, speed];
+  }
+
+  macroPlayBtn.addEventListener("click", () => call("macro_play", ...macroOptions()));
+  macroRepeat.addEventListener("change", () => call("macro_set_options", ...macroOptions()));
+  macroSpeed.addEventListener("change", () => call("macro_set_options", ...macroOptions()));
+
+  macroSaveBtn.addEventListener("click", async () => {
+    const name = (macroName.value || macroList.value || "").trim();
+    if (!name) {
+      showLocalError(t("macro.needName"));
+      return;
     }
+    const taken = [...macroList.options].some((o) => o.value.toLowerCase() === name.toLowerCase());
+    if (taken) {
+      const ok = await confirmDialog(
+        t("macro.overwriteTitle"),
+        t("macro.overwriteBody", { name }),
+        t("profiles.overwrite")
+      );
+      if (!ok) return;
+    }
+    const state = await call("macro_save", name);
+    if (state && state.saved_macro) macroName.value = state.saved_macro;
   });
 
-  macroStopBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.macro_stop());
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
+  macroLoadBtn.addEventListener("click", async () => {
+    const name = (macroList.value || macroName.value || "").trim();
+    if (!name) {
+      showLocalError(t("macro.needSelect"));
+      return;
     }
+    const state = await call("macro_load", name);
+    if (state && !state.last_error) macroName.value = name;
   });
 
-  macroClearBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.macro_clear());
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
+  macroDeleteBtn.addEventListener("click", async () => {
+    const name = (macroList.value || macroName.value || "").trim();
+    if (!name) {
+      showLocalError(t("macro.needSelect"));
+      return;
     }
+    const ok = await confirmDialog(
+      t("macro.deleteTitle"),
+      t("macro.deleteBody", { name }),
+      t("profiles.delete")
+    );
+    if (ok) await call("macro_delete", name);
   });
 
-  scriptRunBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.script_run(scriptSource.value || ""));
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+  macroList.addEventListener("change", () => {
+    if (macroList.value) macroName.value = macroList.value;
+  });
+  macroList.addEventListener("dblclick", () => macroLoadBtn.click());
+  macroStopBtn.addEventListener("click", () => call("macro_stop"));
+  macroClearBtn.addEventListener("click", () => call("macro_clear"));
+
+  const scriptHelpBtn = document.getElementById("scriptHelpBtn");
+  const scriptHelp = document.getElementById("scriptHelp");
+  scriptHelpBtn.addEventListener("click", () => {
+    scriptHelp.hidden = !scriptHelp.hidden;
+    scriptHelpBtn.setAttribute("aria-expanded", scriptHelp.hidden ? "false" : "true");
   });
 
-  scriptStopBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.script_stop());
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+  // O texto do script é guardado para a próxima sessão (com pequeno atraso).
+  scriptSource.addEventListener("input", () => {
+    if (scriptSaveTimer) clearTimeout(scriptSaveTimer);
+    scriptSaveTimer = setTimeout(() => {
+      scriptSaveTimer = null;
+      const bridge = api();
+      if (bridge && bridge.save_script) bridge.save_script(scriptSource.value || "");
+    }, 800);
   });
 
-  scheduleSetBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    const raw = (scheduleAt.value || "").trim();
-    try {
-      applyVisual(await bridge.schedule_set(raw));
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
-  });
+  scriptRunBtn.addEventListener("click", () => call("script_run", scriptSource.value || ""));
+  scriptStopBtn.addEventListener("click", () => call("script_stop"));
 
-  scheduleCancelBtn.addEventListener("click", async () => {
-    const bridge = api();
-    if (!bridge) return;
-    try {
-      applyVisual(await bridge.schedule_cancel());
-    } catch (err) {
-      errorLabel.textContent = String(err.message || err);
-    }
+  let scheduleRepeatValue = "once";
+
+  function syncScheduleForm() {
+    scheduleRepeat.querySelectorAll(".seg").forEach((seg) => {
+      seg.classList.toggle("active", seg.dataset.val === scheduleRepeatValue);
+    });
+    scheduleIntervalRow.hidden = scheduleRepeatValue !== "interval";
+    scheduleProfileRow.hidden = scheduleTarget.value !== "profile";
+  }
+
+  scheduleRepeat.addEventListener("click", (e) => {
+    const seg = e.target.closest(".seg");
+    if (!seg) return;
+    scheduleRepeatValue = seg.dataset.val;
+    syncScheduleForm();
   });
+  scheduleTarget.addEventListener("change", syncScheduleForm);
+  syncScheduleForm();
+
+  scheduleSetBtn.addEventListener("click", () => {
+    const options = { repeat: scheduleRepeatValue, target: scheduleTarget.value };
+    if (scheduleRepeatValue === "interval") {
+      const every = parseFloat(String(scheduleEvery.value || "").replace(",", "."));
+      const factor = { s: 1, min: 60, h: 3600 }[scheduleEveryUnit.value] || 60;
+      options.interval_s = Number.isFinite(every) ? Math.round(every * factor) : 0;
+    }
+    if (options.target === "profile") options.profile = scheduleProfile.value || "";
+    call("schedule_set", (scheduleAt.value || "").trim(), options);
+  });
+  scheduleCancelBtn.addEventListener("click", () => call("schedule_cancel"));
 
   mainBtn.addEventListener("click", () => {
     toggleRun();
@@ -727,15 +1279,9 @@
   const winMin = document.getElementById("winMin");
   const winClose = document.getElementById("winClose");
   if (winMin) {
-    winMin.addEventListener("click", async (e) => {
+    winMin.addEventListener("click", (e) => {
       e.stopPropagation();
-      const bridge = api();
-      if (!bridge || !bridge.window_minimize) return;
-      try {
-        await bridge.window_minimize();
-      } catch (err) {
-        errorLabel.textContent = String(err.message || err);
-      }
+      call("window_minimize");
     });
   }
   const trayModal = document.getElementById("trayModal");
@@ -765,20 +1311,17 @@
     });
   }
   if (trayModalOk) {
-    trayModalOk.addEventListener("click", async () => {
+    trayModalOk.addEventListener("click", () => {
       closeTrayModal();
-      const bridge = api();
-      if (!bridge || !bridge.window_close) return;
-      try {
-        await bridge.window_close();
-      } catch (err) {
-        errorLabel.textContent = String(err.message || err);
-      }
+      call("window_close");
     });
   }
   if (trayModal) {
     trayModal.addEventListener("click", (e) => {
       if (e.target === trayModal) closeTrayModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !trayModal.hidden) closeTrayModal();
     });
   }
 
@@ -789,13 +1332,14 @@
     });
   });
 
-  document.querySelectorAll(".segmented").forEach((group) => {
+  document.querySelectorAll(".segmented[data-group]").forEach((group) => {
     group.addEventListener("click", (e) => {
       const btn = e.target.closest(".seg");
       if (!btn) return;
       group.querySelectorAll(".seg").forEach((s) => s.classList.remove("active"));
       btn.classList.add("active");
       const key = group.dataset.group;
+      if (!key) return; // grupos sem data-group têm tratamento próprio
       const val = btn.dataset.val;
       const payload = {};
       payload[key] = val;
@@ -883,6 +1427,8 @@
     if (window.ClickrManual && window.ClickrManual.reloadLocale) {
       window.ClickrManual.reloadLocale();
     }
+    // Textos montados por código precisam ser refeitos no novo idioma.
+    lastSequenceKey = null;
     await refreshState();
   }
 
@@ -895,13 +1441,18 @@
       try {
         await applyLocale(code, true);
       } catch (err) {
-        errorLabel.textContent = String(err.message || err);
+        showLocalError(String(err.message || err));
       }
     });
   }
 
   function bindManualHooks() {
     if (!window.ClickrManual) return;
+    const requireOk = (state) => {
+      if (!state) throw new Error(localError || t("errors.bridgeUnavailable"));
+      if (state.last_error) throw new Error(formatError(state.last_error));
+      return state;
+    };
     window.ClickrManual.bind({
       activateTab,
       pushConfig,
@@ -913,29 +1464,17 @@
         applyVisual(state);
         return state;
       },
-      setError: (msg) => {
-        errorLabel.textContent = msg || "";
-      },
-      pickLocation: async () => {
-        const bridge = api();
-        if (!bridge) return null;
-        return bridge.pick_location();
-      },
+      setError: (msg) => showLocalError(msg || ""),
+      pickLocation: () => call("pick_location"),
       saveProfile: async (name) => {
-        const bridge = api();
-        if (!bridge) throw new Error(t("errors.bridgeUnavailable"));
-        const state = await bridge.save_profile(name);
+        const state = requireOk(await call("save_profile", name));
         if (profileName) profileName.value = state.saved_profile || name;
-        applyVisual(state);
         return state;
       },
-      start: async () => {
+      start: async () => requireOk(await call("start")),
+      markSeen: () => {
         const bridge = api();
-        if (!bridge) throw new Error(t("errors.bridgeUnavailable"));
-        const state = await bridge.start();
-        applyVisual(state);
-        startPolling();
-        return state;
+        if (bridge && bridge.set_manual_seen) bridge.set_manual_seen(true);
       },
     });
   }
@@ -955,6 +1494,19 @@
       const settings = bridge && bridge.get_settings ? await bridge.get_settings() : {};
       if (settings && settings.version) {
         applyVersion(settings.version);
+      }
+      if (settings && Array.isArray(settings.profiles)) {
+        refreshProfileList(settings.profiles);
+      }
+      if (settings && Array.isArray(settings.macros)) {
+        refreshMacroList(settings.macros);
+      }
+      applySettings(settings);
+      if (settings && typeof settings.last_script === "string" && settings.last_script) {
+        scriptSource.value = settings.last_script;
+      }
+      if (window.ClickrManual && window.ClickrManual.setSeen) {
+        window.ClickrManual.setSeen(!!(settings && settings.manual_seen));
       }
 
       const elapsedSplash = Date.now() - splashStarted;
@@ -985,7 +1537,7 @@
         }
       }
     } catch (err) {
-      errorLabel.textContent = String(err.message || err);
+      showLocalError(String(err.message || err));
       hideSplash();
     }
   }
@@ -996,7 +1548,7 @@
     window.addEventListener("pywebviewready", boot);
     setTimeout(() => {
       if (!apiReady) {
-        errorLabel.textContent = t("errors.waitingBridge");
+        showLocalError(t("errors.waitingBridge"));
       }
     }, 800);
   }

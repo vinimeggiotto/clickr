@@ -22,6 +22,8 @@ a = Analysis(
         (os.path.join(ROOT, 'VERSION'), '.'),
     ],
     hiddenimports=[
+        'hotkeys.backend_pynput',
+        'app.tray',
         'webview',
         'webview.platforms.cocoa',
         'pynput.keyboard._darwin',
@@ -51,7 +53,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=True,
@@ -67,7 +69,7 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name='Clickr',
 )

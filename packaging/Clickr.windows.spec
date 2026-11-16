@@ -19,6 +19,9 @@ a = Analysis(
         (os.path.join(ROOT, 'VERSION'), '.'),
     ],
     hiddenimports=[
+        'hotkeys.backend_win32',
+        'hotkeys.backend_pynput',
+        'app.tray',
         'clr',
         'webview',
         'webview.platforms.edgechromium',
@@ -51,7 +54,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,

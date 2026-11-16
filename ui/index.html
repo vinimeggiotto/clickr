@@ -40,6 +40,17 @@
     </div>
   </div>
 
+  <div id="confirmModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+    <div class="modal-card">
+      <h2 id="confirmModalTitle" class="modal-title"></h2>
+      <p class="modal-body" id="confirmModalBody"></p>
+      <div class="modal-actions">
+        <button type="button" class="action-btn ghost" id="confirmModalCancel" data-i18n="trayModal.cancel">Cancelar</button>
+        <button type="button" class="action-btn" id="confirmModalOk"></button>
+      </div>
+    </div>
+  </div>
+
   <div id="localeGate" class="locale-gate" hidden role="dialog" aria-modal="true" data-i18n-aria="localeGate.aria" aria-labelledby="localeGateTitle">
     <div class="locale-gate-card">
       <h2 id="localeGateTitle" class="locale-gate-title" data-i18n="localeGate.title">Escolha o idioma</h2>
@@ -69,10 +80,16 @@
       <button class="pulse-btn" id="mainBtn" type="button" aria-pressed="false" data-i18n-aria="stage.mainAria" aria-label="Iniciar ou parar">
         <span class="ring"></span>
         <span id="icon">&#9654;</span>
+        <span id="countdown" class="countdown" hidden></span>
       </button>
       <div class="readout">
         <span id="counter">000000</span>
         <span class="readout-label" data-i18n="brand.clicks">clicks</span>
+      </div>
+      <div class="live-stats" id="liveStats" aria-live="off">
+        <span id="liveElapsed">00:00</span>
+        <span class="sep" aria-hidden="true">&middot;</span>
+        <span id="liveCps">0.0</span> <span data-i18n="brand.cpsReal">/s real</span>
       </div>
       <div class="pulse-strip" id="strip"></div>
     </div>
@@ -80,20 +97,21 @@
     <div class="controls">
       <div class="workspace">
       <nav class="tabs" role="tablist" data-i18n-aria="tabs.aria" aria-label="Painéis" aria-orientation="vertical">
-        <button type="button" class="tab active" data-tab="click" role="tab" aria-selected="true" data-i18n="tabs.click">Clique</button>
-        <button type="button" class="tab" data-tab="run" role="tab" aria-selected="false" data-i18n="tabs.run">Run</button>
-        <button type="button" class="tab" data-tab="point" role="tab" aria-selected="false" data-i18n="tabs.point">Point</button>
-        <button type="button" class="tab" data-tab="profiles" role="tab" aria-selected="false" data-i18n="tabs.profiles">Perfis</button>
-        <button type="button" class="tab" data-tab="manual" role="tab" aria-selected="false" data-i18n="tabs.manual">Manual</button>
-        <button type="button" class="tab tab-adv" data-tab="advanced" role="tab" aria-selected="false" data-i18n="tabs.advanced">Adv</button>
-        <button type="button" class="tab tab-adv" data-tab="macro" role="tab" aria-selected="false" data-i18n="tabs.macro">Macro</button>
-        <button type="button" class="tab tab-adv" data-tab="script" role="tab" aria-selected="false" data-i18n="tabs.script">Script</button>
-        <button type="button" class="tab tab-adv" data-tab="schedule" role="tab" aria-selected="false" data-i18n="tabs.schedule">Agenda</button>
+        <button type="button" class="tab active" id="tab-click" aria-controls="panel-click" data-tab="click" role="tab" aria-selected="true" data-i18n="tabs.click">Clique</button>
+        <button type="button" class="tab" id="tab-run" aria-controls="panel-run" data-tab="run" role="tab" aria-selected="false" data-i18n="tabs.run">Run</button>
+        <button type="button" class="tab" id="tab-point" aria-controls="panel-point" data-tab="point" role="tab" aria-selected="false" data-i18n="tabs.point">Point</button>
+        <button type="button" class="tab" id="tab-profiles" aria-controls="panel-profiles" data-tab="profiles" role="tab" aria-selected="false" data-i18n="tabs.profiles">Perfis</button>
+        <button type="button" class="tab" id="tab-keys" aria-controls="panel-keys" data-tab="keys" role="tab" aria-selected="false" data-i18n="tabs.keys">Atalhos</button>
+        <button type="button" class="tab" id="tab-manual" aria-controls="panel-manual" data-tab="manual" role="tab" aria-selected="false" data-i18n="tabs.manual">Manual</button>
+        <button type="button" class="tab tab-adv" id="tab-advanced" aria-controls="panel-advanced" data-tab="advanced" role="tab" aria-selected="false" data-i18n="tabs.advanced">Adv</button>
+        <button type="button" class="tab tab-adv" id="tab-macro" aria-controls="panel-macro" data-tab="macro" role="tab" aria-selected="false" data-i18n="tabs.macro">Macro</button>
+        <button type="button" class="tab tab-adv" id="tab-script" aria-controls="panel-script" data-tab="script" role="tab" aria-selected="false" data-i18n="tabs.script">Script</button>
+        <button type="button" class="tab tab-adv" id="tab-schedule" aria-controls="panel-schedule" data-tab="schedule" role="tab" aria-selected="false" data-i18n="tabs.schedule">Agenda</button>
       </nav>
 
       <div class="main-col">
       <div class="panels">
-        <section class="panel active" id="panel-click" role="tabpanel">
+        <section class="panel active" id="panel-click" role="tabpanel" aria-labelledby="tab-click" tabindex="-1">
           <div class="field">
             <label for="intervalMs" data-i18n="click.interval">Intervalo</label>
             <div class="lcd-input">
@@ -105,12 +123,27 @@
           </div>
 
           <div class="row">
+            <div class="segmented" data-group="action" role="group" data-i18n-aria="click.actionAria" aria-label="O que repetir">
+              <button type="button" class="seg active" data-val="mouse" data-i18n="click.actionMouse">MOUSE</button>
+              <button type="button" class="seg" data-val="key" data-i18n="click.actionKey">TECLA</button>
+            </div>
+          </div>
+
+          <div class="field" id="keyRow" hidden>
+            <label for="keyName" data-i18n="click.key">Tecla</label>
+            <div class="lcd-input compact key-input">
+              <input type="text" id="keyName" maxlength="40" value="SPACE" autocomplete="off" spellcheck="false" data-i18n-placeholder="click.keyPlaceholder" placeholder="SPACE, E, CTRL+C">
+              <button type="button" class="keycap" id="keyCaptureBtn" data-i18n="click.keyCapture">capturar</button>
+            </div>
+          </div>
+
+          <div class="row" id="mouseButtonRow">
             <div class="segmented dense" data-group="button" role="group" data-i18n-aria="click.buttonAria" aria-label="Botão do mouse">
-              <button type="button" class="seg active" data-val="left">L</button>
-              <button type="button" class="seg" data-val="right">R</button>
-              <button type="button" class="seg" data-val="middle">M</button>
-              <button type="button" class="seg" data-val="x1">4</button>
-              <button type="button" class="seg" data-val="x2">5</button>
+              <button type="button" class="seg active" data-val="left" data-i18n-aria="click.btnLeft" data-i18n-title="click.btnLeft" aria-label="Botão esquerdo" title="Botão esquerdo">L</button>
+              <button type="button" class="seg" data-val="right" data-i18n-aria="click.btnRight" data-i18n-title="click.btnRight" aria-label="Botão direito" title="Botão direito">R</button>
+              <button type="button" class="seg" data-val="middle" data-i18n-aria="click.btnMiddle" data-i18n-title="click.btnMiddle" aria-label="Botão do meio" title="Botão do meio">M</button>
+              <button type="button" class="seg" data-val="x1" data-i18n-aria="click.btnX1" data-i18n-title="click.btnX1" aria-label="Botão lateral 4" title="Botão lateral 4">4</button>
+              <button type="button" class="seg" data-val="x2" data-i18n-aria="click.btnX2" data-i18n-title="click.btnX2" aria-label="Botão lateral 5" title="Botão lateral 5">5</button>
             </div>
           </div>
 
@@ -122,7 +155,7 @@
             </div>
           </div>
 
-          <div class="row">
+          <div class="row" id="positionRow">
             <div class="segmented" data-group="position_mode" role="group" data-i18n-aria="click.positionAria" aria-label="Modo de posição">
               <button type="button" class="seg active" data-val="cursor" data-i18n="click.cursor">CURSOR</button>
               <button type="button" class="seg" data-val="fixed" data-i18n="click.fixed">PONTO FIXO</button>
@@ -130,13 +163,18 @@
           </div>
         </section>
 
-        <section class="panel" id="panel-run" role="tabpanel" hidden>
+        <section class="panel" id="panel-run" role="tabpanel" aria-labelledby="tab-run" tabindex="-1" hidden>
           <div class="field-grid">
             <div class="field">
               <label for="startDelay" data-i18n="run.startDelay">Delay início</label>
               <div class="lcd-input compact">
-                <input type="number" id="startDelay" value="0" min="0" max="60000" step="100">
-                <span>ms</span>
+                <input type="number" id="startDelay" value="0" min="0" step="any">
+                <select class="unit-select" data-unit="start_delay" data-i18n-aria="run.unitAria" aria-label="Unidade de tempo">
+                  <option value="ms">ms</option>
+                  <option value="s">s</option>
+                  <option value="min">min</option>
+                  <option value="h">h</option>
+                </select>
               </div>
             </div>
             <div class="field">
@@ -156,8 +194,13 @@
             <div class="field">
               <label for="maxDuration" data-i18n="run.maxDuration">Duração máx.</label>
               <div class="lcd-input compact">
-                <input type="number" id="maxDuration" value="" min="1" max="86400000" placeholder="∞">
-                <span>ms</span>
+                <input type="number" id="maxDuration" value="" min="0" step="any" placeholder="∞">
+                <select class="unit-select" data-unit="max_duration" data-i18n-aria="run.unitAria" aria-label="Unidade de tempo">
+                  <option value="ms">ms</option>
+                  <option value="s">s</option>
+                  <option value="min">min</option>
+                  <option value="h">h</option>
+                </select>
               </div>
             </div>
           </div>
@@ -171,9 +214,20 @@
             <input type="checkbox" id="compactMode">
             <span class="toggle-ui" aria-hidden="true"></span>
           </label>
+          <label class="toggle-row">
+            <span data-i18n="run.launchAtLogin">Iniciar com o sistema (na bandeja)</span>
+            <input type="checkbox" id="launchAtLogin">
+            <span class="toggle-ui" aria-hidden="true"></span>
+          </label>
+          <label class="toggle-row">
+            <span data-i18n="run.checkUpdates">Avisar quando houver versão nova</span>
+            <input type="checkbox" id="checkUpdates">
+            <span class="toggle-ui" aria-hidden="true"></span>
+          </label>
+          <div class="fixed-hint" data-i18n="run.checkUpdatesHint">Consulta a página de versões do projeto no GitHub ao abrir. Nenhum dado seu é enviado.</div>
         </section>
 
-        <section class="panel" id="panel-point" role="tabpanel" hidden>
+        <section class="panel" id="panel-point" role="tabpanel" aria-labelledby="tab-point" tabindex="-1" hidden>
           <div class="field-grid xy-grid">
             <div class="field">
               <label for="fixedX">X</label>
@@ -190,22 +244,33 @@
           </div>
           <button type="button" class="action-btn" id="pickBtn" data-i18n="point.pick">Capturar ponto</button>
           <div class="fixed-hint" id="fixedHint"></div>
+          <div class="field">
+            <label for="posJitter" data-i18n="point.jitter">Variação da posição ±</label>
+            <div class="lcd-input compact">
+              <input type="number" id="posJitter" value="0" min="0" max="500" step="1">
+              <span>px</span>
+            </div>
+          </div>
+          <label class="toggle-row">
+            <span data-i18n="point.restoreCursor">Devolver o cursor após o clique</span>
+            <input type="checkbox" id="restoreCursor">
+            <span class="toggle-ui" aria-hidden="true"></span>
+          </label>
 
           <div class="seq-block">
             <div class="seq-head">
               <span class="field-label" data-i18n="point.sequence">Sequência</span>
               <div class="seq-actions">
-                <button type="button" class="action-btn ghost tiny" id="addSeqBtn" data-i18n="point.addPoint">+ ponto</button>
+                <button type="button" class="action-btn ghost tiny" id="pickSeqBtn" data-i18n="point.pickToList" data-i18n-title="point.pickToListTitle" title="Capturar um ponto na tela e adicionar à lista">capturar</button>
+                <button type="button" class="action-btn ghost tiny" id="addSeqBtn" data-i18n="point.addPoint" data-i18n-title="point.addPointTitle" title="Adicionar o X/Y acima à lista">+ X/Y</button>
                 <button type="button" class="action-btn ghost tiny" id="clearSeqBtn" data-i18n="point.clear">limpar</button>
               </div>
             </div>
-            <div class="field-grid xy-grid seq-add-row">
-              <div class="field">
-                <label for="seqDelay" data-i18n="point.seqDelay">Delay passo</label>
-                <div class="lcd-input compact">
-                  <input type="number" id="seqDelay" value="80" min="0" max="60000" step="10">
-                  <span>ms</span>
-                </div>
+            <div class="seq-add-row">
+              <label for="seqDelay" class="field-label" data-i18n="point.seqDelay">Delay passo</label>
+              <div class="lcd-input compact">
+                <input type="number" id="seqDelay" value="80" min="0" max="60000" step="10">
+                <span>ms</span>
               </div>
             </div>
             <ul class="seq-list" id="seqList" data-i18n-aria="point.seqListAria" aria-label="Lista de pontos da sequência"></ul>
@@ -213,12 +278,14 @@
           </div>
         </section>
 
-        <section class="panel" id="panel-advanced" role="tabpanel" hidden>
+        <section class="panel" id="panel-advanced" role="tabpanel" aria-labelledby="tab-advanced" tabindex="-1" hidden>
           <label class="toggle-row">
             <span data-i18n="advanced.windowFilter">Filtro de janela</span>
             <input type="checkbox" id="wfEnabled">
             <span class="toggle-ui" aria-hidden="true"></span>
           </label>
+          <button type="button" class="action-btn ghost" id="wfCaptureBtn" data-i18n="advanced.useCurrentWindow">Usar janela atual</button>
+          <div class="fixed-hint" id="wfCaptureHint" data-i18n="advanced.useCurrentWindowHint">Clique e troque para a janela desejada: ela é lida após 3 segundos.</div>
           <div class="field">
             <label for="wfProcess" data-i18n="advanced.process">Processo</label>
             <div class="lcd-input compact">
@@ -242,15 +309,20 @@
             <div class="field">
               <label for="burstPause" data-i18n="advanced.burstPause">Pausa burst</label>
               <div class="lcd-input compact">
-                <input type="number" id="burstPause" value="" min="0" max="600000" data-i18n-placeholder="advanced.placeholderDash" placeholder="—">
-                <span>ms</span>
+                <input type="number" id="burstPause" value="" min="0" step="any" data-i18n-placeholder="advanced.placeholderDash" placeholder="—">
+                <select class="unit-select" data-unit="burst_pause" data-i18n-aria="run.unitAria" aria-label="Unidade de tempo">
+                  <option value="ms">ms</option>
+                  <option value="s">s</option>
+                  <option value="min">min</option>
+                  <option value="h">h</option>
+                </select>
               </div>
             </div>
           </div>
           <div class="fixed-hint" data-i18n="advanced.hintXButtons">Botões 4/5 = XBUTTON1/2 no seletor L R M 4 5.</div>
         </section>
 
-        <section class="panel" id="panel-profiles" role="tabpanel" hidden>
+        <section class="panel" id="panel-profiles" role="tabpanel" aria-labelledby="tab-profiles" tabindex="-1" hidden>
           <div class="field">
             <label for="profileName" data-i18n="profiles.name">Nome do perfil</label>
             <div class="lcd-input">
@@ -261,15 +333,52 @@
             <button type="button" class="action-btn" id="saveProfileBtn" data-i18n="profiles.save">Salvar</button>
             <button type="button" class="action-btn ghost" id="loadProfileBtn" data-i18n="profiles.load">Carregar</button>
           </div>
+          <label class="field-label" for="profileList" data-i18n="profiles.savedLabel">Perfis salvos</label>
+          <select id="profileList" class="profile-select" size="5" data-i18n-aria="profiles.listAria" aria-label="Lista de perfis"></select>
+          <div class="action-row">
+            <button type="button" class="action-btn ghost" id="renameProfileBtn" data-i18n="profiles.rename" data-i18n-title="profiles.renameTitle" title="Renomeia o perfil selecionado para o nome digitado acima">Renomear</button>
+            <button type="button" class="action-btn ghost" id="deleteProfileBtn" data-i18n="profiles.delete">Excluir</button>
+          </div>
           <div class="action-row">
             <button type="button" class="action-btn ghost" id="exportProfileBtn" data-i18n="profiles.export">Exportar</button>
             <button type="button" class="action-btn ghost" id="importProfileBtn" data-i18n="profiles.import">Importar</button>
           </div>
-          <label class="field-label" for="profileList" data-i18n="profiles.savedLabel">Perfis salvos</label>
-          <select id="profileList" class="profile-select" size="2" data-i18n-aria="profiles.listAria" aria-label="Lista de perfis"></select>
         </section>
 
-        <section class="panel" id="panel-manual" role="tabpanel" hidden>
+        <section class="panel" id="panel-keys" role="tabpanel" aria-labelledby="tab-keys" tabindex="-1" hidden>
+          <div class="hk-list" id="hotkeyList">
+            <div class="hk-row" data-action="toggle">
+              <span class="hk-label" data-i18n="keys.toggle">Iniciar / parar</span>
+              <button type="button" class="keycap hk-key" data-hk="toggle" data-i18n-title="footer.hotkeyTitle" title="Clique para gravar nova tecla">F6</button>
+            </div>
+            <div class="hk-row" data-action="stop_all">
+              <span class="hk-label" data-i18n="keys.stopAll">Parar tudo</span>
+              <button type="button" class="keycap hk-key" data-hk="stop_all" data-i18n-title="footer.hotkeyTitle" title="Clique para gravar nova tecla">—</button>
+              <button type="button" class="hk-clear" data-hk-clear="stop_all" data-i18n-aria="keys.clear" data-i18n-title="keys.clear" aria-label="Remover atalho" title="Remover atalho">&times;</button>
+            </div>
+            <div class="hk-row" data-action="pick_point">
+              <span class="hk-label" data-i18n="keys.pickPoint">Capturar ponto no cursor</span>
+              <button type="button" class="keycap hk-key" data-hk="pick_point" data-i18n-title="footer.hotkeyTitle" title="Clique para gravar nova tecla">—</button>
+              <button type="button" class="hk-clear" data-hk-clear="pick_point" data-i18n-aria="keys.clear" data-i18n-title="keys.clear" aria-label="Remover atalho" title="Remover atalho">&times;</button>
+            </div>
+            <div class="hk-row" data-action="macro_record">
+              <span class="hk-label" data-i18n="keys.macroRecord">Gravar / parar macro</span>
+              <button type="button" class="keycap hk-key" data-hk="macro_record" data-i18n-title="footer.hotkeyTitle" title="Clique para gravar nova tecla">—</button>
+              <button type="button" class="hk-clear" data-hk-clear="macro_record" data-i18n-aria="keys.clear" data-i18n-title="keys.clear" aria-label="Remover atalho" title="Remover atalho">&times;</button>
+            </div>
+          </div>
+          <div class="fixed-hint" id="hotkeyPanelHint" data-i18n="keys.hint">Clique em um atalho e pressione a combinação (ex.: Ctrl+Alt+F6). Esc cancela.</div>
+          <div class="field">
+            <span class="field-label" data-i18n="keys.activation">Atalho de iniciar / parar</span>
+            <div class="segmented" data-pref="activation" role="group" data-i18n-aria="keys.activation" aria-label="Atalho de iniciar / parar">
+              <button type="button" class="seg active" data-val="toggle" data-i18n="keys.modeToggle">ALTERNAR</button>
+              <button type="button" class="seg" data-val="hold" data-i18n="keys.modeHold">SEGURAR</button>
+            </div>
+          </div>
+          <div class="fixed-hint" id="activationHint" data-i18n="keys.modeToggleHint">Uma pressão inicia, outra para.</div>
+        </section>
+
+        <section class="panel" id="panel-manual" role="tabpanel" aria-labelledby="tab-manual" tabindex="-1" hidden>
           <div class="manual-modes segmented" role="tablist" data-i18n-aria="manualUi.modeAria" aria-label="Modo do Manual">
             <button type="button" class="seg active" id="modeGuide" data-mode="guide" data-i18n="manualUi.guide">Guia</button>
             <button type="button" class="seg" id="modeWizard" data-mode="wizard" data-i18n="manualUi.wizard">Assistente</button>
@@ -300,7 +409,7 @@
           </div>
         </section>
 
-        <section class="panel panel-adv" id="panel-macro" role="tabpanel" hidden>
+        <section class="panel panel-adv" id="panel-macro" role="tabpanel" aria-labelledby="tab-macro" tabindex="-1" hidden>
           <div class="fixed-hint" id="macroHint" data-i18n="macro.empty">Nenhum evento gravado.</div>
           <div class="action-row">
             <button type="button" class="action-btn" id="macroRecordBtn" data-i18n="macro.record">Gravar</button>
@@ -310,23 +419,100 @@
             <button type="button" class="action-btn ghost" id="macroStopBtn" data-i18n="macro.stop">Parar</button>
             <button type="button" class="action-btn ghost" id="macroClearBtn" data-i18n="macro.clear">Limpar</button>
           </div>
+          <div class="field-grid">
+            <div class="field">
+              <label for="macroRepeat" data-i18n="macro.repeat">Repetições</label>
+              <div class="lcd-input compact">
+                <input type="number" id="macroRepeat" value="1" min="1" max="100000" step="1">
+                <span>&times;</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="macroSpeed" data-i18n="macro.speed">Velocidade</label>
+              <div class="lcd-input compact">
+                <input type="number" id="macroSpeed" value="1" min="0.1" max="10" step="0.1">
+                <span>&times;</span>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="macroName" data-i18n="macro.name">Nome da macro</label>
+            <div class="lcd-input compact">
+              <input type="text" id="macroName" maxlength="64" data-i18n-placeholder="macro.namePlaceholder" placeholder="minha-macro" autocomplete="off">
+            </div>
+          </div>
+          <div class="action-row triple">
+            <button type="button" class="action-btn" id="macroSaveBtn" data-i18n="profiles.save">Salvar</button>
+            <button type="button" class="action-btn ghost" id="macroLoadBtn" data-i18n="profiles.load">Carregar</button>
+            <button type="button" class="action-btn ghost" id="macroDeleteBtn" data-i18n="profiles.delete">Excluir</button>
+          </div>
+          <label class="field-label" for="macroList" data-i18n="macro.savedLabel">Macros salvas</label>
+          <select id="macroList" class="profile-select" size="3" data-i18n-aria="macro.savedLabel" aria-label="Macros salvas"></select>
         </section>
 
-        <section class="panel panel-adv" id="panel-script" role="tabpanel" hidden>
-          <label class="field-label" for="scriptSource" data-i18n="script.dsl">DSL</label>
-          <textarea id="scriptSource" class="script-area" spellcheck="false" rows="4" data-i18n-placeholder="script.placeholder" placeholder="move 100 200&#10;click left&#10;wait 100&#10;key SPACE&#10;loop 3&#10;  click&#10;  wait 50&#10;end"></textarea>
+        <section class="panel panel-adv" id="panel-script" role="tabpanel" aria-labelledby="tab-script" tabindex="-1" hidden>
+          <div class="script-head">
+            <label class="field-label" for="scriptSource" data-i18n="script.dsl">DSL</label>
+            <button type="button" class="action-btn ghost tiny" id="scriptHelpBtn" data-i18n="script.help">comandos</button>
+          </div>
+          <div class="script-help" id="scriptHelp" hidden>
+            <code>click [btn] [X Y]</code><span data-i18n="script.helpClick">clique (left, right, middle, x1, x2)</span>
+            <code>dclick [btn] [X Y]</code><span data-i18n="script.helpDclick">duplo clique</span>
+            <code>move X Y</code><span data-i18n="script.helpMove">move o cursor</span>
+            <code>drag X1 Y1 X2 Y2</code><span data-i18n="script.helpDrag">arrasta de um ponto a outro</span>
+            <code>scroll N</code><span data-i18n="script.helpScroll">rola a roda (negativo = para baixo)</span>
+            <code>wait MS | MIN-MAX</code><span data-i18n="script.helpWait">espera fixa ou aleatória</span>
+            <code>key A | CTRL+C</code><span data-i18n="script.helpKey">tecla ou combinação</span>
+            <code>type "abc"</code><span data-i18n="script.helpType">digita o texto</span>
+            <code>loop N … end</code><span data-i18n="script.helpLoop">repete o bloco N vezes</span>
+            <code># …</code><span data-i18n="script.helpComment">comentário</span>
+          </div>
+          <textarea id="scriptSource" class="script-area" spellcheck="false" rows="8" data-i18n-placeholder="script.placeholder" placeholder="move 100 200&#10;click left&#10;wait 100&#10;key SPACE&#10;loop 3&#10;  click&#10;  wait 50&#10;end"></textarea>
+          <div class="fixed-hint" id="scriptHint"></div>
           <div class="action-row">
             <button type="button" class="action-btn" id="scriptRunBtn" data-i18n="script.run">Executar</button>
             <button type="button" class="action-btn ghost" id="scriptStopBtn" data-i18n="script.stop">Parar</button>
           </div>
         </section>
 
-        <section class="panel panel-adv" id="panel-schedule" role="tabpanel" hidden>
+        <section class="panel panel-adv" id="panel-schedule" role="tabpanel" aria-labelledby="tab-schedule" tabindex="-1" hidden>
           <div class="field">
             <label for="scheduleAt" data-i18n="schedule.startAt">Início em</label>
             <div class="lcd-input">
               <input type="datetime-local" id="scheduleAt" step="1">
             </div>
+          </div>
+          <div class="field">
+            <span class="field-label" data-i18n="schedule.repeat">Repetição</span>
+            <div class="segmented" id="scheduleRepeat" role="group" data-i18n-aria="schedule.repeat" aria-label="Repetição">
+              <button type="button" class="seg active" data-val="once" data-i18n="schedule.once">UMA VEZ</button>
+              <button type="button" class="seg" data-val="daily" data-i18n="schedule.daily">DIÁRIO</button>
+              <button type="button" class="seg" data-val="interval" data-i18n="schedule.interval">A CADA</button>
+            </div>
+          </div>
+          <div class="field" id="scheduleIntervalRow" hidden>
+            <label for="scheduleEvery" data-i18n="schedule.every">Repetir a cada</label>
+            <div class="lcd-input compact">
+              <input type="number" id="scheduleEvery" value="30" min="0" step="any">
+              <select class="unit-select" id="scheduleEveryUnit" data-i18n-aria="run.unitAria" aria-label="Unidade de tempo">
+                <option value="s">s</option>
+                <option value="min" selected>min</option>
+                <option value="h">h</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="scheduleTarget" data-i18n="schedule.target">O que iniciar</label>
+            <select id="scheduleTarget" class="plain-select">
+              <option value="engine" data-i18n="schedule.targetEngine">Autoclique (configuração atual)</option>
+              <option value="profile" data-i18n="schedule.targetProfile">Um perfil salvo</option>
+              <option value="macro" data-i18n="schedule.targetMacro">Macro carregada</option>
+              <option value="script" data-i18n="schedule.targetScript">Script</option>
+            </select>
+          </div>
+          <div class="field" id="scheduleProfileRow" hidden>
+            <label for="scheduleProfile" data-i18n="schedule.profile">Perfil</label>
+            <select id="scheduleProfile" class="plain-select"></select>
           </div>
           <div class="fixed-hint" id="scheduleHint" data-i18n="schedule.none">Nenhum agendamento ativo.</div>
           <div class="action-row">
@@ -336,7 +522,7 @@
         </section>
       </div>
 
-      <div class="error" id="errorLabel"></div>
+      <div class="error" id="errorLabel" role="alert" aria-live="assertive"></div>
       </div><!-- /.main-col -->
       </div><!-- /.workspace -->
     </div>
@@ -346,7 +532,10 @@
         <button type="button" class="keycap" id="hotkeyBtn" data-i18n-title="footer.hotkeyTitle" title="Clique para gravar nova tecla">F6</button>
         <span id="hotkeyHint" data-i18n="footer.hotkeyHint">iniciar / parar</span>
       </div>
-      <div class="footer-version" id="appVersion" hidden></div>
+      <div class="footer-version">
+        <span id="appVersion" hidden></span>
+        <button type="button" class="update-badge" id="updateBadge" hidden></button>
+      </div>
       <div class="status" id="statusLabel" data-i18n="status.stopped">parado</div>
     </div>
   </div>

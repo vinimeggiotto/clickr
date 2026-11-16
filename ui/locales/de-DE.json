@@ -13,7 +13,8 @@
   },
   "brand": {
     "clicks": "Klicks",
-    "cpsSuffix": "Klicks/Sek"
+    "cpsSuffix": "Klicks/Sek",
+    "cpsReal": "/s real"
   },
   "splash": {
     "loading": "lädt"
@@ -51,7 +52,8 @@
     "advanced": "Adv",
     "macro": "Makro",
     "script": "Skript",
-    "schedule": "Plan"
+    "schedule": "Plan",
+    "keys": "Tasten"
   },
   "click": {
     "interval": "Intervall",
@@ -63,7 +65,18 @@
     "double": "DOPPELT",
     "hold": "HALTEN",
     "cursor": "CURSOR",
-    "fixed": "FIXPUNKT"
+    "fixed": "FIXPUNKT",
+    "actionAria": "Was wiederholt wird",
+    "actionMouse": "MAUS",
+    "actionKey": "TASTE",
+    "key": "Taste",
+    "keyPlaceholder": "SPACE, E, CTRL+C",
+    "keyCapture": "erfassen",
+    "btnLeft": "Linke Taste",
+    "btnRight": "Rechte Taste",
+    "btnMiddle": "Mittlere Taste",
+    "btnX1": "Seitentaste 4",
+    "btnX2": "Seitentaste 5"
   },
   "run": {
     "startDelay": "Startverzögerung",
@@ -71,22 +84,34 @@
     "maxClicks": "Klicklimit",
     "maxDuration": "Max. Dauer",
     "alwaysOnTop": "Immer im Vordergrund",
-    "compactMode": "Kompaktmodus"
+    "compactMode": "Kompaktmodus",
+    "unitAria": "Zeiteinheit",
+    "launchAtLogin": "Mit dem System starten (im Tray)",
+    "checkUpdates": "Bei neuer Version benachrichtigen",
+    "checkUpdatesHint": "Prüft beim Start die Release-Seite des Projekts auf GitHub. Es werden keine Ihrer Daten gesendet."
   },
   "point": {
     "pick": "Punkt erfassen",
     "picking": "Erfassen…",
     "sequence": "Sequenz",
-    "addPoint": "+ Punkt",
+    "addPoint": "+ X/Y",
     "clear": "leeren",
     "seqDelay": "Schrittverzögerung",
     "seqListAria": "Sequenzpunktliste",
-    "seqEmpty": "Leere Liste: nutzt Cursor oder Fixpunkt.",
+    "seqEmpty": "Leere Liste: Cursor oder fester Punkt wird verwendet.",
     "seqCount": "{n} Punkt(e) — die Engine durchläuft die Liste.",
     "seqRemove": "Entfernen",
     "seqDelayMeta": "Verzögerung {ms} ms",
     "fixedPoint": "Punkt: <strong>{x}, {y}</strong>",
-    "fixedHintCursor": "FIXPUNKT aktivieren oder Koordinate erfassen."
+    "fixedHintCursor": "FIXPUNKT aktivieren oder Koordinate erfassen.",
+    "jitter": "Positionsabweichung ±",
+    "restoreCursor": "Cursor nach dem Klick zurücksetzen",
+    "pickToList": "erfassen",
+    "pickToListTitle": "Punkt auf dem Bildschirm erfassen und zur Liste hinzufügen",
+    "addPointTitle": "Obiges X/Y zur Liste hinzufügen",
+    "seqDelayAria": "Verzögerung nach Schritt {n} (ms)",
+    "seqUp": "Nach oben",
+    "seqDown": "Nach unten"
   },
   "advanced": {
     "windowFilter": "Fensterfilter",
@@ -98,7 +123,10 @@
     "placeholderProcess": "notepad.exe",
     "placeholderTitle": "Ohne Titel",
     "placeholderOff": "aus",
-    "placeholderDash": "—"
+    "placeholderDash": "—",
+    "useCurrentWindow": "Aktuelles Fenster verwenden",
+    "useCurrentWindowWait": "Fenster wechseln… {n}",
+    "useCurrentWindowHint": "Klicken und zum Zielfenster wechseln: es wird nach 3 Sekunden gelesen."
   },
   "profiles": {
     "name": "Profilname",
@@ -110,7 +138,16 @@
     "savedLabel": "Gespeicherte Profile",
     "listAria": "Profilliste",
     "needName": "Profilnamen eingeben.",
-    "needSelect": "Profil zum Laden auswählen."
+    "needSelect": "Profil aus der Liste auswählen.",
+    "delete": "Löschen",
+    "rename": "Umbenennen",
+    "renameTitle": "Benennt das gewählte Profil in den oben eingegebenen Namen um",
+    "needNewName": "Neuen Namen in das Feld oben eingeben.",
+    "deleteTitle": "Profil löschen",
+    "deleteBody": "Das Profil „{name}“ wird von der Festplatte gelöscht. Das kann nicht rückgängig gemacht werden.",
+    "overwriteTitle": "Profil ersetzen",
+    "overwriteBody": "Ein Profil namens „{name}“ existiert bereits. Sein Inhalt wird ersetzt.",
+    "overwrite": "Ersetzen"
   },
   "manualUi": {
     "modeAria": "Handbuchmodus",
@@ -131,32 +168,81 @@
     "stopRecord": "Aufnahme stoppen",
     "play": "Abspielen",
     "stop": "Stopp",
-    "clear": "Leeren"
+    "clear": "Leeren",
+    "repeat": "Wiederholungen",
+    "speed": "Geschwindigkeit",
+    "name": "Makroname",
+    "namePlaceholder": "mein-makro",
+    "savedLabel": "Gespeicherte Makros",
+    "needName": "Namen für das Makro eingeben.",
+    "needSelect": "Makro auswählen.",
+    "countDuration": "{n} Ereignis(se) · {s} s",
+    "playingRound": "Wiedergabe {i} von {n}",
+    "deleteTitle": "Makro löschen",
+    "deleteBody": "Das Makro „{name}“ wird von der Festplatte gelöscht. Das kann nicht rückgängig gemacht werden.",
+    "overwriteTitle": "Makro ersetzen",
+    "overwriteBody": "Ein Makro namens „{name}“ existiert bereits. Sein Inhalt wird ersetzt."
   },
   "script": {
     "dsl": "DSL",
     "run": "Ausführen",
     "stop": "Stopp",
-    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend"
+    "placeholder": "move 100 200\nclick left\nwait 80-150\nkey CTRL+C\ntype \"hallo\"\nloop 3\n  dclick 300 400\n  scroll -2\nend",
+    "runningLine": "Zeile {n} wird ausgeführt",
+    "help": "Befehle",
+    "helpClick": "Klick (left, right, middle, x1, x2)",
+    "helpDclick": "Doppelklick",
+    "helpMove": "bewegt den Cursor",
+    "helpDrag": "zieht von einem Punkt zum anderen",
+    "helpScroll": "scrollt das Rad (negativ = nach unten)",
+    "helpWait": "feste oder zufällige Wartezeit",
+    "helpKey": "Taste oder Kombination",
+    "helpType": "tippt den Text",
+    "helpLoop": "wiederholt den Block N-mal",
+    "helpComment": "Kommentar"
   },
   "schedule": {
     "startAt": "Start um",
     "none": "Kein aktiver Plan.",
     "active": "Geplant: {at}",
     "set": "Planen",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "repeat": "Wiederholung",
+    "once": "EINMAL",
+    "daily": "TÄGLICH",
+    "interval": "ALLE",
+    "every": "Wiederholen alle",
+    "target": "Was gestartet wird",
+    "targetEngine": "Autoklick (aktuelle Einstellungen)",
+    "targetProfile": "Ein gespeichertes Profil",
+    "targetMacro": "Geladenes Makro",
+    "targetScript": "Skript",
+    "profile": "Profil",
+    "activeFull": "Geplant für {at}: {what}.",
+    "target_engine": "Autoklick",
+    "target_profile": "Profil „{name}“",
+    "target_macro": "Makro",
+    "target_script": "Skript",
+    "repeatsDaily": "Wiederholt sich täglich.",
+    "repeatsEvery": "Wiederholt sich alle {every}."
   },
   "footer": {
     "hotkeyTitle": "Klicken, um neue Taste aufzunehmen",
     "hotkeyHint": "starten / stoppen",
-    "hotkeyRecording": "Taste drücken…"
+    "hotkeyRecording": "Kombination drücken…",
+    "hotkeyHintHold": "zum Klicken halten",
+    "updateAvailable": "v{v} verfügbar",
+    "updateTitle": "Download-Seite öffnen"
   },
   "status": {
     "stopped": "gestoppt",
     "active": "aktiv",
     "recording": "Aufnahme",
     "macro": "Makro",
-    "script": "Skript"
+    "script": "Skript",
+    "countdown": "wartet",
+    "blockedOwn": "Ziel liegt über Clickr",
+    "blockedFilter": "außerhalb des Filterfensters"
   },
   "errors": {
     "bridgeUnavailable": "pywebview-Bridge nicht verfügbar",
@@ -164,14 +250,79 @@
     "infoUnavailable": "Info-Fenster nicht verfügbar.",
     "pickHint": "Auf den Bildschirm klicken, um den Punkt zu markieren (Esc bricht ab)…",
     "wizardSavedStart": "Profil „{name}“ gespeichert und Engine gestartet.",
-    "wizardSavedOnly": "Profil „{name}“ gespeichert. Später unter Klick / Run / Punkt anpassen."
+    "wizardSavedOnly": "Profil „{name}“ gespeichert. Später unter Klick / Run / Punkt anpassen.",
+    "overlayMissing": "Erfassungs-Overlay nicht gefunden.",
+    "alwaysOnTop": "„Immer im Vordergrund“ konnte nicht angewendet werden.",
+    "config": {
+      "invalid": "Ungültige Konfiguration."
+    },
+    "hotkey": {
+      "unsupported": "Nicht unterstützte Tastenkombination: {key}",
+      "conflict": "{key} wird bereits von einem anderen Tastenkürzel verwendet.",
+      "unknownAction": "Unbekannte Tastenkürzel-Aktion.",
+      "toggleRequired": "Die Start-/Stopp-Taste darf nicht leer sein."
+    },
+    "sequence": {
+      "badIndex": "Ungültiger Sequenzschritt."
+    },
+    "macro": {
+      "empty": "Leeres Makro – zuerst Ereignisse aufzeichnen.",
+      "recordFailed": "Makroaufzeichnung konnte nicht gestartet werden.",
+      "busy": "Makro zuerst stoppen.",
+      "unsupportedKey": "Das Makro enthält eine nicht unterstützte Taste: {key}",
+      "unknownEvent": "Unbekanntes Makroereignis: {kind}",
+      "notFound": "Makro nicht gefunden: {name}",
+      "invalidFile": "Ungültige Makrodatei.",
+      "badOptions": "Ungültige Wiederholungen oder Geschwindigkeit."
+    },
+    "schedule": {
+      "empty": "Datum und Uhrzeit für die Planung eingeben.",
+      "invalid": "Ungültiges Datum/Uhrzeit.",
+      "past": "Der geplante Zeitpunkt muss in der Zukunft liegen.",
+      "badInterval": "Das Wiederholungsintervall muss zwischen {min} s und 7 Tagen liegen.",
+      "needProfile": "Zu startendes Profil auswählen."
+    },
+    "script": {
+      "empty": "Leeres Skript.",
+      "tooLong": "Das Skript überschreitet {max} Zeilen.",
+      "unknownCommand": "Zeile {line}: unbekannter Befehl „{op}“.",
+      "usage": "Zeile {line}: „{usage}“ verwenden.",
+      "badNumber": "Zeile {line}: ungültige Zahl „{value}“.",
+      "badButton": "Zeile {line}: ungültige Taste „{value}“.",
+      "badKey": "Zeile {line}: nicht unterstützte Taste „{value}“.",
+      "negativeWait": "Zeile {line}: ungültiges wait (MS oder MIN-MAX).",
+      "loopRange": "Zeile {line}: loop muss zwischen 1 und {max} liegen.",
+      "loopDepth": "Zeile {line}: höchstens {max} verschachtelte Schleifen.",
+      "endWithoutLoop": "Zeile {line}: „end“ ohne zugehörige Schleife.",
+      "loopNoEnd": "Einer Schleife fehlt das „end“."
+    },
+    "profile": {
+      "invalidName": "Ungültiger Profilname. Buchstaben, Ziffern, Leerzeichen, _ . - (max. 64).",
+      "reservedName": "„{name}“ ist vom System reserviert. Anderen Namen wählen.",
+      "notFound": "Profil nicht gefunden: {name}",
+      "exists": "Ein Profil namens „{name}“ existiert bereits.",
+      "invalidFile": "Ungültige Profildatei.",
+      "fileNotFound": "Datei nicht gefunden."
+    },
+    "key": {
+      "unsupported": "Nicht unterstützte Taste: {key}"
+    },
+    "filter": {
+      "ownWindow": "Das fokussierte Fenster war Clickr selbst. Vor Ablauf des Countdowns zum Zielfenster wechseln.",
+      "unavailable": "Das fokussierte Fenster konnte auf diesem System nicht gelesen werden.",
+      "noWindow": "Kein fokussiertes Fenster gefunden."
+    },
+    "autostart": {
+      "failed": "Der automatische Start konnte auf diesem System nicht geändert werden."
+    }
   },
   "tray": {
     "show": "Anzeigen",
     "hide": "Ausblenden",
     "quit": "Beenden",
     "notifyTitle": "Läuft noch",
-    "notifyBody": "Clickr läuft weiter im Tray. Nutzen Sie Beenden am Symbol zum echten Beenden."
+    "notifyBody": "Clickr läuft weiter im Tray. Nutzen Sie Beenden am Symbol zum echten Beenden.",
+    "toggle": "Start / Stopp"
   },
   "overlay": {
     "title": "Punkt erfassen",
@@ -191,95 +342,121 @@
       "advanced": "Adv",
       "macro": "Makro",
       "script": "Skript",
-      "schedule": "Plan"
+      "schedule": "Plan",
+      "keys": "Tasten"
     },
     "guide": {
       "welcome": {
         "title": "Willkommen bei Clickr",
         "body": [
-          "Autoclicker für Windows mit nativem Motor (SendInput).",
-          "Nutzen Sie den Pulse-Button oder den Hotkey (Standard F6) zum Starten und Stoppen.",
-          "Das X schließt die App nicht — sie geht in den Tray. Zum echten Beenden: Tray-Symbol → Beenden."
+          "Autoklicker für Windows, macOS und Linux mit nativer Eingabe-Engine.",
+          "Mit der mittleren Schaltfläche oder der Taste (Standard F6) starten und stoppen.",
+          "Die zuletzt verwendete Konfiguration wird beim Öffnen wiederhergestellt.",
+          "Das X des Fensters beendet die App nicht – sie geht in den Tray. Wirklich beenden: Tray-Symbol → Beenden."
         ],
         "tips": [
-          "Klicken Sie auf die F6-Taste im Footer, um einen anderen Hotkey aufzunehmen.",
-          "Geführtes Preset? Nutzen Sie den Assistenten oben in diesem Tab."
+          "Unter dem Zähler stehen die verstrichene Zeit und die tatsächliche Klickrate.",
+          "Geführte Voreinstellung gewünscht? Assistenten-Modus oben in diesem Tab verwenden."
         ]
       },
       "click": {
-        "title": "Tab Klick — Grundlagen",
+        "title": "Tab Klick – Grundlagen",
         "body": [
-          "Intervall (ms) + Slider: Zeit zwischen Klicks. Geschätzte CPS unten.",
-          "Taste: L / R / M / 4 / 5 (seitliche Maustasten).",
-          "Typ: Einfach, Doppelt oder Halten (gedrückt bis Stopp).",
-          "Position: Cursor (Mausposition) oder Fixpunkt (XY)."
+          "Intervall (ms) + Regler: Zeit zwischen Aktionen. Die geschätzte Rate steht darunter.",
+          "Maus oder Taste: eine Maustaste oder eine Taste/Kombination wiederholen (z. B. E, SPACE, CTRL+C).",
+          "Taste: L / R / M / 4 / 5 (Seitentasten der Maus).",
+          "Typ: Einfach, Doppelt oder Halten (bleibt bis zum Stopp gedrückt).",
+          "Position: Cursor (wo die Maus ist) oder fester Punkt (XY-Koordinate)."
         ],
         "tips": [
-          "Halten lässt die Taste los, wenn Sie den Motor stoppen.",
-          "Nach dem Assistenten können Sie alles hier erneut ändern."
+          "Clickr klickt nie auf das eigene Fenster: Cursor davon wegbewegen, damit die Klicks beginnen.",
+          "Halten lässt Taste oder Maustaste beim Stoppen los."
         ]
       },
       "run": {
-        "title": "Tab Run — Limits und Extras",
+        "title": "Tab Run – Limits und System",
         "body": [
-          "Startverzögerung: Warten vor dem ersten Klick.",
-          "Jitter ±: zufällige Intervallvariation.",
-          "Klicklimit / max. Dauer: stoppt allein bei N oder Zeit.",
-          "Immer im Vordergrund und Kompaktmodus."
+          "Startverzögerung: Wartezeit vor der ersten Aktion; der Countdown erscheint in der mittleren Schaltfläche.",
+          "Jitter ±: zufällige Variation des Intervalls (weniger „mechanische“ Klicks).",
+          "Klicklimit / max. Dauer: stoppt selbst bei N oder nach der Zeit.",
+          "Zeitfelder akzeptieren ms, s, min oder h – Einheit neben dem Wert wählen.",
+          "Immer im Vordergrund, Kompaktmodus, Mit dem System starten und Versionshinweis sind App-Einstellungen (Profile ändern sie nicht)."
         ],
         "tips": []
       },
       "point": {
-        "title": "Tab Punkt — Koordinaten",
+        "title": "Tab Point – Koordinaten",
         "body": [
-          "X und Y manuell setzen oder Punkt erfassen (Overlay auf allen Monitoren).",
-          "Sequenz: Punktliste mit Verzögerung pro Schritt.",
-          "+ Punkt nutzt die aktuelle Cursorposition (oder XY)."
+          "X und Y von Hand setzen oder Punkt erfassen verwenden: der Bildschirm wird leicht abgedunkelt, der Klick markiert die Position.",
+          "Positionsabweichung ±: jeder Klick landet bis zu N Pixel vom Punkt. Cursor zurücksetzen: die Maus kehrt nach dem Klick zurück.",
+          "Sequenz: Liste von Punkten mit Verzögerung pro Schritt. Die Engine durchläuft die Liste zyklisch, wenn sie nicht leer ist.",
+          "„Erfassen“ wählt einen Punkt auf dem Bildschirm und fügt ihn der Liste hinzu; „+ X/Y“ fügt die oben eingegebenen Koordinaten hinzu.",
+          "In der Liste: Verzögerung direkt bearbeiten, mit ↑ ↓ umsortieren, mit × entfernen."
         ],
         "tips": [
-          "Esc bricht die Erfassung ab."
+          "Esc bricht die Erfassung ab. Ein Punkt unter dem Clickr-Fenster wird übersprungen – die Fußzeile zeigt es an."
         ]
       },
       "profiles": {
         "title": "Tab Profile",
         "body": [
-          "Aktuelle Konfiguration unter dem Clickr-Benutzerdatenordner (profiles/) speichern.",
-          "Laden wendet ein Profil an. Export/Import tauscht JSON."
-        ],
-        "tips": []
-      },
-      "advanced": {
-        "title": "Tab Adv — Filter und Burst",
-        "body": [
-          "Fensterfilter und Burst (Salven). Außerhalb des Basis-Assistenten.",
-          "Tasten 4 und 5 sind im Selektor des Klick-Tabs."
+          "Aktuelle Klick-Konfiguration unter einem Namen speichern. Laden wendet ein Profil aus der Liste an.",
+          "Umbenennen nutzt das gewählte Profil und den eingegebenen Namen. Löschen fragt nach Bestätigung.",
+          "Export/Import tauscht JSON-Dateien mit anderen Rechnern; vor dem Ersetzen eines Profils wird immer gefragt.",
+          "Profile speichern nur das Klickverhalten. Tastenkürzel und App-Einstellungen bleiben getrennt."
         ],
         "tips": [
-          "Bei aktivem Filter ohne Kriterien sind alle Klicks erlaubt."
+          "Profile aus früheren Versionen funktionieren wie bisher, einschließlich ihrer Tastenbelegung."
+        ]
+      },
+      "advanced": {
+        "title": "Tab Adv – Filter und Burst",
+        "body": [
+          "Fensterfilter: wirkt nur, wenn Prozess und/oder Titel des fokussierten Fensters passen.",
+          "Aktuelles Fenster verwenden: klicken, zum Zielfenster wechseln, es wird nach 3 Sekunden gelesen.",
+          "Burst: N schnelle Klicks, Pause, Wiederholung – nützlich für kontrollierte Salven.",
+          "Solange der Filter Klicks zurückhält, zeigt die Fußzeile „außerhalb des Filterfensters“."
+        ],
+        "tips": [
+          "Bei aktivem Filter ohne Kriterien sind alle Aktionen erlaubt."
         ]
       },
       "macro": {
         "title": "Tab Makro",
         "body": [
-          "Aufnehmen und Abspielen von Maus/Tastatur mit relativen Zeiten."
+          "Aufnehmen: erfasst Maus (inkl. Rad) und Tastatur mit relativen Zeiten.",
+          "Wiedergeben: spielt die Aufnahme ab. Wiederholungen legt die Anzahl fest; Geschwindigkeit beschleunigt oder verlangsamt (1 = Original).",
+          "Namen vergeben und mit Speichern / Laden / Löschen Makros über Sitzungen hinweg behalten.",
+          "Stopp unterbricht und lässt gedrückte Tasten oder Maustasten los."
         ],
         "tips": [
-          "Während der Aufnahme wird der Toggle-Hotkey ignoriert."
+          "Im Tab Tasten ein Kürzel für „Makro aufnehmen / stoppen“ festlegen, damit der Klick auf die Schaltfläche nicht aufgezeichnet wird."
         ]
       },
       "script": {
-        "title": "Tab Skript — DSL",
+        "title": "Tab Skript",
         "body": [
-          "Befehle: click, move, wait, key und loop…end."
+          "Ein Befehl pro Zeile: click, dclick, move, drag, scroll, wait, key, type und loop N … end.",
+          "Die Schaltfläche „Befehle“ öffnet die Referenz mit der Syntax.",
+          "wait akzeptiert einen festen Wert oder einen Zufallsbereich (z. B. wait 80-150); key akzeptiert Kombinationen (z. B. key CTRL+C).",
+          "Limits: bis zu 500 Zeilen, Schleifen von 1 bis 1000, höchstens 2 verschachtelte Schleifen.",
+          "Der Text bleibt für das nächste Mal erhalten; beim Ausführen wird die aktuelle Zeile angezeigt."
         ],
-        "tips": []
+        "tips": [
+          "Syntaxfehler nennen die Zeilennummer."
+        ]
       },
       "schedule": {
-        "title": "Tab Plan",
+        "title": "Tab Zeitplan",
         "body": [
-          "Lokales Datum/Uhrzeit planen; der Motor startet dann selbst."
+          "Lokales Datum/Uhrzeit wählen und was gestartet wird: Autoklick mit den aktuellen Einstellungen, ein gespeichertes Profil, das geladene Makro oder das Skript.",
+          "Wiederholung: einmal, täglich zur selben Zeit oder in einem Intervall.",
+          "Der Zeitplan wird gespeichert: wiederkehrende Zeitpläne sind nach dem Neustart wieder aktiv.",
+          "Abbrechen entfernt den aktiven Zeitplan."
         ],
-        "tips": []
+        "tips": [
+          "Clickr muss laufen (kann im Tray bleiben), damit der Zeitplan auslöst."
+        ]
       },
       "safety": {
         "title": "Verantwortungsvoller Einsatz",
@@ -290,6 +467,18 @@
         ],
         "tips": [
           "Sie sind für die Nutzung verantwortlich."
+        ]
+      },
+      "keys": {
+        "title": "Tab Tasten",
+        "body": [
+          "Jede Aktion hat ihr eigenes globales Tastenkürzel: Start / Stopp, Alles stoppen, Punkt am Cursor erfassen und Makro aufnehmen / stoppen.",
+          "Kürzel anklicken und Kombination drücken – Strg, Alt, Umschalt und Win sind erlaubt (z. B. Strg+Alt+F6). Esc bricht ab; × entfernt.",
+          "Umschalten: einmal drücken startet, erneut stoppt. Halten: klickt nur, solange die Taste gehalten wird.",
+          "„Alles stoppen“ beendet Autoklick, Makro, Skript und Erfassung auf einmal."
+        ],
+        "tips": [
+          "Unter Windows erreicht das Kürzel das fokussierte Programm nicht. Funktionstasten oder Kombinationen mit Modifikator bevorzugen."
         ]
       }
     },
@@ -406,5 +595,19 @@
         ]
       }
     }
+  },
+  "keys": {
+    "toggle": "Start / Stopp",
+    "stopAll": "Alles stoppen",
+    "pickPoint": "Punkt am Cursor erfassen",
+    "macroRecord": "Makro aufnehmen / stoppen",
+    "clear": "Tastenkürzel entfernen",
+    "none": "festlegen",
+    "hint": "Tastenkürzel anklicken und Kombination drücken (z. B. Strg+Alt+F6). Esc bricht ab.",
+    "activation": "Start-/Stopp-Taste",
+    "modeToggle": "UMSCHALTEN",
+    "modeHold": "HALTEN",
+    "modeToggleHint": "Einmal drücken startet, erneut drücken stoppt.",
+    "modeHoldHint": "Klickt nur, solange die Taste gehalten wird."
   }
 }

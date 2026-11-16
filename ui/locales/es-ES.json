@@ -13,7 +13,8 @@
   },
   "brand": {
     "clicks": "clics",
-    "cpsSuffix": "clics/seg"
+    "cpsSuffix": "clics/seg",
+    "cpsReal": "/s real"
   },
   "splash": {
     "loading": "cargando"
@@ -51,7 +52,8 @@
     "advanced": "Adv",
     "macro": "Macro",
     "script": "Script",
-    "schedule": "Agenda"
+    "schedule": "Agenda",
+    "keys": "Atajos"
   },
   "click": {
     "interval": "Intervalo",
@@ -63,7 +65,18 @@
     "double": "DOBLE",
     "hold": "HOLD",
     "cursor": "CURSOR",
-    "fixed": "PUNTO FIJO"
+    "fixed": "PUNTO FIJO",
+    "actionAria": "Qué repetir",
+    "actionMouse": "RATÓN",
+    "actionKey": "TECLA",
+    "key": "Tecla",
+    "keyPlaceholder": "SPACE, E, CTRL+C",
+    "keyCapture": "capturar",
+    "btnLeft": "Botón izquierdo",
+    "btnRight": "Botón derecho",
+    "btnMiddle": "Botón central",
+    "btnX1": "Botón lateral 4",
+    "btnX2": "Botón lateral 5"
   },
   "run": {
     "startDelay": "Retardo inicio",
@@ -71,13 +84,17 @@
     "maxClicks": "Límite clics",
     "maxDuration": "Duración máx.",
     "alwaysOnTop": "Siempre encima",
-    "compactMode": "Modo compacto"
+    "compactMode": "Modo compacto",
+    "unitAria": "Unidad de tiempo",
+    "launchAtLogin": "Iniciar con el sistema (en la bandeja)",
+    "checkUpdates": "Avisar cuando haya una versión nueva",
+    "checkUpdatesHint": "Consulta la página de versiones del proyecto en GitHub al abrir. No se envía ningún dato tuyo."
   },
   "point": {
     "pick": "Capturar punto",
     "picking": "Capturando…",
     "sequence": "Secuencia",
-    "addPoint": "+ punto",
+    "addPoint": "+ X/Y",
     "clear": "limpiar",
     "seqDelay": "Retardo paso",
     "seqListAria": "Lista de puntos de la secuencia",
@@ -86,7 +103,15 @@
     "seqRemove": "Quitar",
     "seqDelayMeta": "retardo {ms} ms",
     "fixedPoint": "Punto: <strong>{x}, {y}</strong>",
-    "fixedHintCursor": "Activa PUNTO FIJO o captura una coordenada."
+    "fixedHintCursor": "Activa PUNTO FIJO o captura una coordenada.",
+    "jitter": "Variación de posición ±",
+    "restoreCursor": "Devolver el cursor tras el clic",
+    "pickToList": "capturar",
+    "pickToListTitle": "Capturar un punto en pantalla y añadirlo a la lista",
+    "addPointTitle": "Añadir el X/Y de arriba a la lista",
+    "seqDelayAria": "Retardo tras el paso {n} (ms)",
+    "seqUp": "Subir",
+    "seqDown": "Bajar"
   },
   "advanced": {
     "windowFilter": "Filtro de ventana",
@@ -98,7 +123,10 @@
     "placeholderProcess": "notepad.exe",
     "placeholderTitle": "Sin título",
     "placeholderOff": "off",
-    "placeholderDash": "—"
+    "placeholderDash": "—",
+    "useCurrentWindow": "Usar ventana actual",
+    "useCurrentWindowWait": "Cambia de ventana… {n}",
+    "useCurrentWindowHint": "Haz clic y cambia a la ventana deseada: se lee tras 3 segundos."
   },
   "profiles": {
     "name": "Nombre del perfil",
@@ -110,7 +138,16 @@
     "savedLabel": "Perfiles guardados",
     "listAria": "Lista de perfiles",
     "needName": "Indica un nombre de perfil.",
-    "needSelect": "Selecciona un perfil para cargar."
+    "needSelect": "Selecciona un perfil de la lista.",
+    "delete": "Eliminar",
+    "rename": "Renombrar",
+    "renameTitle": "Renombra el perfil seleccionado con el nombre escrito arriba",
+    "needNewName": "Escribe el nuevo nombre en el campo de arriba.",
+    "deleteTitle": "Eliminar perfil",
+    "deleteBody": "El perfil “{name}” se borrará del disco. Esta acción no se puede deshacer.",
+    "overwriteTitle": "Reemplazar perfil",
+    "overwriteBody": "Ya existe un perfil llamado “{name}”. Su contenido actual será reemplazado.",
+    "overwrite": "Reemplazar"
   },
   "manualUi": {
     "modeAria": "Modo del Manual",
@@ -131,32 +168,81 @@
     "stopRecord": "Parar grabación",
     "play": "Reproducir",
     "stop": "Parar",
-    "clear": "Limpiar"
+    "clear": "Limpiar",
+    "repeat": "Repeticiones",
+    "speed": "Velocidad",
+    "name": "Nombre de la macro",
+    "namePlaceholder": "mi-macro",
+    "savedLabel": "Macros guardadas",
+    "needName": "Indica un nombre para la macro.",
+    "needSelect": "Selecciona una macro.",
+    "countDuration": "{n} evento(s) · {s} s",
+    "playingRound": "Reproduciendo {i} de {n}",
+    "deleteTitle": "Eliminar macro",
+    "deleteBody": "La macro “{name}” se borrará del disco. Esta acción no se puede deshacer.",
+    "overwriteTitle": "Reemplazar macro",
+    "overwriteBody": "Ya existe una macro llamada “{name}”. Su contenido actual será reemplazado."
   },
   "script": {
     "dsl": "DSL",
     "run": "Ejecutar",
     "stop": "Parar",
-    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend"
+    "placeholder": "move 100 200\nclick left\nwait 80-150\nkey CTRL+C\ntype \"hola\"\nloop 3\n  dclick 300 400\n  scroll -2\nend",
+    "runningLine": "Ejecutando línea {n}",
+    "help": "comandos",
+    "helpClick": "clic (left, right, middle, x1, x2)",
+    "helpDclick": "doble clic",
+    "helpMove": "mueve el cursor",
+    "helpDrag": "arrastra de un punto a otro",
+    "helpScroll": "desplaza la rueda (negativo = abajo)",
+    "helpWait": "espera fija o aleatoria",
+    "helpKey": "tecla o combinación",
+    "helpType": "escribe el texto",
+    "helpLoop": "repite el bloque N veces",
+    "helpComment": "comentario"
   },
   "schedule": {
     "startAt": "Inicio en",
     "none": "Ninguna programación activa.",
     "active": "Programado: {at}",
     "set": "Programar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "repeat": "Repetición",
+    "once": "UNA VEZ",
+    "daily": "DIARIO",
+    "interval": "CADA",
+    "every": "Repetir cada",
+    "target": "Qué iniciar",
+    "targetEngine": "Autoclic (configuración actual)",
+    "targetProfile": "Un perfil guardado",
+    "targetMacro": "Macro cargada",
+    "targetScript": "Script",
+    "profile": "Perfil",
+    "activeFull": "Programado para {at}: {what}.",
+    "target_engine": "autoclic",
+    "target_profile": "perfil “{name}”",
+    "target_macro": "macro",
+    "target_script": "script",
+    "repeatsDaily": "Se repite todos los días.",
+    "repeatsEvery": "Se repite cada {every}."
   },
   "footer": {
     "hotkeyTitle": "Clic para grabar una nueva tecla",
     "hotkeyHint": "iniciar / parar",
-    "hotkeyRecording": "pulsa una tecla…"
+    "hotkeyRecording": "pulsa la combinación…",
+    "hotkeyHintHold": "mantén para hacer clic",
+    "updateAvailable": "v{v} disponible",
+    "updateTitle": "Abrir la página de descarga"
   },
   "status": {
     "stopped": "parado",
     "active": "activo",
     "recording": "grabando",
     "macro": "macro",
-    "script": "script"
+    "script": "script",
+    "countdown": "esperando",
+    "blockedOwn": "objetivo sobre Clickr",
+    "blockedFilter": "fuera de la ventana del filtro"
   },
   "errors": {
     "bridgeUnavailable": "Puente pywebview no disponible",
@@ -164,14 +250,79 @@
     "infoUnavailable": "Ventana de información no disponible.",
     "pickHint": "Haz clic en la pantalla para marcar el punto (Esc cancela)…",
     "wizardSavedStart": "Perfil “{name}” guardado y motor iniciado.",
-    "wizardSavedOnly": "Perfil “{name}” guardado. Ajústalo luego en Clic / Run / Punto."
+    "wizardSavedOnly": "Perfil “{name}” guardado. Ajústalo luego en Clic / Run / Punto.",
+    "overlayMissing": "No se encontró la pantalla de captura.",
+    "alwaysOnTop": "No se pudo aplicar “siempre visible”.",
+    "config": {
+      "invalid": "Configuración no válida."
+    },
+    "hotkey": {
+      "unsupported": "Atajo no compatible: {key}",
+      "conflict": "{key} ya está en uso por otro atajo.",
+      "unknownAction": "Acción de atajo desconocida.",
+      "toggleRequired": "El atajo de iniciar / detener no puede quedar vacío."
+    },
+    "sequence": {
+      "badIndex": "Paso de secuencia no válido."
+    },
+    "macro": {
+      "empty": "Macro vacía: graba eventos antes de reproducir.",
+      "recordFailed": "No se pudo iniciar la grabación de la macro.",
+      "busy": "Detén la macro antes de continuar.",
+      "unsupportedKey": "La macro contiene una tecla no compatible: {key}",
+      "unknownEvent": "Evento de macro desconocido: {kind}",
+      "notFound": "Macro no encontrada: {name}",
+      "invalidFile": "Archivo de macro no válido.",
+      "badOptions": "Repeticiones o velocidad no válidas."
+    },
+    "schedule": {
+      "empty": "Indica fecha y hora para programar.",
+      "invalid": "Fecha/hora no válida.",
+      "past": "La hora programada debe ser futura.",
+      "badInterval": "El intervalo de repetición debe estar entre {min} s y 7 días.",
+      "needProfile": "Elige el perfil a iniciar."
+    },
+    "script": {
+      "empty": "Script vacío.",
+      "tooLong": "El script supera las {max} líneas.",
+      "unknownCommand": "Línea {line}: comando desconocido “{op}”.",
+      "usage": "Línea {line}: usa “{usage}”.",
+      "badNumber": "Línea {line}: número no válido “{value}”.",
+      "badButton": "Línea {line}: botón no válido “{value}”.",
+      "badKey": "Línea {line}: tecla no compatible “{value}”.",
+      "negativeWait": "Línea {line}: wait no válido (usa MS o MIN-MAX).",
+      "loopRange": "Línea {line}: loop debe estar entre 1 y {max}.",
+      "loopDepth": "Línea {line}: máximo {max} loops anidados.",
+      "endWithoutLoop": "Línea {line}: “end” sin loop correspondiente.",
+      "loopNoEnd": "Hay un loop sin “end”."
+    },
+    "profile": {
+      "invalidName": "Nombre de perfil no válido. Usa letras, números, espacio, _ . - (máx. 64).",
+      "reservedName": "“{name}” es un nombre reservado por el sistema. Elige otro.",
+      "notFound": "Perfil no encontrado: {name}",
+      "exists": "Ya existe un perfil llamado “{name}”.",
+      "invalidFile": "Archivo de perfil no válido.",
+      "fileNotFound": "Archivo no encontrado."
+    },
+    "key": {
+      "unsupported": "Tecla no compatible: {key}"
+    },
+    "filter": {
+      "ownWindow": "La ventana en foco era el propio Clickr. Cambia a la ventana deseada antes de que termine la cuenta.",
+      "unavailable": "No se pudo leer la ventana en foco en este sistema.",
+      "noWindow": "No se encontró ninguna ventana en foco."
+    },
+    "autostart": {
+      "failed": "No se pudo cambiar el inicio automático en este sistema."
+    }
   },
   "tray": {
     "show": "Mostrar",
     "hide": "Ocultar",
     "quit": "Salir",
     "notifyTitle": "Sigue en ejecución",
-    "notifyBody": "Clickr sigue en la bandeja. Usa Salir en el icono para cerrar de verdad."
+    "notifyBody": "Clickr sigue en la bandeja. Usa Salir en el icono para cerrar de verdad.",
+    "toggle": "Iniciar / Detener"
   },
   "overlay": {
     "title": "Capturar punto",
@@ -191,95 +342,121 @@
       "advanced": "Adv",
       "macro": "Macro",
       "script": "Script",
-      "schedule": "Agenda"
+      "schedule": "Agenda",
+      "keys": "Atajos"
     },
     "guide": {
       "welcome": {
         "title": "Bienvenido a Clickr",
         "body": [
-          "Autoclicker para Windows con motor nativo (SendInput).",
-          "Usa el botón pulse o la hotkey (por defecto F6) para iniciar y parar.",
-          "La X de la ventana no cierra la app — va a la bandeja. Para salir de verdad: icono → Salir."
+          "Autoclicker para Windows, macOS y Linux con motor de entrada nativo.",
+          "Usa el botón central o el atajo (F6 por defecto) para iniciar y detener.",
+          "La última configuración usada se restaura al abrir la app.",
+          "La X de la ventana no cierra la app: va a la bandeja. Para salir de verdad: icono de la bandeja → Salir."
         ],
         "tips": [
-          "Haz clic en el keycap F6 del pie para grabar otra tecla.",
-          "¿Quieres un preset guiado? Usa el modo Asistente arriba."
+          "Bajo el contador aparecen el tiempo transcurrido y la tasa real de clics.",
+          "¿Quieres un preset guiado? Usa el modo Asistente en la parte superior de esta pestaña."
         ]
       },
       "click": {
-        "title": "Pestaña Clic — esencial",
+        "title": "Pestaña Clic: lo esencial",
         "body": [
-          "Intervalo (ms) + deslizador: tiempo entre clics. El CPS estimado aparece abajo.",
-          "Botón: L / R / M / 4 / 5 (botones laterales).",
-          "Tipo: Simple, Doble o Hold (mantiene pulsado hasta parar).",
-          "Posición: Cursor o Punto fijo (XY)."
+          "Intervalo (ms) + deslizador: tiempo entre acciones. La tasa estimada aparece debajo.",
+          "Ratón o Tecla: repite un botón del ratón o una tecla/combinación (p. ej. E, SPACE, CTRL+C).",
+          "Botón: L / R / M / 4 / 5 (botones laterales del ratón).",
+          "Tipo: Simple, Doble o Hold (se mantiene pulsado hasta detener).",
+          "Posición: Cursor (donde esté el ratón) o Punto fijo (coordenada XY)."
         ],
         "tips": [
-          "Hold suelta el botón al parar el motor.",
-          "Tras el Asistente, cámbialo todo de nuevo aquí."
+          "Clickr nunca hace clic en su propia ventana: aparta el cursor para que empiecen los clics.",
+          "Hold suelta el botón o la tecla al detener el motor."
         ]
       },
       "run": {
-        "title": "Pestaña Run — límites y extras",
+        "title": "Pestaña Run: límites y sistema",
         "body": [
-          "Retardo de inicio: espera antes del primer clic.",
-          "Jitter ±: variación aleatoria del intervalo.",
-          "Límite de clics / duración máx.: para solo al alcanzar N o el tiempo.",
-          "Siempre encima y Modo compacto."
+          "Retardo inicial: espera antes de la primera acción; la cuenta atrás aparece en el botón central.",
+          "Jitter ±: variación aleatoria del intervalo (clics menos “mecánicos”).",
+          "Límite de clics / duración máx.: se detiene solo al llegar a N o al tiempo.",
+          "Los campos de tiempo aceptan ms, s, min u h: elige la unidad junto al valor.",
+          "Siempre visible, Modo compacto, Iniciar con el sistema y Aviso de versión nueva son preferencias de la app (los perfiles no las cambian)."
         ],
         "tips": []
       },
       "point": {
-        "title": "Pestaña Punto — coordenadas",
+        "title": "Pestaña Point: coordenadas",
         "body": [
-          "Define X e Y o usa Capturar punto (todos los monitores).",
-          "Secuencia: lista de puntos con retardo por paso.",
-          "+ punto usa la posición actual del cursor (o XY)."
+          "Define X e Y a mano o usa Capturar punto: la pantalla se oscurece un poco y el clic marca la posición.",
+          "Variación de posición ±: cada clic cae a hasta N píxeles del punto. Devolver el cursor: el ratón vuelve a donde estaba tras el clic.",
+          "Secuencia: lista de puntos con retardo por paso. El motor recorre la lista en ciclo cuando no está vacía.",
+          "“Capturar” elige un punto en pantalla y lo añade a la lista; “+ X/Y” añade las coordenadas escritas arriba.",
+          "En la lista: edita el retardo en la propia fila, usa ↑ ↓ para reordenar y × para quitar."
         ],
         "tips": [
-          "Esc cancela la captura."
+          "Esc cancela la captura. Un punto bajo la ventana de Clickr se omite: el pie lo indica."
         ]
       },
       "profiles": {
         "title": "Pestaña Perfiles",
         "body": [
-          "Guarda la configuración actual con un nombre en la carpeta de datos del Clickr (profiles/).",
-          "Cargar aplica un perfil. Exportar/Importar intercambia JSON."
-        ],
-        "tips": []
-      },
-      "advanced": {
-        "title": "Pestaña Adv — filtro y ráfaga",
-        "body": [
-          "Filtro de ventana y ráfaga. Fuera del Asistente básico.",
-          "Los botones 4 y 5 están en el selector de Clic."
+          "Guarda la configuración de clic actual con un nombre. Cargar aplica un perfil de la lista.",
+          "Renombrar usa el perfil seleccionado y el nombre escrito en el campo. Eliminar pide confirmación.",
+          "Exportar/Importar intercambia archivos JSON con otros equipos; reemplazar un perfil existente siempre pregunta antes.",
+          "Los perfiles guardan solo el comportamiento de clic. Los atajos y preferencias de la app van aparte."
         ],
         "tips": [
-          "Con filtro activo y criterios vacíos, se permiten todos los clics."
+          "Los perfiles creados en versiones anteriores siguen funcionando igual, incluido el atajo que definían."
+        ]
+      },
+      "advanced": {
+        "title": "Pestaña Adv: filtro y ráfaga",
+        "body": [
+          "Filtro de ventana: solo actúa si el proceso y/o el título de la ventana en foco coinciden.",
+          "Usar ventana actual: haz clic, cambia a la ventana deseada y se lee tras 3 segundos.",
+          "Burst: N clics rápidos, pausa y repite: útil para ráfagas controladas.",
+          "Cuando el filtro retiene los clics, el pie muestra “fuera de la ventana del filtro”."
+        ],
+        "tips": [
+          "Con el filtro activo y criterios vacíos, se permiten todas las acciones."
         ]
       },
       "macro": {
         "title": "Pestaña Macro",
         "body": [
-          "Grabar y reproducir ratón/teclado con tiempos relativos."
+          "Grabar: captura ratón (incluida la rueda) y teclado con tiempos relativos.",
+          "Reproducir: repite la grabación. Repeticiones define cuántas veces; Velocidad acelera o ralentiza (1 = original).",
+          "Ponle nombre y usa Guardar / Cargar / Eliminar para conservar macros entre sesiones.",
+          "Detener interrumpe y suelta cualquier tecla o botón que haya quedado pulsado."
         ],
         "tips": [
-          "Durante la grabación se ignora la hotkey de toggle."
+          "Define un atajo de “Grabar / detener macro” en la pestaña Atajos: así el clic en el botón no entra en la grabación."
         ]
       },
       "script": {
-        "title": "Pestaña Script — DSL",
+        "title": "Pestaña Script",
         "body": [
-          "Comandos click, move, wait, key y loop…end."
+          "Un comando por línea: click, dclick, move, drag, scroll, wait, key, type y loop N … end.",
+          "El botón “comandos” abre la referencia con la sintaxis de cada uno.",
+          "wait acepta un valor fijo o un rango aleatorio (p. ej. wait 80-150); key acepta combinaciones (p. ej. key CTRL+C).",
+          "Límites: hasta 500 líneas, bucles de 1 a 1000, máximo 2 bucles anidados.",
+          "El texto se guarda para la próxima vez; durante la ejecución se muestra la línea actual."
         ],
-        "tips": []
+        "tips": [
+          "Los errores de sintaxis indican el número de línea."
+        ]
       },
       "schedule": {
         "title": "Pestaña Agenda",
         "body": [
-          "Programa fecha/hora local para iniciar el motor solo."
+          "Elige fecha/hora local y qué iniciar: el autoclic con la configuración actual, un perfil guardado, la macro cargada o el script.",
+          "Repetición: una vez, cada día a la misma hora o cada cierto intervalo.",
+          "La programación se guarda: las recurrentes vuelven al reabrir la app.",
+          "Cancelar elimina la programación activa."
         ],
-        "tips": []
+        "tips": [
+          "Clickr debe estar abierto (puede quedarse en la bandeja) para que la programación se dispare."
+        ]
       },
       "safety": {
         "title": "Uso responsable",
@@ -290,6 +467,18 @@
         ],
         "tips": [
           "Eres responsable del uso del software."
+        ]
+      },
+      "keys": {
+        "title": "Pestaña Atajos",
+        "body": [
+          "Cada acción tiene su atajo global: Iniciar / detener, Detener todo, Capturar punto en el cursor y Grabar / detener macro.",
+          "Haz clic en el atajo y pulsa la combinación: puedes usar Ctrl, Alt, Mayús y Win (p. ej. Ctrl+Alt+F6). Esc cancela; × lo quita.",
+          "Alternar: una pulsación inicia, otra detiene. Mantener: solo hace clic mientras el atajo esté pulsado.",
+          "“Detener todo” interrumpe autoclic, macro, script y captura de una vez."
+        ],
+        "tips": [
+          "En Windows el atajo no llega al programa en foco. Prefiere teclas de función o combinaciones con modificador."
         ]
       }
     },
@@ -406,5 +595,19 @@
         ]
       }
     }
+  },
+  "keys": {
+    "toggle": "Iniciar / detener",
+    "stopAll": "Detener todo",
+    "pickPoint": "Capturar punto en el cursor",
+    "macroRecord": "Grabar / detener macro",
+    "clear": "Quitar atajo",
+    "none": "definir",
+    "hint": "Haz clic en un atajo y pulsa la combinación (p. ej. Ctrl+Alt+F6). Esc cancela.",
+    "activation": "Atajo de iniciar / detener",
+    "modeToggle": "ALTERNAR",
+    "modeHold": "MANTENER",
+    "modeToggleHint": "Una pulsación inicia, otra detiene.",
+    "modeHoldHint": "Solo hace clic mientras el atajo esté pulsado."
   }
 }

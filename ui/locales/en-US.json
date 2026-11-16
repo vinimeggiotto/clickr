@@ -13,7 +13,8 @@
   },
   "brand": {
     "clicks": "clicks",
-    "cpsSuffix": "clicks/sec"
+    "cpsSuffix": "clicks/sec",
+    "cpsReal": "/s actual"
   },
   "splash": {
     "loading": "loading"
@@ -51,7 +52,8 @@
     "advanced": "Adv",
     "macro": "Macro",
     "script": "Script",
-    "schedule": "Schedule"
+    "schedule": "Schedule",
+    "keys": "Keys"
   },
   "click": {
     "interval": "Interval",
@@ -63,7 +65,18 @@
     "double": "DOUBLE",
     "hold": "HOLD",
     "cursor": "CURSOR",
-    "fixed": "FIXED POINT"
+    "fixed": "FIXED POINT",
+    "actionAria": "What to repeat",
+    "actionMouse": "MOUSE",
+    "actionKey": "KEY",
+    "key": "Key",
+    "keyPlaceholder": "SPACE, E, CTRL+C",
+    "keyCapture": "capture",
+    "btnLeft": "Left button",
+    "btnRight": "Right button",
+    "btnMiddle": "Middle button",
+    "btnX1": "Side button 4",
+    "btnX2": "Side button 5"
   },
   "run": {
     "startDelay": "Start delay",
@@ -71,13 +84,17 @@
     "maxClicks": "Click limit",
     "maxDuration": "Max duration",
     "alwaysOnTop": "Always on top",
-    "compactMode": "Compact mode"
+    "compactMode": "Compact mode",
+    "unitAria": "Time unit",
+    "launchAtLogin": "Start with the system (in the tray)",
+    "checkUpdates": "Notify when a new version is available",
+    "checkUpdatesHint": "Checks the project's releases page on GitHub at startup. None of your data is sent."
   },
   "point": {
     "pick": "Capture point",
     "picking": "Capturing…",
     "sequence": "Sequence",
-    "addPoint": "+ point",
+    "addPoint": "+ X/Y",
     "clear": "clear",
     "seqDelay": "Step delay",
     "seqListAria": "Sequence point list",
@@ -86,7 +103,15 @@
     "seqRemove": "Remove",
     "seqDelayMeta": "delay {ms} ms",
     "fixedPoint": "Point: <strong>{x}, {y}</strong>",
-    "fixedHintCursor": "Enable FIXED POINT or capture a coordinate."
+    "fixedHintCursor": "Enable FIXED POINT or capture a coordinate.",
+    "jitter": "Position variation ±",
+    "restoreCursor": "Return the cursor after the click",
+    "pickToList": "capture",
+    "pickToListTitle": "Capture a point on screen and add it to the list",
+    "addPointTitle": "Add the X/Y above to the list",
+    "seqDelayAria": "Delay after step {n} (ms)",
+    "seqUp": "Move up",
+    "seqDown": "Move down"
   },
   "advanced": {
     "windowFilter": "Window filter",
@@ -98,7 +123,10 @@
     "placeholderProcess": "notepad.exe",
     "placeholderTitle": "Untitled",
     "placeholderOff": "off",
-    "placeholderDash": "—"
+    "placeholderDash": "—",
+    "useCurrentWindow": "Use current window",
+    "useCurrentWindowWait": "Switch window… {n}",
+    "useCurrentWindowHint": "Click, then switch to the target window: it is read after 3 seconds."
   },
   "profiles": {
     "name": "Profile name",
@@ -110,7 +138,16 @@
     "savedLabel": "Saved profiles",
     "listAria": "Profile list",
     "needName": "Enter a profile name.",
-    "needSelect": "Select a profile to load."
+    "needSelect": "Select a profile from the list.",
+    "delete": "Delete",
+    "rename": "Rename",
+    "renameTitle": "Renames the selected profile to the name typed above",
+    "needNewName": "Type the new name in the field above.",
+    "deleteTitle": "Delete profile",
+    "deleteBody": "The profile “{name}” will be deleted from disk. This cannot be undone.",
+    "overwriteTitle": "Replace profile",
+    "overwriteBody": "A profile named “{name}” already exists. Its current content will be replaced.",
+    "overwrite": "Replace"
   },
   "manualUi": {
     "modeAria": "Manual mode",
@@ -131,32 +168,81 @@
     "stopRecord": "Stop recording",
     "play": "Play",
     "stop": "Stop",
-    "clear": "Clear"
+    "clear": "Clear",
+    "repeat": "Repeats",
+    "speed": "Speed",
+    "name": "Macro name",
+    "namePlaceholder": "my-macro",
+    "savedLabel": "Saved macros",
+    "needName": "Enter a name for the macro.",
+    "needSelect": "Select a macro.",
+    "countDuration": "{n} event(s) · {s} s",
+    "playingRound": "Playing {i} of {n}",
+    "deleteTitle": "Delete macro",
+    "deleteBody": "The macro “{name}” will be deleted from disk. This cannot be undone.",
+    "overwriteTitle": "Replace macro",
+    "overwriteBody": "A macro named “{name}” already exists. Its current content will be replaced."
   },
   "script": {
     "dsl": "DSL",
     "run": "Run",
     "stop": "Stop",
-    "placeholder": "move 100 200\nclick left\nwait 100\nkey SPACE\nloop 3\n  click\n  wait 50\nend"
+    "placeholder": "move 100 200\nclick left\nwait 80-150\nkey CTRL+C\ntype \"hello\"\nloop 3\n  dclick 300 400\n  scroll -2\nend",
+    "runningLine": "Running line {n}",
+    "help": "commands",
+    "helpClick": "click (left, right, middle, x1, x2)",
+    "helpDclick": "double click",
+    "helpMove": "moves the cursor",
+    "helpDrag": "drags from one point to another",
+    "helpScroll": "scrolls the wheel (negative = down)",
+    "helpWait": "fixed or random wait",
+    "helpKey": "key or combination",
+    "helpType": "types the text",
+    "helpLoop": "repeats the block N times",
+    "helpComment": "comment"
   },
   "schedule": {
     "startAt": "Start at",
     "none": "No active schedule.",
     "active": "Scheduled: {at}",
     "set": "Schedule",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "repeat": "Repeat",
+    "once": "ONCE",
+    "daily": "DAILY",
+    "interval": "EVERY",
+    "every": "Repeat every",
+    "target": "What to start",
+    "targetEngine": "Auto-click (current settings)",
+    "targetProfile": "A saved profile",
+    "targetMacro": "Loaded macro",
+    "targetScript": "Script",
+    "profile": "Profile",
+    "activeFull": "Scheduled for {at}: {what}.",
+    "target_engine": "auto-click",
+    "target_profile": "profile “{name}”",
+    "target_macro": "macro",
+    "target_script": "script",
+    "repeatsDaily": "Repeats every day.",
+    "repeatsEvery": "Repeats every {every}."
   },
   "footer": {
     "hotkeyTitle": "Click to record a new key",
     "hotkeyHint": "start / stop",
-    "hotkeyRecording": "press a key…"
+    "hotkeyRecording": "press the combination…",
+    "hotkeyHintHold": "hold to click",
+    "updateAvailable": "v{v} available",
+    "updateTitle": "Open the download page"
   },
   "status": {
     "stopped": "stopped",
     "active": "active",
     "recording": "recording",
     "macro": "macro",
-    "script": "script"
+    "script": "script",
+    "countdown": "waiting",
+    "blockedOwn": "target is over Clickr",
+    "blockedFilter": "outside filter window"
   },
   "errors": {
     "bridgeUnavailable": "pywebview bridge unavailable",
@@ -164,14 +250,79 @@
     "infoUnavailable": "Info window unavailable.",
     "pickHint": "Click the screen to mark the point (Esc cancels)…",
     "wizardSavedStart": "Profile “{name}” saved and engine started.",
-    "wizardSavedOnly": "Profile “{name}” saved. Tweak later in Click / Run / Point."
+    "wizardSavedOnly": "Profile “{name}” saved. Tweak later in Click / Run / Point.",
+    "overlayMissing": "Capture overlay not found.",
+    "alwaysOnTop": "Could not apply “always on top”.",
+    "config": {
+      "invalid": "Invalid configuration."
+    },
+    "hotkey": {
+      "unsupported": "Unsupported hotkey: {key}",
+      "conflict": "{key} is already used by another shortcut.",
+      "unknownAction": "Unknown shortcut action.",
+      "toggleRequired": "The start / stop shortcut cannot be empty."
+    },
+    "sequence": {
+      "badIndex": "Invalid sequence step."
+    },
+    "macro": {
+      "empty": "Empty macro — record events before playing.",
+      "recordFailed": "Could not start macro recording.",
+      "busy": "Stop the macro before continuing.",
+      "unsupportedKey": "The macro contains an unsupported key: {key}",
+      "unknownEvent": "Unknown macro event: {kind}",
+      "notFound": "Macro not found: {name}",
+      "invalidFile": "Invalid macro file.",
+      "badOptions": "Invalid repeats or speed."
+    },
+    "schedule": {
+      "empty": "Enter a date and time to schedule.",
+      "invalid": "Invalid date/time.",
+      "past": "The scheduled time must be in the future.",
+      "badInterval": "The repeat interval must be between {min} s and 7 days.",
+      "needProfile": "Choose the profile to start."
+    },
+    "script": {
+      "empty": "Empty script.",
+      "tooLong": "The script exceeds {max} lines.",
+      "unknownCommand": "Line {line}: unknown command “{op}”.",
+      "usage": "Line {line}: use “{usage}”.",
+      "badNumber": "Line {line}: invalid number “{value}”.",
+      "badButton": "Line {line}: invalid button “{value}”.",
+      "badKey": "Line {line}: unsupported key “{value}”.",
+      "negativeWait": "Line {line}: invalid wait (use MS or MIN-MAX).",
+      "loopRange": "Line {line}: loop must be between 1 and {max}.",
+      "loopDepth": "Line {line}: at most {max} nested loops.",
+      "endWithoutLoop": "Line {line}: “end” without a matching loop.",
+      "loopNoEnd": "A loop is missing its “end”."
+    },
+    "profile": {
+      "invalidName": "Invalid profile name. Use letters, numbers, space, _ . - (max. 64).",
+      "reservedName": "“{name}” is reserved by the system. Choose another name.",
+      "notFound": "Profile not found: {name}",
+      "exists": "A profile named “{name}” already exists.",
+      "invalidFile": "Invalid profile file.",
+      "fileNotFound": "File not found."
+    },
+    "key": {
+      "unsupported": "Unsupported key: {key}"
+    },
+    "filter": {
+      "ownWindow": "The focused window was Clickr itself. Switch to the target window before the countdown ends.",
+      "unavailable": "Could not read the focused window on this system.",
+      "noWindow": "No focused window was found."
+    },
+    "autostart": {
+      "failed": "Could not change automatic startup on this system."
+    }
   },
   "tray": {
     "show": "Show",
     "hide": "Hide",
     "quit": "Quit",
     "notifyTitle": "Still running",
-    "notifyBody": "Clickr is still running in the tray. Use Quit on the icon to exit for real."
+    "notifyBody": "Clickr is still running in the tray. Use Quit on the icon to exit for real.",
+    "toggle": "Start / Stop"
   },
   "overlay": {
     "title": "Capture point",
@@ -191,104 +342,121 @@
       "advanced": "Adv",
       "macro": "Macro",
       "script": "Script",
-      "schedule": "Schedule"
+      "schedule": "Schedule",
+      "keys": "Keys"
     },
     "guide": {
       "welcome": {
         "title": "Welcome to Clickr",
         "body": [
-          "Windows autoclicker with a native motor (SendInput).",
-          "Use the pulse button or the hotkey (default F6) to start and stop.",
-          "The window X does not quit the app — it goes to the tray. To quit for real: tray icon → Quit."
+          "Autoclicker for Windows, macOS and Linux with a native input engine.",
+          "Use the centre button or the shortcut (F6 by default) to start and stop.",
+          "The last configuration you used is restored when the app opens.",
+          "The window's X does not quit the app — it goes to the tray. To really quit: tray icon → Quit."
         ],
         "tips": [
-          "Click the F6 keycap in the footer to record another shortcut key.",
+          "Elapsed time and the real click rate are shown under the counter.",
           "Want a guided preset? Use Wizard mode at the top of this tab."
         ]
       },
       "click": {
         "title": "Click tab — essentials",
         "body": [
-          "Interval (ms) + slider: time between clicks. Estimated CPS appears below.",
-          "Button: L / R / M / 4 / 5 (side mouse buttons).",
-          "Type: Single, Double, or Hold (keeps pressed until stop).",
-          "Position: Cursor (where the mouse is) or Fixed point (XY)."
+          "Interval (ms) + slider: time between actions. The estimated rate is shown below.",
+          "Mouse or Key: repeat a mouse button or a key/combination (e.g. E, SPACE, CTRL+C).",
+          "Button: L / R / M / 4 / 5 (mouse side buttons).",
+          "Type: Single, Double or Hold (kept pressed until you stop).",
+          "Position: Cursor (wherever the mouse is) or Fixed point (XY coordinate)."
         ],
         "tips": [
-          "Hold releases the button when you stop the engine.",
-          "After the Wizard, change everything again on this tab."
+          "Clickr never clicks on its own window: move the cursor off it for clicks to begin.",
+          "Hold releases the button or key when you stop the engine."
         ]
       },
       "run": {
-        "title": "Run tab — limits and extras",
+        "title": "Run tab — limits and system",
         "body": [
-          "Start delay: wait before the first click (useful to return to the target window).",
-          "Jitter ±: random variation on the interval (less “mechanical” clicks).",
-          "Click limit / max duration: stops alone when N or the time is reached.",
-          "Always on top: window above others. Compact mode: hides Adv, Macro, Script, and Schedule."
+          "Start delay: wait before the first action; the countdown shows in the centre button.",
+          "Jitter ±: random variation of the interval (less “mechanical” clicks).",
+          "Click limit / max. duration: stops by itself at N or at the time.",
+          "Time fields accept ms, s, min or h — choose the unit next to the value.",
+          "Always on top, Compact mode, Start with the system and New-version notice are app preferences (profiles do not change them)."
         ],
         "tips": []
       },
       "point": {
         "title": "Point tab — coordinates",
         "body": [
-          "Set X and Y manually or use Capture point (overlay on all monitors).",
-          "Sequence: list of points with per-step delay. The engine cycles the list when not empty.",
-          "+ point uses the current cursor position (or XY if provided)."
+          "Set X and Y by hand or use Capture point: the screen dims slightly and your click marks the position.",
+          "Position variation ±: each click lands up to N pixels from the point. Return the cursor: the mouse goes back to where it was after the click.",
+          "Sequence: list of points with a delay per step. The engine cycles through the list when it is not empty.",
+          "“Capture” picks a point on screen and adds it to the list; “+ X/Y” adds the coordinates typed above.",
+          "In the list: edit the delay inline, use ↑ ↓ to reorder and × to remove."
         ],
         "tips": [
-          "Esc cancels capture. Click marks the real OS cursor position."
+          "Esc cancels the capture. A point lying under the Clickr window is skipped — the footer tells you."
         ]
       },
       "profiles": {
         "title": "Profiles tab",
         "body": [
-          "Save the current config with a name under the Clickr user data folder (profiles/).",
-          "Load applies a profile from the list. Export/Import swaps JSON with other machines."
+          "Save the current click configuration under a name. Load applies a profile from the list.",
+          "Rename uses the selected profile and the name typed in the field. Delete asks for confirmation.",
+          "Export/Import exchanges JSON files with other machines; replacing an existing profile always asks first.",
+          "Profiles store only click behaviour. Shortcuts and app preferences are kept separately."
         ],
-        "tips": []
+        "tips": [
+          "Profiles created in earlier versions keep working as before, including the shortcut they defined."
+        ]
       },
       "advanced": {
         "title": "Adv tab — filter and burst",
         "body": [
-          "Window filter: only clicks if the focused process and/or title match.",
-          "Burst: N fast clicks, pause, repeat — useful for controlled bursts.",
-          "Buttons 4 and 5 are on the Click tab selector."
+          "Window filter: acts only if the process and/or title of the focused window match.",
+          "Use current window: click, switch to the target window and it is read after 3 seconds.",
+          "Burst: N quick clicks, a pause, then repeat — useful for controlled bursts.",
+          "While the filter is holding clicks back, the footer shows “outside filter window”."
         ],
         "tips": [
-          "With filter on and empty criteria, all clicks are allowed."
+          "With the filter on and empty criteria, every action is allowed."
         ]
       },
       "macro": {
         "title": "Macro tab",
         "body": [
-          "Record: captures mouse and keyboard with relative timing.",
-          "Play: resends events via SendInput.",
-          "Stop / Clear interrupt or erase the recording."
+          "Record: captures mouse (including the wheel) and keyboard with relative timing.",
+          "Play: replays the recording. Repeats sets how many times; Speed makes it faster or slower (1 = original).",
+          "Give it a name and use Save / Load / Delete to keep macros between sessions.",
+          "Stop interrupts and releases any key or button left pressed."
         ],
         "tips": [
-          "During recording, the engine toggle hotkey is ignored."
+          "Set a “Record / stop macro” shortcut in the Keys tab so that clicking the button is not part of the recording."
         ]
       },
       "script": {
-        "title": "Script tab — DSL",
+        "title": "Script tab",
         "body": [
-          "Commands: click [button], move X Y, wait ms, key NAME, loop N … end.",
-          "Limits: up to 500 lines, loops 1–1000, loop depth ≤ 2.",
-          "Run / Stop control the runner."
+          "One command per line: click, dclick, move, drag, scroll, wait, key, type and loop N … end.",
+          "The “commands” button opens the reference with the syntax of each one.",
+          "wait takes a fixed value or a random range (e.g. wait 80-150); key takes combinations (e.g. key CTRL+C).",
+          "Limits: up to 500 lines, loops from 1 to 1000, at most 2 nested loops.",
+          "The text is kept for next time; while running, the current line is shown."
         ],
         "tips": [
-          "Example: move 100 200 → click left → wait 100 → key SPACE"
+          "Syntax errors tell you the line number."
         ]
       },
       "schedule": {
         "title": "Schedule tab",
         "body": [
-          "Pick a local date/time and Schedule.",
-          "When the time arrives, the click engine starts on its own.",
-          "Cancel removes the pending schedule."
+          "Choose the local date/time and what to start: auto-click with the current settings, a saved profile, the loaded macro or the script.",
+          "Repeat: once, every day at the same time, or every interval.",
+          "The schedule is saved: recurring schedules come back when you reopen the app.",
+          "Cancel removes the active schedule."
         ],
-        "tips": []
+        "tips": [
+          "Clickr must be running (it can stay in the tray) for the schedule to fire."
+        ]
       },
       "safety": {
         "title": "Responsible use",
@@ -299,6 +467,18 @@
         ],
         "tips": [
           "You are responsible for how you use the software."
+        ]
+      },
+      "keys": {
+        "title": "Keys tab",
+        "body": [
+          "Each action has its own global shortcut: Start / stop, Stop everything, Capture point at cursor and Record / stop macro.",
+          "Click a shortcut and press the combination — Ctrl, Alt, Shift and Win are allowed (e.g. Ctrl+Alt+F6). Esc cancels; × removes.",
+          "Toggle: one press starts, another stops. Hold: clicks only while the shortcut is held down.",
+          "“Stop everything” halts auto-click, macro, script and capture at once."
+        ],
+        "tips": [
+          "On Windows the shortcut is not passed on to the focused program. Prefer function keys or combinations with a modifier."
         ]
       }
     },
@@ -415,5 +595,19 @@
         ]
       }
     }
+  },
+  "keys": {
+    "toggle": "Start / stop",
+    "stopAll": "Stop everything",
+    "pickPoint": "Capture point at cursor",
+    "macroRecord": "Record / stop macro",
+    "clear": "Remove shortcut",
+    "none": "set",
+    "hint": "Click a shortcut and press the combination (e.g. Ctrl+Alt+F6). Esc cancels.",
+    "activation": "Start / stop shortcut",
+    "modeToggle": "TOGGLE",
+    "modeHold": "HOLD",
+    "modeToggleHint": "One press starts, another stops.",
+    "modeHoldHint": "Clicks only while the shortcut is held down."
   }
 }

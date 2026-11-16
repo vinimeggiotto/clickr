@@ -3,24 +3,57 @@
 from __future__ import annotations
 
 import random
+import sys
+from collections import deque
 import threading
 import time
 from typing import Callable, Optional
 
 from core import sendinput
+from core.keys import parse_key_sequence
 from core.types import ClickConfig, RuntimeState
 from sequence.runner import SequenceRunner
 from window_filter.filter import WindowFilter
+
+# Atraso acima do qual o agendamento é ressincronizado em vez de "correr atrás".
+_RESYNC_LATE_S = 0.02
+# Trecho final da espera feito em espera ativa para precisão de sub-milissegundo.
+_SPIN_S = 0.0015
+
+
+class _TimerResolution:
+    """Eleva a resolução do timer do Windows para 1 ms enquanto o motor roda."""
+
+    def __init__(self) -> None:
+        self._winmm = None
+        if sys.platform == "win32":
+            try:
+                import ctypes
+
+                self._winmm = ctypes.WinDLL("winmm")
+            except OSError:
+                self._winmm = None
+
+    def __enter__(self) -> "_TimerResolution":
+        if self._winmm is not None:
+            self._winmm.timeBeginPeriod(1)
+        return self
+
+    def __exit__(self, *_exc: object) -> None:
+        if self._winmm is not None:
+            self._winmm.timeEndPeriod(1)
 
 
 class ClickEngine:
     """
     Motor de autoclique.
 
-    - Thread dedicada com time.perf_counter para intervalo estável.
+    - Thread dedicada; cada espera mira um instante agendado (deadline), de modo
+      que o tempo gasto na própria ação não se soma ao intervalo.
     - Jitter: intervalo_ms ± jitter_ms por espera.
     - Burst: N cliques com intervalo entre eles → pausa burst_pause_ms → repete.
-    - Antes de cada clique: WindowFilter.allows(); se False, pula o clique.
+    - Antes de cada clique: WindowFilter.allows() e o guard de clique (ex.: não
+      clicar na própria janela do Clickr); se bloqueado, pula o clique.
     - Sequência multi-ponto via SequenceRunner quando sequence não está vazia.
     - Botões: left / right / middle / x1 / x2.
     """
@@ -33,14 +66,37 @@ class ClickEngine:
         self._running = False
         self._click_count = 0
         self._started_at: Optional[float] = None
-        self._last_error: Optional[str] = None
-        self._hold_pressed = False
+        self._last_error: Optional[object] = None
+        self._hold_button: Optional[str] = None
+        self._hold_keys: tuple = ()
+        self._key_guard: Optional[Callable[[], bool]] = None
         self._on_tick: Optional[Callable[[], None]] = None
+        self._click_guard: Optional[Callable[[int, int], bool]] = None
         self._window_filter = WindowFilter()
         self._sequence = SequenceRunner()
+        self._due: Optional[float] = None
+        self._phase = "idle"
+        self._countdown_until: Optional[float] = None
+        self._run_started: Optional[float] = None  # perf_counter do fim do delay
+        self._elapsed_final_ms = 0
+        self._stamps: deque = deque(maxlen=4096)  # (perf_counter, cliques)
+        self._blocked: Optional[str] = None
 
     def set_on_tick(self, callback: Optional[Callable[[], None]]) -> None:
+        """Callback leve chamado a cada mudança de estado (deve só sinalizar)."""
         self._on_tick = callback
+
+    def set_click_guard(self, guard: Optional[Callable[[int, int], bool]]) -> None:
+        """guard(x, y) → True bloqueia o clique naquele ponto de tela."""
+        self._click_guard = guard
+
+    def set_key_guard(self, guard: Optional[Callable[[], bool]]) -> None:
+        """guard() → True bloqueia o envio de teclas (ex.: Clickr em foco)."""
+        self._key_guard = guard
+
+    @property
+    def window_filter(self) -> WindowFilter:
+        return self._window_filter
 
     def get_config(self) -> ClickConfig:
         with self._lock:
@@ -57,19 +113,38 @@ class ClickEngine:
 
     def get_state(self) -> RuntimeState:
         with self._lock:
+            now = time.perf_counter()
+            if self._phase == "running" and self._run_started is not None:
+                elapsed_ms = int((now - self._run_started) * 1000)
+            else:
+                elapsed_ms = self._elapsed_final_ms
+            cps = 0.0
+            if self._phase == "running":
+                while self._stamps and now - self._stamps[0][0] > 1.0:
+                    self._stamps.popleft()
+                cps = float(sum(n for _, n in self._stamps))
+            seq_index: Optional[int] = None
+            if self._config.has_sequence() and self._config.action != "key":
+                seq_index = self._sequence.current_index()
             return RuntimeState(
                 running=self._running,
                 click_count=self._click_count,
                 started_at=self._started_at,
                 last_error=self._last_error,
                 config=ClickConfig.from_dict(self._config.to_dict()),
+                phase=self._phase if self._running else "idle",
+                starts_at=self._countdown_until if self._phase == "countdown" else None,
+                elapsed_ms=elapsed_ms,
+                actual_cps=cps,
+                sequence_index=seq_index,
+                blocked=self._blocked if self._phase == "running" else None,
             )
 
     def is_running(self) -> bool:
         with self._lock:
             return self._running
 
-    def set_last_error(self, message: Optional[str]) -> None:
+    def set_last_error(self, message: Optional[object]) -> None:
         with self._lock:
             self._last_error = message
 
@@ -82,7 +157,19 @@ class ClickEngine:
             self._started_at = time.time()
             self._stop_event.clear()
             self._running = True
-            self._hold_pressed = False
+            self._hold_button = None
+            self._hold_keys = ()
+            self._due = None
+            self._phase = "countdown" if self._config.clamped_start_delay_ms() > 0 else "running"
+            self._countdown_until = (
+                self._started_at + self._config.clamped_start_delay_ms() / 1000.0
+                if self._phase == "countdown"
+                else None
+            )
+            self._run_started = time.perf_counter()
+            self._elapsed_final_ms = 0
+            self._stamps.clear()
+            self._blocked = None
             self._window_filter.configure(self._config.window_filter)
             self._sequence.reset(self._config.sequence)
             self._thread = threading.Thread(
@@ -99,13 +186,20 @@ class ClickEngine:
                 return False
             self._stop_event.set()
             thread = self._thread
-        if thread is not None and thread.is_alive():
+        if (
+            thread is not None
+            and thread.is_alive()
+            and thread is not threading.current_thread()
+        ):
             thread.join(timeout=2.0)
         with self._lock:
-            self._release_hold_if_needed()
-            self._running = False
-            self._thread = None
-            return True
+            # Se outra thread já iniciou uma nova execução, não a marca como parada.
+            if self._thread is thread:
+                self._release_hold_if_needed()
+                self._finish_locked()
+                self._thread = None
+        self._emit()
+        return True
 
     def toggle(self) -> bool:
         if self.is_running():
@@ -114,15 +208,39 @@ class ClickEngine:
         self.start()
         return True
 
-    def _release_hold_if_needed(self) -> None:
-        if not self._hold_pressed:
+    # --- Interno -------------------------------------------------------
+
+    def _finish_locked(self) -> None:
+        """Marca o motor como parado e congela o tempo decorrido."""
+        if self._phase == "running" and self._run_started is not None:
+            self._elapsed_final_ms = int((time.perf_counter() - self._run_started) * 1000)
+        self._phase = "idle"
+        self._countdown_until = None
+        self._running = False
+
+    def _emit(self) -> None:
+        callback = self._on_tick
+        if callback is None:
             return
         try:
-            sendinput.button_up(self._config.button)
-        except OSError as exc:
+            callback()
+        except Exception:
+            pass
+
+    def _release_hold_if_needed(self) -> None:
+        button, self._hold_button = self._hold_button, None
+        keys, self._hold_keys = self._hold_keys, ()
+        try:
+            if button is not None:
+                sendinput.button_up(button)  # type: ignore[arg-type]
+            for vk in reversed(keys):
+                sendinput.key_up(vk)
+        except (OSError, ValueError) as exc:
             self._last_error = str(exc)
-        finally:
-            self._hold_pressed = False
+
+    @property
+    def _holding(self) -> bool:
+        return self._hold_button is not None or bool(self._hold_keys)
 
     def _is_hold(self, config: ClickConfig) -> bool:
         return config.click_type == "hold" or config.hold
@@ -148,33 +266,95 @@ class ClickEngine:
         delta = random.randint(-jitter, jitter)
         return max(0.0, (base + delta) / 1000.0)
 
-    def _wait_interruptible(self, seconds: float) -> bool:
-        """Espera até `seconds`. Retorna True se stop foi pedido."""
-        if seconds <= 0:
-            return self._stop_event.is_set()
-        deadline = time.perf_counter() + seconds
+    def _wait_until(self, deadline: float) -> bool:
+        """Espera até o instante `deadline` (perf_counter). True se stop foi pedido."""
         while True:
             if self._stop_event.is_set():
                 return True
             remaining = deadline - time.perf_counter()
             if remaining <= 0:
                 return False
-            if self._stop_event.wait(timeout=min(remaining, 0.01)):
-                return True
+            if remaining > _SPIN_S:
+                if self._stop_event.wait(timeout=min(remaining - _SPIN_S, 0.05)):
+                    return True
+            else:
+                time.sleep(0)
+
+    def _wait_interruptible(self, seconds: float) -> bool:
+        """Espera `seconds` a partir de agora. True se stop foi pedido."""
+        if seconds <= 0:
+            return self._stop_event.is_set()
+        return self._wait_until(time.perf_counter() + seconds)
+
+    def _anchor(self) -> float:
+        """Instante de referência do tick atual (agendado, ou agora se atrasado)."""
+        now = time.perf_counter()
+        due = self._due
+        if due is None or (now - due) > _RESYNC_LATE_S:
+            return now
+        return due
+
+    def _wait_from(self, anchor: float, seconds: float) -> bool:
+        """Agenda o próximo tick para anchor + seconds e espera até lá."""
+        self._due = anchor + max(0.0, seconds)
+        return self._wait_until(self._due)
 
     def _resolve_target(self, config: ClickConfig) -> tuple[bool, int, int, Optional[int]]:
         """
         Retorna (use_fixed, x, y, step_delay_ms).
 
         step_delay_ms só vem da sequência; None = usar interval_ms.
+        O jitter de posição desloca pontos fixos/da sequência; no modo cursor
+        não se aplica (o cursor é do usuário).
         """
+        jitter = max(0, int(config.position_jitter_px))
+        dx = random.randint(-jitter, jitter) if jitter else 0
+        dy = random.randint(-jitter, jitter) if jitter else 0
         if config.has_sequence() and not self._is_hold(config):
             target = self._sequence.peek()
             if target is not None:
-                return True, target.x, target.y, target.delay_ms
+                return True, target.x + dx, target.y + dy, target.delay_ms
         if config.position_mode == "fixed":
-            return True, config.fixed_x, config.fixed_y, None
+            return True, config.fixed_x + dx, config.fixed_y + dy, None
         return False, 0, 0, None
+
+    def _guard_blocks(self, use_fixed: bool, x: int, y: int) -> bool:
+        guard = self._click_guard
+        if guard is None:
+            return False
+        try:
+            if not use_fixed:
+                x, y = sendinput.get_cursor_pos()
+            return bool(guard(int(x), int(y)))
+        except Exception:
+            return False
+
+    def _key_guard_blocks(self) -> bool:
+        guard = self._key_guard
+        if guard is None:
+            return False
+        try:
+            return bool(guard())
+        except Exception:
+            return False
+
+    def _perform_key_action(self, config: ClickConfig) -> int:
+        """Ação de teclado: pressiona a tecla/combinação configurada."""
+        vks = parse_key_sequence(config.key_name)
+        if self._is_hold(config):
+            if self._hold_keys:
+                return 0
+            for vk in vks:
+                sendinput.key_down(vk)
+            self._hold_keys = tuple(vks)
+            return 1
+        times = 2 if config.click_type == "double" else 1
+        for _ in range(times):
+            for vk in vks:
+                sendinput.key_down(vk)
+            for vk in reversed(vks):
+                sendinput.key_up(vk)
+        return times
 
     def _perform_action(
         self,
@@ -185,40 +365,53 @@ class ClickEngine:
     ) -> int:
         """Executa a ação do tick. Retorna quantos cliques contabilizar."""
         button = config.button
+        restore = bool(config.restore_cursor)
 
         if self._is_hold(config):
-            if not self._hold_pressed:
+            if self._hold_button is None:
                 if use_fixed:
                     sendinput.move_absolute(x, y)
                 sendinput.button_down(button)
-                self._hold_pressed = True
+                self._hold_button = button
                 return 1
             return 0
 
         if config.click_type == "double":
             if use_fixed:
-                sendinput.double_click_at(button, x, y)
+                sendinput.double_click_at(button, x, y, restore=restore)
             else:
                 sendinput.double_click(button)
             return 2
 
         if use_fixed:
-            sendinput.click_at(button, x, y)
+            sendinput.click_at(button, x, y, restore=restore)
         else:
             sendinput.click(button)
         return 1
 
     def _maybe_click(self, config: ClickConfig) -> tuple[int, Optional[int]]:
         """
-        Tenta um clique se o filtro permitir.
+        Tenta uma ação se o filtro e os guards permitirem.
 
         Retorna (clicks_added, step_delay_ms).
-        Clique pulado pelo filtro: (0, None) e não avança a sequência.
+        Ação pulada: (0, None) e não avança a sequência.
         """
         if not self._window_filter.allows():
+            self._blocked = "filter"
             return 0, None
 
+        if config.action == "key":
+            if self._key_guard_blocks():
+                self._blocked = "own_window"
+                return 0, None
+            self._blocked = None
+            return self._perform_key_action(config), None
+
         use_fixed, x, y, step_delay = self._resolve_target(config)
+        if self._guard_blocks(use_fixed, x, y):
+            self._blocked = "own_window"
+            return 0, None
+        self._blocked = None
         added = self._perform_action(config, use_fixed, x, y)
         if added and config.has_sequence() and not self._is_hold(config):
             self._sequence.advance()
@@ -229,57 +422,68 @@ class ClickEngine:
         with self._lock:
             if added:
                 self._click_count += added
-            if self._limits_reached(config, loop_start):
+                self._stamps.append((time.perf_counter(), added))
+            done = self._limits_reached(config, loop_start)
+            if done:
                 self._running = False
-                return True
-        callback = self._on_tick
-        if callback is not None:
-            callback()
-        return False
+        self._emit()
+        return done
 
     def _run_loop(self) -> None:
+        try:
+            with _TimerResolution():
+                self._run_loop_inner()
+        finally:
+            with self._lock:
+                if self._thread is threading.current_thread():
+                    self._release_hold_if_needed()
+                    self._finish_locked()
+            # Sempre avisa a UI no fim (limite atingido, erro ou stop).
+            self._emit()
+
+    def _run_loop_inner(self) -> None:
         with self._lock:
             delay_ms = self._config.clamped_start_delay_ms()
 
         if delay_ms > 0:
+            self._emit()
             if self._wait_interruptible(delay_ms / 1000.0):
-                with self._lock:
-                    self._running = False
                 return
 
         loop_start = time.perf_counter()
-        try:
-            while not self._stop_event.is_set():
-                config = self._snapshot_config()
-                with self._lock:
-                    if self._limits_reached(config, loop_start):
-                        self._running = False
-                        break
-
-                try:
-                    if self._is_hold(config):
-                        if self._run_hold_tick(config, loop_start):
-                            break
-                        continue
-
-                    if self._run_click_cycle(config, loop_start):
-                        break
-                except OSError as exc:
-                    with self._lock:
-                        self._last_error = str(exc)
-                        self._running = False
-                    break
-        finally:
+        self._due = None
+        with self._lock:
+            self._phase = "running"
+            self._countdown_until = None
+            self._run_started = loop_start
+        self._emit()
+        while not self._stop_event.is_set():
+            config = self._snapshot_config()
             with self._lock:
-                self._release_hold_if_needed()
-                self._running = False
+                if self._limits_reached(config, loop_start):
+                    self._running = False
+                    break
+
+            try:
+                if self._is_hold(config):
+                    if self._run_hold_tick(config, loop_start):
+                        break
+                    continue
+
+                if self._run_click_cycle(config, loop_start):
+                    break
+            except (OSError, ValueError) as exc:
+                with self._lock:
+                    self._last_error = str(exc)
+                    self._running = False
+                break
 
     def _run_hold_tick(self, config: ClickConfig, loop_start: float) -> bool:
         """Um ciclo de hold. Retorna True se o loop deve encerrar."""
         added, _ = self._maybe_click(config)
         if self._apply_click_result(added, config, loop_start):
             return True
-        if self._hold_pressed:
+        if self._holding:
             return self._wait_interruptible(0.05)
         # Filtro bloqueou o press — espera intervalo e tenta de novo
         return self._wait_interruptible(self._interval_with_jitter_s(config))
@@ -293,6 +497,7 @@ class ClickEngine:
         burst_enabled = config.burst_count is not None
         burst_n = config.burst_count if burst_enabled else 1
         last_step_delay: Optional[int] = None
+        anchor = self._anchor()
 
         for i in range(burst_n):
             if self._stop_event.is_set():
@@ -304,6 +509,7 @@ class ClickEngine:
                     self._running = False
                     return True
 
+            anchor = self._anchor()
             added, step_delay = self._maybe_click(config)
             if step_delay is not None:
                 last_step_delay = step_delay
@@ -313,8 +519,7 @@ class ClickEngine:
 
             # Entre cliques do burst
             if burst_enabled and i < burst_n - 1:
-                wait_base = last_step_delay if last_step_delay is not None else None
-                if self._wait_interruptible(self._interval_with_jitter_s(config, wait_base)):
+                if self._wait_from(anchor, self._interval_with_jitter_s(config, last_step_delay)):
                     return True
 
         config = self._snapshot_config()
@@ -324,8 +529,7 @@ class ClickEngine:
             pause_ms = 0
             if config.burst_pause_ms is not None:
                 pause_ms = max(0, int(config.burst_pause_ms))
-            return self._wait_interruptible(pause_ms / 1000.0)
+            return self._wait_from(anchor, pause_ms / 1000.0)
 
         # Ciclo normal: intervalo ± jitter (ou delay do passo da sequência)
-        wait_base = last_step_delay if last_step_delay is not None else None
-        return self._wait_interruptible(self._interval_with_jitter_s(config, wait_base))
+        return self._wait_from(anchor, self._interval_with_jitter_s(config, last_step_delay))

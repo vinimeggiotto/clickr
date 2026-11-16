@@ -5,16 +5,20 @@ API pública estável (get_cursor_pos, move_absolute, click_at, double_click_at,
 hold, key_*, virtual screen). Backend:
 - Windows: Win32 SendInput (core.sendinput_win32)
 - macOS / Linux: pynput (core.sendinput_pynput)
+- Testes / sem display: CLICKR_INPUT_BACKEND=null (core.sendinput_null)
 """
 
 from __future__ import annotations
 
+import os
 import sys
 from typing import Literal
 
 ButtonName = Literal["left", "right", "middle", "x1", "x2"]
 
-if sys.platform == "win32":
+if os.environ.get("CLICKR_INPUT_BACKEND", "").strip().lower() == "null":
+    from core import sendinput_null as _backend
+elif sys.platform == "win32":
     from core import sendinput_win32 as _backend
 else:
     from core import sendinput_pynput as _backend
@@ -28,7 +32,11 @@ click = _backend.click
 click_at = _backend.click_at
 double_click = _backend.double_click
 double_click_at = _backend.double_click_at
+scroll = _backend.scroll
 name_to_vk = _backend.name_to_vk
+key_down_char = _backend.key_down_char
+key_up_char = _backend.key_up_char
+type_text = _backend.type_text
 key_down = _backend.key_down
 key_up = _backend.key_up
 key_press = _backend.key_press
@@ -48,7 +56,11 @@ __all__ = [
     "click_at",
     "double_click",
     "double_click_at",
+    "scroll",
     "name_to_vk",
+    "key_down_char",
+    "key_up_char",
+    "type_text",
     "key_down",
     "key_up",
     "key_press",

@@ -1,6 +1,7 @@
 (() => {
-  const STORAGE_GUIDE = "clickr_manual_seen_v1";
-  const STORAGE_WIZARD = "clickr_wizard_done_v1";
+  // "Já visto" fica nas preferências do app (settings.json), não no
+  // localStorage do webview, que não persiste entre execuções.
+  let seen = false;
   const MIN_SPLASH_MS = 1100;
 
   const GUIDE_ORDER = [
@@ -9,6 +10,7 @@
     { id: "run", goto: "run" },
     { id: "point", goto: "point" },
     { id: "profiles", goto: "profiles" },
+    { id: "keys", goto: "keys" },
     { id: "advanced", goto: "advanced" },
     { id: "macro", goto: "macro" },
     { id: "script", goto: "script" },
@@ -49,7 +51,14 @@
     getConfig: null,
     getState: null,
     setError: null,
+    markSeen: null,
   };
+
+  function markSeen() {
+    if (seen) return;
+    seen = true;
+    if (api.markSeen) api.markSeen();
+  }
 
   const manualGuide = document.getElementById("manualGuide");
   const manualWizard = document.getElementById("manualWizard");
@@ -160,11 +169,7 @@
     const next = guideIndex + delta;
     if (next < 0) return;
     if (next >= guideSteps.length) {
-      try {
-        localStorage.setItem(STORAGE_GUIDE, "1");
-      } catch (_) {
-        /* ignore */
-      }
+      markSeen();
       if (api.activateTab) api.activateTab("click");
       return;
     }
@@ -598,12 +603,7 @@
       if (api.saveProfile) {
         await api.saveProfile(draft.profile_name);
       }
-      try {
-        localStorage.setItem(STORAGE_WIZARD, "1");
-        localStorage.setItem(STORAGE_GUIDE, "1");
-      } catch (_) {
-        /* ignore */
-      }
+      markSeen();
       if (andStart && api.start) {
         await api.start();
       }
@@ -642,14 +642,7 @@
   }
 
   function shouldOpenOnFirstRun() {
-    try {
-      return (
-        localStorage.getItem(STORAGE_WIZARD) !== "1" &&
-        localStorage.getItem(STORAGE_GUIDE) !== "1"
-      );
-    } catch (_) {
-      return false;
-    }
+    return !seen;
   }
 
   function openFirstRun() {
@@ -664,6 +657,9 @@
     load: loadManual,
     bind,
     shouldOpenOnFirstRun,
+    setSeen: (value) => {
+      seen = !!value;
+    },
     openFirstRun,
     setMode,
     reloadLocale,

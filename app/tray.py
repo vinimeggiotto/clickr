@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sys
 import threading
 from typing import Callable, Optional
 
@@ -24,21 +25,35 @@ class SystemTray:
         on_show: Callable[[], None],
         on_hide: Callable[[], None],
         on_quit: Callable[[], None],
+        on_toggle: Optional[Callable[[], None]] = None,
         locale: str | None = None,
     ) -> None:
         self._on_show = on_show
         self._on_hide = on_hide
         self._on_quit = on_quit
+        self._on_toggle = on_toggle
+        self._running = False
+        self._image_idle: Optional[Image.Image] = None
+        self._image_active: Optional[Image.Image] = None
         self._locale = locale if locale in SUPPORTED_LOCALES else FALLBACK_LOCALE
         self._labels = self._load_labels(self._locale)
         self._icon: Optional[pystray.Icon] = None
         self._thread: Optional[threading.Thread] = None
 
-    def start(self) -> None:
+    def start(self, detached: bool = False) -> None:
+        """
+        Inicia o ícone. No macOS o pystray precisa ser iniciado na thread
+        principal com run_detached (antes do loop do pywebview); nos demais SOs
+        roda em thread própria.
+        """
         if self._icon is not None:
             return
-        image = self._load_icon()
-        self._icon = pystray.Icon("Clickr", image, "Clickr", self._build_menu())
+        self._image_idle = self._load_icon()
+        self._image_active = self._active_variant(self._image_idle)
+        self._icon = pystray.Icon("Clickr", self._image_idle, "Clickr", self._build_menu())
+        if detached or sys.platform == "darwin":
+            self._icon.run_detached()
+            return
         self._thread = threading.Thread(target=self._icon.run, name="SystemTray", daemon=True)
         self._thread.start()
 
@@ -63,10 +78,26 @@ class SystemTray:
         except Exception:
             pass
 
+    def set_running(self, running: bool) -> None:
+        """Troca o ícone (ponto verde quando ativo)."""
+        self._running = bool(running)
+        icon = self._icon
+        if icon is None:
+            return
+        # No macOS o ícone só pode ser alterado na thread principal; lá o
+        # estado fica visível apenas na janela.
+        if sys.platform == "darwin":
+            return
+        image = self._image_active if self._running else self._image_idle
+        if image is not None:
+            icon.icon = image
+
     def notify(self, message: str, title: str = "Clickr") -> None:
         """Balloon/toast do Windows via ícone da bandeja."""
         icon = self._icon
         if icon is None:
+            return
+        if not getattr(icon, "HAS_NOTIFICATION", True):
             return
         icon.notify(message, title)
 
@@ -78,7 +109,18 @@ class SystemTray:
         )
 
     def _build_menu(self) -> pystray.Menu:
+        items = []
+        if self._on_toggle is not None:
+            items.append(
+                # Rótulo fixo: o menu não é recriado a cada mudança de estado
+                # (isso teria de acontecer fora da thread da bandeja).
+                pystray.MenuItem(
+                    self._labels.get("toggle", "Iniciar / Parar"), self._handle_toggle
+                )
+            )
+            items.append(pystray.Menu.SEPARATOR)
         return pystray.Menu(
+            *items,
             pystray.MenuItem(self._labels.get("show", "Mostrar"), self._handle_show, default=True),
             pystray.MenuItem(self._labels.get("hide", "Ocultar"), self._handle_hide),
             pystray.Menu.SEPARATOR,
@@ -94,11 +136,41 @@ class SystemTray:
     def _handle_quit(self, icon: object = None, item: object = None) -> None:
         self._on_quit()
 
+    def _handle_toggle(self, icon: object = None, item: object = None) -> None:
+        if self._on_toggle is not None:
+            self._on_toggle()
+
+    @staticmethod
+    def _active_variant(base: Image.Image) -> Image.Image:
+        """Cópia do ícone com um ponto verde no canto: indica execução."""
+        from PIL import ImageDraw
+
+        image = base.copy()
+        width, height = image.size
+        radius = max(3, min(width, height) // 6)
+        box = (width - 2 * radius - 1, height - 2 * radius - 1, width - 1, height - 1)
+        draw = ImageDraw.Draw(image)
+        draw.ellipse(box, fill=(20, 16, 12, 255))
+        inset = max(1, radius // 4)
+        draw.ellipse(
+            (box[0] + inset, box[1] + inset, box[2] - inset, box[3] - inset),
+            fill=(74, 222, 128, 255),
+        )
+        return image
+
     @staticmethod
     def _load_icon() -> Image.Image:
-        if not ICON_PATH.is_file():
-            raise FileNotFoundError(f"Ícone da bandeja não encontrado: {ICON_PATH}")
-        return Image.open(ICON_PATH).convert("RGBA")
+        if ICON_PATH.is_file():
+            try:
+                return Image.open(ICON_PATH).convert("RGBA")
+            except OSError:
+                pass
+        # Ícone ausente/corrompido não pode impedir a bandeja: desenha um substituto.
+        from PIL import ImageDraw
+
+        image = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+        ImageDraw.Draw(image).ellipse((6, 6, 58, 58), fill=(242, 163, 59, 255))
+        return image
 
     @staticmethod
     def _load_labels(code: str) -> dict[str, str]:
@@ -124,7 +196,7 @@ class SystemTray:
         if not isinstance(tray, dict):
             return {}
         out: dict[str, str] = {}
-        for key in ("show", "hide", "quit", "notifyTitle", "notifyBody"):
+        for key in ("show", "hide", "quit", "toggle", "notifyTitle", "notifyBody"):
             val = tray.get(key)
             if isinstance(val, str):
                 out[key] = val

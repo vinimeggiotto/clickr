@@ -20,6 +20,7 @@ Permitir que o usuário escolha o idioma da interface do Clickr (6 locales), com
 - Arquivo: `{user_data_dir()}/settings.json`
 - Campo: `locale` (string BCP-47 ou ausente/`null`)
 - **Não** misturado com presets de clique em `profiles/`
+- O mesmo arquivo guarda as demais preferências do app (ver [`preferencias-e-sessao`](../preferencias-e-sessao/regras-de-negocio.md))
 
 ## Fluxo de boot
 
@@ -37,11 +38,17 @@ Permitir que o usuário escolha o idioma da interface do Clickr (6 locales), com
 
 - Splash, titlebar, nameplate, abas, painéis, toggles, placeholders, footer, status, modal da bandeja.
 - Overlay de captura, janela de info, Guia, Assistente e textos `(i)`.
-- Menu da bandeja (Mostrar / Ocultar / Sair) e toast de “ainda rodando”.
+- Menu da bandeja (Iniciar / Parar / Mostrar / Ocultar / Sair) e toast de “ainda rodando”.
+- Aba **Atalhos**, unidades de tempo, estatísticas ao vivo, diálogos de confirmação, referência de comandos do script e opções da agenda.
+- **Mensagens de erro por código:** o backend devolve `last_error = { code, message, params }`; a UI procura a chave `errors.<code>` no catálogo ativo e interpola `params` (ex.: número da linha do script, nome do perfil). Se a chave não existir, ou o código for `generic`, mostra `message` como veio do backend.
 
 ## Fallback de chave
 
 Se uma chave faltar no locale ativo, o runtime usa apenas o valor do catálogo `pt-BR` (sem outros fallbacks de negócio).
+
+## Verificação automática
+
+`tests/test_locales.py` (pytest) confere que os seis catálogos têm exatamente as mesmas chaves e que as chaves usadas no HTML (`data-i18n*`) e nas chamadas `t("...")` de `app.js` / `manual.js` existem em `pt-BR`, aceitando prefixos montados em tempo de execução (terminados em `.` ou `_`).
 
 ## Fora de escopo
 

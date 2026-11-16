@@ -9,7 +9,9 @@ Arquivo [`VERSION`](../../../VERSION) na raiz do repositório (uma linha, semver
 - Splash: `#splashVersion` (`v` + versão)
 - Rodapé do device: `#appVersion`
 
-A UI obtém o valor via `get_settings().version` (`app.paths.app_version()`).
+A UI obtém o valor via `get_settings().version` (`app.paths.app_version()`). Se `VERSION` estiver ilegível, o erro é registrado no log e a versão vem vazia (os elementos ficam ocultos).
+
+O mesmo valor é a "versão atual" usada na verificação opcional de atualização (ver [`atualizacao`](../atualizacao/regras-de-negocio.md)).
 
 ## Empacote
 

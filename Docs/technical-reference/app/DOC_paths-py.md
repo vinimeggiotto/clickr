@@ -28,4 +28,4 @@ Resolver a raiz de recursos da UI/assets (dev e PyInstaller frozen) e o diretór
 | `assets_dir() -> Path` | `.../assets` |
 | `locales_dir() -> Path` | `.../ui/locales` |
 | `app_version() -> str` | semver do arquivo `VERSION` |
-| `user_data_dir() -> Path` | pasta de prefs/perfis do usuário |
+| `user_data_dir() -> Path` | pasta de dados do usuário: `settings.json`, `profiles/`, `macros/`, `clickr.log`, `clickr.lock`, `show.request` |
